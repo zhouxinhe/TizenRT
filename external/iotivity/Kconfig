@@ -71,7 +71,7 @@ config ENABLE_IOTIVITY_CLOUD
 	---help---
 		select to enable the cloud for iotivity stack in tinyara
 
-config IOTIVITY_DEBUG
+config IOTIVITY_LOGGING
         bool "enable iotivity stack logs"
         default n
         ---help---

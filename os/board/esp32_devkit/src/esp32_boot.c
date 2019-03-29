@@ -114,6 +114,18 @@ void esp32_devKit_mount_partions(void)
 			lldbg("ERROR: mounting '%s' failed\n", CONFIG_ESP32_AUTOMOUNT_USERFS_DEVNAME);
 		}
 	}
+
+#ifdef CONFIG_FS_ROMFS
+	{
+		char rommtd_devname[16];
+		snprintf(rommtd_devname, 16, "/dev/mtdblock%d", 1);
+		ret = mount(rommtd_devname, "/rom", "romfs", 0, NULL);
+		if (ret != OK) {
+			lldbg("ERROR: mounting '%s'(ROMFS) failed\n", rommtd_devname);
+		}
+	}
+#endif
+
 #endif
 }
 

@@ -85,6 +85,9 @@ CFLAGS += \
 #ifeq ($(CONFIG_IOTIVITY_ROUTING) , "EP")
 #endif
 
+ifeq ($(CONFIG_IOTIVITY_LOGGING),y)
+CFLAGS += -DTB_LOG
+endif
 
 #
 # IoTivity

@@ -145,14 +145,19 @@ FAR void *mm_realloc(FAR struct mm_heap_s *heap, FAR void *oldmem, size_t size)
 	/* Map the memory chunk into an allocated node structure */
 
 	oldnode = (FAR struct mm_allocnode_s *)((FAR char *)oldmem - SIZEOF_MM_ALLOCNODE);
+	DEBUGASSERT(VERIFY_MAGICWORD(oldnode));
 
 	/* We need to hold the MM semaphore while we muck with the nodelist. */
 
 	mm_takesemaphore(heap);
 
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
 	/* Check if this is a request to reduce the size of the allocation. */
 
 	oldsize = oldnode->size;
+
+	//ets_printf("Realloc node %p nsize %u -> %u, caller %x\n", oldnode, oldsize, newsize, caller_retaddr);
 
 	if (newsize <= oldsize) {
 		/* Handle the special case where we are not going to change the size
@@ -250,7 +255,7 @@ FAR void *mm_realloc(FAR struct mm_heap_s *heap, FAR void *oldmem, size_t size)
 				takeprev = needed - nextsize;
 				takenext = nextsize;
 			} else {
-				/* Yes, take what we need from the previous chunk */
+				/* Yes, take what we need from the next chunk */
 
 				takeprev = 0;
 				takenext = needed;
@@ -304,7 +309,7 @@ FAR void *mm_realloc(FAR struct mm_heap_s *heap, FAR void *oldmem, size_t size)
 			/* Now we have to move the user contents 'down' in memory.  memcpy should
 			 * should be save for this.
 			 */
-
+			ASSIGN_MAGICWORD(newnode);
 			newmem = (FAR void *)((FAR char *)newnode + SIZEOF_MM_ALLOCNODE);
 			memcpy(newmem, oldmem, oldsize - SIZEOF_MM_ALLOCNODE);
 		}
@@ -363,6 +368,7 @@ FAR void *mm_realloc(FAR struct mm_heap_s *heap, FAR void *oldmem, size_t size)
 #endif
 
 		mm_givesemaphore(heap);
+		//ets_printf("Realloc new node %p mem %p\n", newmem - SIZEOF_MM_ALLOCNODE, newmem);
 		return newmem;
 	}
 

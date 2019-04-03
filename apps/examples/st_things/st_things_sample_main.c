@@ -21,15 +21,19 @@
 #include <stdio.h>
 #include "st_things_sample.h"
 
+extern int kdbg_stackmonitor(int argc, char **args);
+
 #ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
 #else
 int st_things_sample_main(int argc, char *argv[])
 #endif
 {
+	//kdbg_stackmonitor(0, NULL);
+
 	printf("st_things_sample!!\n");
-	
+
 	ess_process();
-	
+
 	return 0;
 }

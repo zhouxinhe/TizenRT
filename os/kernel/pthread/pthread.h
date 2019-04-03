@@ -84,6 +84,7 @@
 
 struct join_s {
 	FAR struct join_s *next;	/* Implements link list */
+	uint32_t magicword;
 	uint8_t crefs;				/* Reference count */
 	bool started;				/* true: pthread started. */
 	bool detached;				/* true: pthread_detached'ed */
@@ -92,6 +93,7 @@ struct join_s {
 	sem_t exit_sem;				/* Implements join */
 	sem_t data_sem;				/* Implements join */
 	pthread_addr_t exit_value;	/* Returned data */
+	uint32_t magicword2;
 };
 
 /****************************************************************************

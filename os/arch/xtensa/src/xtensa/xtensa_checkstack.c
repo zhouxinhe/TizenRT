@@ -63,7 +63,9 @@
 #include <debug.h>
 
 #include <tinyara/arch.h>
+#ifdef CONFIG_TLS
 #include <tinyara/tls.h>
+#endif
 #include <tinyara/board.h>
 
 #include "xtensa.h"
@@ -138,7 +140,7 @@ static size_t do_stackcheck(uintptr_t alloc, size_t size)
 	 * then enable the following logic to see it there are unused areas in the
 	 * middle of the stack.
 	 */
-	
+
 	/* Return our guess about how much stack space was used */
 
 	return mark << 2;

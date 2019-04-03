@@ -58,6 +58,8 @@
 
 #include <tinyara/mm/mm.h>
 
+#include <assert.h>
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -90,9 +92,12 @@ void mm_addfreechunk(FAR struct mm_heap_s *heap, FAR struct mm_freenode_s *node)
 
 	/* Now put the new node int the next */
 
-	for (prev = &heap->mm_nodelist[ndx], next = heap->mm_nodelist[ndx].flink; next && next->size && next->size < node->size; prev = next, next = next->flink) ;
+	for (prev = &heap->mm_nodelist[ndx], next = heap->mm_nodelist[ndx].flink; next && next->size && next->size < node->size; prev = next, next = next->flink)
+		DEBUGASSERT(VERIFY_MAGICWORD(prev));
 
 	/* Does it go in mid next or at the end? */
+
+	ASSIGN_MAGICWORD(node);
 
 	prev->flink = node;
 	node->blink = prev;
@@ -100,7 +105,7 @@ void mm_addfreechunk(FAR struct mm_heap_s *heap, FAR struct mm_freenode_s *node)
 
 	if (next) {
 		/* The new node goes between prev and next */
-
+		DEBUGASSERT(VERIFY_MAGICWORD(next));
 		next->blink = node;
 	}
 }

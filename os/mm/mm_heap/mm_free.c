@@ -93,7 +93,7 @@ void mm_free(FAR struct mm_heap_s *heap, FAR void *mem)
 	struct mm_allocnode_s *alloc_node;
 #endif
 
-	mvdbg("Freeing %p\n", mem);
+	//ets_printf("Freeing %p\n", mem);
 
 	/* Protect against attempts to free a NULL reference */
 
@@ -117,9 +117,14 @@ void mm_free(FAR struct mm_heap_s *heap, FAR void *mem)
 
 	mm_takesemaphore(heap);
 
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
 	/* Map the memory chunk into a free node */
 
 	node = (FAR struct mm_freenode_s *)((char *)mem - SIZEOF_MM_ALLOCNODE);
+	//ets_printf("Freeing node %p mem %p nsize %d\n", node, mem, node->size);
+	DEBUGASSERT(VERIFY_MAGICWORD(node));
+
 #ifdef CONFIG_DEBUG_DOUBLE_FREE
 	/* Assert on following logical error scenarios
 	 * 1) Attempt to free an unallocated memory or

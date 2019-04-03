@@ -656,6 +656,7 @@ struct pthread_tcb_s {
 #if defined(CONFIG_BUILD_PROTECTED)
 	struct pthread_region_s *region;
 #endif
+	uint32_t magicword;
 };
 #endif							/* !CONFIG_DISABLE_PTHREAD */
 

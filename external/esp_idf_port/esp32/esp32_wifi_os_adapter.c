@@ -105,7 +105,7 @@ static int32_t IRAM_ATTR semphr_take_from_isr_wrapper(void *semphr, void *hptw)
 {
     *(bool *) hptw = WIFI_ADAPTER_FALSE;
 	FAR struct tcb_s *stcb = NULL;
-    pid_t pid = getpid();   
+    pid_t pid = getpid();
     FAR struct tcb_s *rtcb = sched_gettcb(pid);
 	sem_t *sem = (sem_t *) semphr;
 	irqstate_t saved_state;
@@ -165,7 +165,7 @@ static int32_t IRAM_ATTR semphr_take_wrapper(void *semphr, uint32_t block_time_t
 
 	} else {
 		struct timespec abstime;
-	    calc_abs_time(&abstime, block_time_tick);	
+	    calc_abs_time(&abstime, block_time_tick);
         ret = sem_timedwait(semphr, &abstime);
 		if (ret == OK) {
 			return pdPASS;
@@ -267,6 +267,8 @@ static int32_t IRAM_ATTR mutex_unlock_wrapper(void *mutex)
 /*=================task control API=================*/
 static int32_t IRAM_ATTR task_create_wrapper(void *task_func, const char *name, uint32_t stack_depth, void *param, uint32_t prio, void *task_handle)
 {
+	stack_depth += 2048;
+	//ets_printf("[%s] line %d, task_func %p name %s stack_size %u\n", __FUNCTION__, __LINE__, task_func, name, stack_depth);
 	int pid = task_create(name, prio, stack_depth, task_func, param);
 	if (pid < 0) {
 		return pdFAIL;
@@ -424,7 +426,7 @@ static void IRAM_ATTR timer_setfn_wrapper(void *ptimer, void *pfunction, void *p
 	ETSTimer *etimer = (ETSTimer *) ptimer;
 
 	if (etimer->timer_period != TIMER_INITIALIZED_VAL) {
-		memset(ptimer, 0, sizeof(*ptimer));
+		memset(etimer, 0, sizeof(*etimer));
 		etimer->timer_period = TIMER_INITIALIZED_VAL;
 	}
 
@@ -435,7 +437,7 @@ static void IRAM_ATTR timer_setfn_wrapper(void *ptimer, void *pfunction, void *p
 		}
 		etimer->timer_func = pfunction;
 		etimer->timer_expire = (uint32_t) parg;
-		etimer->timer_next = (struct work_s *)malloc(sizeof(struct work_s));
+		etimer->timer_next = (struct work_s *)zalloc(sizeof(struct work_s));
 	}
 }
 
@@ -470,12 +472,12 @@ static inline int32_t IRAM_ATTR esp_os_get_random_wrapper(uint8_t *buf, size_t l
 
 /*=================espwifi modem API=========================*/
 static inline esp_err_t esp_modem_sleep_enter_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_enter((modem_sleep_module_t) module);
 }
 
 static inline esp_err_t esp_modem_sleep_exit_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_exit((modem_sleep_module_t) module);
 }
 
@@ -485,7 +487,7 @@ static inline esp_err_t esp_modem_sleep_register_wrapper(uint32_t module)
 }
 
 static inline esp_err_t esp_modem_sleep_deregister_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_deregister((modem_sleep_module_t) module);
 }
 

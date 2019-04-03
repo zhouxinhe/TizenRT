@@ -1,4 +1,4 @@
-/**************************************************************************** 
+/****************************************************************************
  *
  * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
@@ -741,7 +741,7 @@ wifi_manager_result_e _get_ipaddr_dhcpc(void)
 void _close_ipaddr_dhcpc(void)
 {
 	int ret;
-	struct in_addr ip_check;	
+	struct in_addr ip_check;
 	dhcp_client_stop(WIFIMGR_STA_IFNAME);
 
 	ret = netlib_get_ipv4addr(WIFIMGR_STA_IFNAME, &ip_check);
@@ -1325,8 +1325,10 @@ wifi_manager_result_e _handler_on_softap_state(_wifimgr_msg_s *msg)
 		WIFIMGR_STORE_PREV_STATE;
 		WIFIMGR_SET_STATE(WIFIMGR_SCANNING);
 	} else if (msg->event == EVT_JOINED) {
+#ifndef CONFIG_WIFIMGR_DISABLE_DHCPS
 		/* wifi manager passes the callback after the dhcp server gives a station an IP address*/
 	} else if (msg->event == EVT_DHCPD_GET_IP) {
+#endif
 		WIFIMGR_INC_NUM_CLIENT;
 		_handle_user_cb(CB_STA_JOINED, NULL);
 	} else if (msg->event == EVT_LEFT) {
@@ -1697,7 +1699,7 @@ wifi_manager_result_e wifi_manager_unregister_cb(wifi_manager_cb_s *wmcb)
 {
 	wifi_manager_result_e res = WIFI_MANAGER_FAIL;
 	int i;
-	
+
 	LOCK_WIFIMGR;
 	// g_manager_info.cb[0] is assigned to the callback which is registered by wifi_manager_init
 	for (i = 1; i < WIFIMGR_NUM_CALLBACKS; i++) {

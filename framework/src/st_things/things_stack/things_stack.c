@@ -373,8 +373,8 @@ int things_start_stack(void)
 				return 0;
 			}
 			//call wifi scan ap.
-			if (!things_start_scanning_ap())
-				return 0;
+			//if (!things_start_scanning_ap())
+			//	return 0;
 		} else if (!things_network_connect_home_ap()) {
 			return 0;
 		}

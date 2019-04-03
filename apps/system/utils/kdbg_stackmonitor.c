@@ -87,7 +87,7 @@
 #define STKMON_BUFLEN 64
 /* Configuration ************************************************************/
 
-#define STACKMONITOR_STACKSIZE 1024
+#define STACKMONITOR_STACKSIZE (1024*4)
 
 #ifndef CONFIG_STACKMONITOR_PRIORITY
 #define CONFIG_STACKMONITOR_PRIORITY 100

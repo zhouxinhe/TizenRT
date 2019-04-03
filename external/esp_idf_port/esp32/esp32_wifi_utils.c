@@ -63,8 +63,8 @@
 #define CONFIG_MAX_STA_CONN WIFI_MAX_STA_CONN
 #endif
 
-#define DEFAULT_SSID    CONFIG_EXAMPLES_TESTCASE_WIFI_MANAGER_UTC_SSID
-#define DEFAULT_PWD     CONFIG_EXAMPLES_TESTCASE_WIFI_MANAGER_UTC_PASSPHRASE
+#define DEFAULT_SSID    "UNKNOWN"
+#define DEFAULT_PWD     "NULL"
 
 #define DEFAULT_PS_MODE WIFI_PS_MIN_MODEM
 
@@ -245,7 +245,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		s_retry_num++;
 		int reason = event->event_info.disconnected.reason;
 		ESP_LOGI(TAG, "[%s] connect to the AP %s fail %d: %d; %d\n", __func__, event->event_info.disconnected.ssid, s_retry_num, event->event_info.disconnected.reason, isStaConnected);
-    
+
         /*give chance to other thread to continue*/
         sleep(1);
 		if (s_retry_num > 0) {

@@ -270,6 +270,7 @@ int pthread_create(FAR pthread_t *thread, FAR const pthread_attr_t *attr, pthrea
 		sdbg("ERROR: Failed to allocate TCB\n");
 		return ENOMEM;
 	}
+	ptcb->magicword = 0x5555AAAA;
 #ifdef HAVE_TASK_GROUP
 	/* Bind the parent's group to the new TCB (we have not yet joined the
 	 * group).
@@ -378,7 +379,8 @@ int pthread_create(FAR pthread_t *thread, FAR const pthread_attr_t *attr, pthrea
 #endif
 
 	/* Attach the join info to the TCB. */
-
+	pjoin->magicword = 0x5aa5a55a;
+	pjoin->magicword2 = 0x5aa5a55a;
 	ptcb->joininfo = (FAR void *)pjoin;
 
 	/* Set the appropriate scheduling policy in the TCB */

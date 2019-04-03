@@ -114,6 +114,8 @@ const char *__get_timestamp__(void);
 #define THINGS_LOG_E(tag, ...)
 #define THINGS_LOG_D(tag, ...)
 #define THINGS_LOG_V(tag, ...)
+#define THINGS_LOG_REQUEST(tag, flag, payload)
+#define THINGS_LOG_RESPONSE(tag, payload)
 
 #endif //CONFIG_DEBUG_ST_THINGS
 

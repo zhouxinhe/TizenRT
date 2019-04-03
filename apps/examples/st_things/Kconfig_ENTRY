@@ -1,0 +1,3 @@
+config ENTRY_ST_THINGS
+	bool "Smart Things example"
+	depends on EXAMPLES_ST_THINGS

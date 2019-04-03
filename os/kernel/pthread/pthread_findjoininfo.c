@@ -111,7 +111,15 @@ FAR struct join_s *pthread_findjoininfo(FAR struct task_group_s *group, pid_t pi
 
 	/* Find the entry with the matching pid */
 
-	for (pjoin = group->tg_joinhead; (pjoin && (pid_t)pjoin->thread != pid); pjoin = pjoin->next) ;
+	//for (pjoin = group->tg_joinhead; (pjoin && (pid_t)pjoin->thread != pid); pjoin = pjoin->next) ;
+
+	pjoin = group->tg_joinhead;
+	while (pjoin) {
+		if ((pid_t)pjoin->thread == pid) {
+			break;
+		}
+		pjoin = pjoin->next;
+	}
 
 	/* and return it */
 

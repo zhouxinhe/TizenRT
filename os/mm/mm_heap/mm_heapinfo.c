@@ -83,6 +83,26 @@ heapinfo_total_info_t total_info;
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+#ifdef MM_NODE_DEBUG
+int heapinfo_check(FAR struct mm_heap_s *heap)
+{
+	int region = 0;
+#if CONFIG_MM_REGIONS > 1
+	for (region = 0; region < heap->mm_nregions; region++)
+#endif
+	{
+		struct mm_allocnode_s *node;
+		for (node = heap->mm_heapstart[region]; node < heap->mm_heapend[region]; node = (struct mm_allocnode_s *)((char *)node + node->size)) {
+			if (!VERIFY_MAGICWORD(node)) {
+				ets_printf("abnormal node detected!\n 0x%x | %8u | 0x%8x | 0x%8x | %3d |\n", node, node->size, node->preceding, node->alloc_call_addr, node->pid);
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+#endif
 
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 /****************************************************************************
@@ -421,7 +441,7 @@ void heapinfo_exclude_stacksize(void *stack_ptr)
  * Name: heapinfo_update_group_info
  *
  * Description:
- * when create or release task/thread, check that the task/thread is 
+ * when create or release task/thread, check that the task/thread is
  * in group list
  ****************************************************************************/
 void heapinfo_update_group_info(pid_t pid, int group, int type)

@@ -1,4 +1,4 @@
-/**************************************************************************** 
+/****************************************************************************
  *
  * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
@@ -154,7 +154,7 @@ typedef struct _wifimgr_info _wifimgr_info_s;
 
 /* Check if external wifi driver supports auto(re)connect */
 #ifndef CONFIG_DISABLE_EXTERNAL_AUTOCONNECT
-#define WIFIDRIVER_SUPPORT_AUTOCONNECT 1
+#define WIFIDRIVER_SUPPORT_AUTOCONNECT 0
 #else
 #define WIFIDRIVER_SUPPORT_AUTOCONNECT 0
 #endif
@@ -492,6 +492,7 @@ const wifimgr_handler g_handler[] = {
 #ifdef CONFIG_ENABLE_IOTIVITY
 void __tizenrt_manual_linkset(const char *msg)
 {
+	nvdbg("[WM] send message \"%s\"\n", msg);
 	int ret = mq_send(g_dw_nwevent_mqfd, msg, 3, 42);
 	if (ret < 0) {
 		ndbg("[WM] send message fail\n");
@@ -741,7 +742,7 @@ wifi_manager_result_e _get_ipaddr_dhcpc(void)
 void _close_ipaddr_dhcpc(void)
 {
 	int ret;
-	struct in_addr ip_check;	
+	struct in_addr ip_check;
 	dhcp_client_stop(WIFIMGR_STA_IFNAME);
 
 	ret = netlib_get_ipv4addr(WIFIMGR_STA_IFNAME, &ip_check);
@@ -867,6 +868,10 @@ wifi_manager_result_e _wifimgr_run_softap(wifi_manager_softap_config_s *config)
     /*Sometimes WiFi vender run dhcp server*/
 #ifndef CONFIG_WIFIMGR_DISABLE_DHCPS
 	WIFIMGR_CHECK_RESULT(_start_dhcps(), "[WM] Starting DHCP server failed.\n", WIFI_MANAGER_FAIL);
+#else
+#ifdef CONFIG_ENABLE_IOTIVITY
+	__tizenrt_manual_linkset("gen");
+#endif
 #endif
 	/* update wifi_manager_info */
 	WIFIMGR_SET_SOFTAP_SSID(config->ssid);
@@ -1325,8 +1330,10 @@ wifi_manager_result_e _handler_on_softap_state(_wifimgr_msg_s *msg)
 		WIFIMGR_STORE_PREV_STATE;
 		WIFIMGR_SET_STATE(WIFIMGR_SCANNING);
 	} else if (msg->event == EVT_JOINED) {
+#ifndef CONFIG_WIFIMGR_DISABLE_DHCPS
 		/* wifi manager passes the callback after the dhcp server gives a station an IP address*/
 	} else if (msg->event == EVT_DHCPD_GET_IP) {
+#endif
 		WIFIMGR_INC_NUM_CLIENT;
 		_handle_user_cb(CB_STA_JOINED, NULL);
 	} else if (msg->event == EVT_LEFT) {
@@ -1697,7 +1704,7 @@ wifi_manager_result_e wifi_manager_unregister_cb(wifi_manager_cb_s *wmcb)
 {
 	wifi_manager_result_e res = WIFI_MANAGER_FAIL;
 	int i;
-	
+
 	LOCK_WIFIMGR;
 	// g_manager_info.cb[0] is assigned to the callback which is registered by wifi_manager_init
 	for (i = 1; i < WIFIMGR_NUM_CALLBACKS; i++) {

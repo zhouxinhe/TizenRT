@@ -66,6 +66,7 @@
 #include <tinyara/board.h>
 #include <tinyara/syslog/syslog.h>
 #include <tinyara/usb/usbdev_trace.h>
+#include <tinyara/mm/mm.h>
 
 #include <arch/board/board.h>
 
@@ -167,6 +168,12 @@ static void xtensa_assert(int errorcode)
 void up_assert(const uint8_t *filename, int lineno)
 {
 	board_autoled_on(LED_ASSERTION);
+
+#ifdef MM_NODE_DEBUG
+	// struct mm_heap_s * heap
+	extern struct mm_heap_s g_mmheap[CONFIG_MM_NHEAPS];
+	heapinfo_check(&g_mmheap[0]);
+#endif
 
 #if defined(CONFIG_DEBUG)
 #if CONFIG_TASK_NAME_SIZE > 0 && defined(CONFIG_DEBUG_ERROR)

@@ -119,6 +119,15 @@ static void heapinfo_print_values(char *buf)
 	int i;
 	stat_data stat_info[PROC_STAT_MAX];
 
+	if (buf) {
+		//printf("heapinfo_print_values(%s) len %d\n", buf, strlen(buf));
+		if (strlen(buf) < 16) {
+			printf("heapinfo_print_values ignore abnormal string: %s, len %d\n", buf, strlen(buf));
+		}
+	} else {
+		printf("heapinfo_print_values(null)\n");
+	}
+
 	stat_info[0] = buf;
 
 	for (i = 0; i < PROC_STAT_MAX - 1; i++) {
@@ -342,7 +351,7 @@ int utils_heapinfo(int argc, char **args)
 
 #ifdef CONFIG_MM_KERNEL_HEAP
 	if (showing_kheap == true) {
-		kernel_option.mode = heapinfo_mode; 
+		kernel_option.mode = heapinfo_mode;
 		kernel_option.pid = heapinfo_pid;
 	}
 #endif

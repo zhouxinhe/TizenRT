@@ -292,6 +292,7 @@ int things_deinitialize_stack(void)
 	return 1;
 }
 
+extern int utils_heapinfo(int argc, char **args);
 int things_start_stack(void)
 {
 	THINGS_LOG_V(TAG, "ST_Things SDK version : %s", ST_THINGS_STACK_VERSION);
@@ -369,12 +370,13 @@ int things_start_stack(void)
 	}
 	if (dm_get_easysetup_connectivity_type() == es_conn_type_softap) {
 		if (dm_is_es_complete() == false) {
+			//utils_heapinfo(0, NULL);
 			if (!things_network_turn_on_soft_ap()) {
 				return 0;
 			}
 			//call wifi scan ap.
-			if (!things_start_scanning_ap())
-				return 0;
+			//if (!things_start_scanning_ap())
+			//	return 0;
 		} else if (!things_network_connect_home_ap()) {
 			return 0;
 		}

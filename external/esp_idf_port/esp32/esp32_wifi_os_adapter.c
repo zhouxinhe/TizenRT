@@ -105,7 +105,7 @@ static int32_t IRAM_ATTR semphr_take_from_isr_wrapper(void *semphr, void *hptw)
 {
     *(bool *) hptw = WIFI_ADAPTER_FALSE;
 	FAR struct tcb_s *stcb = NULL;
-    pid_t pid = getpid();   
+    pid_t pid = getpid();
     FAR struct tcb_s *rtcb = sched_gettcb(pid);
 	sem_t *sem = (sem_t *) semphr;
 	irqstate_t saved_state;
@@ -165,7 +165,7 @@ static int32_t IRAM_ATTR semphr_take_wrapper(void *semphr, uint32_t block_time_t
 
 	} else {
 		struct timespec abstime;
-	    calc_abs_time(&abstime, block_time_tick);	
+	    calc_abs_time(&abstime, block_time_tick);
         ret = sem_timedwait(semphr, &abstime);
 		if (ret == OK) {
 			return pdPASS;
@@ -424,7 +424,7 @@ static void IRAM_ATTR timer_setfn_wrapper(void *ptimer, void *pfunction, void *p
 	ETSTimer *etimer = (ETSTimer *) ptimer;
 
 	if (etimer->timer_period != TIMER_INITIALIZED_VAL) {
-		memset(ptimer, 0, sizeof(*ptimer));
+		memset(etimer, 0, sizeof(ETSTimer));
 		etimer->timer_period = TIMER_INITIALIZED_VAL;
 	}
 
@@ -435,7 +435,7 @@ static void IRAM_ATTR timer_setfn_wrapper(void *ptimer, void *pfunction, void *p
 		}
 		etimer->timer_func = pfunction;
 		etimer->timer_expire = (uint32_t) parg;
-		etimer->timer_next = (struct work_s *)malloc(sizeof(struct work_s));
+		etimer->timer_next = (struct work_s *)zalloc(sizeof(struct work_s));
 	}
 }
 
@@ -470,12 +470,12 @@ static inline int32_t IRAM_ATTR esp_os_get_random_wrapper(uint8_t *buf, size_t l
 
 /*=================espwifi modem API=========================*/
 static inline esp_err_t esp_modem_sleep_enter_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_enter((modem_sleep_module_t) module);
 }
 
 static inline esp_err_t esp_modem_sleep_exit_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_exit((modem_sleep_module_t) module);
 }
 
@@ -485,7 +485,7 @@ static inline esp_err_t esp_modem_sleep_register_wrapper(uint32_t module)
 }
 
 static inline esp_err_t esp_modem_sleep_deregister_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_deregister((modem_sleep_module_t) module);
 }
 
@@ -630,25 +630,57 @@ uint32_t IRAM_ATTR esp_get_free_heap_size(void)
 
 static void *IRAM_ATTR malloc_internal_wrapper(size_t size)
 {
-	return malloc(size);
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+    return malloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, size);
+#else
+    return malloc(size);
+#endif
 }
 
 static void *IRAM_ATTR realloc_internal_wrapper(void *ptr, size_t size)
 {
-	return realloc(ptr, size);
+    return realloc(ptr, size);
 }
 
 static void *IRAM_ATTR calloc_internal_wrapper(size_t n, size_t size)
 {
-	return calloc(n, size);
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+    return calloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, n, size);
+#else
+    return calloc(n, size);
+#endif
 }
 
 static void *IRAM_ATTR zalloc_internal_wrapper(size_t size)
 {
-	void *ptr = zalloc(size);
-	return ptr;
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+    return zalloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, size);
+#else
+    return zalloc(size);
+#endif
 }
 
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+void *IRAM_ATTR wifi_malloc(size_t size)
+{
+    return malloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, size);
+}
+
+void *IRAM_ATTR wifi_realloc(void *ptr, size_t size)
+{
+	return realloc(ptr, size);
+}
+
+void *IRAM_ATTR wifi_calloc(size_t n, size_t size)
+{
+    return calloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, n, size);
+}
+
+static void *IRAM_ATTR wifi_zalloc_wrapper(size_t size)
+{
+    return zalloc_at(CONFIG_KMM_FORCE_ALLOC_IDX, size);
+}
+#else
 void *IRAM_ATTR wifi_malloc(size_t size)
 {
 	return malloc(size);
@@ -668,6 +700,8 @@ static void *IRAM_ATTR wifi_zalloc_wrapper(size_t size)
 {
 	return zalloc(size);
 }
+#endif
+
 
 wifi_static_queue_t *IRAM_ATTR wifi_create_queue(int queue_len, int item_size)
 {

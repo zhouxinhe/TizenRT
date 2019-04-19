@@ -159,6 +159,7 @@ void get_things_status_cb(things_es_enrollee_state_e state)
 /**
  * DA Stack invokes this callback for providing ownership transfer states.
  */
+extern int utils_heapinfo(int argc, char **args);
 void ownership_transfer_state_cb(const char *addr, uint16_t port, const char *uuid, int event)
 {
 	THINGS_LOG_D(TAG, THINGS_FUNC_ENTRY);
@@ -175,6 +176,7 @@ void ownership_transfer_state_cb(const char *addr, uint16_t port, const char *uu
 	switch (event) {
 	case 1:					// OTM Started
 		g_handle_things_status_change_cb(ST_THINGS_STATUS_ES_STARTED);
+		//kdbg_heapinfo(0, NULL);
 		break;
 	case 2:					// OTM Done
 		g_handle_things_status_change_cb(ST_THINGS_STATUS_ES_DONE);

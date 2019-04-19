@@ -231,7 +231,7 @@ void mm_givesemaphore(FAR struct mm_heap_s *heap)
  * Name: mm_is_sem_available
  *
  * Description:
- *   Check availability of mm semaphore 
+ *   Check availability of mm semaphore
  *
  ****************************************************************************/
 void mm_is_sem_available(void *address)

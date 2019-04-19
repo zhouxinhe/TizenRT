@@ -246,10 +246,11 @@ typedef size_t mmaddress_t;		/* 32 bit address space */
 	} while (0);
 #elif defined(CONFIG_ARCH_XTENSA)
 #define ARCH_GET_RET_ADDRESS \
-	mmaddress_t retaddr = 0; \
-	do { \
-		asm volatile ("mov %0,a0\n" : "=&r" (retaddr));\
-	} while (0);
+	mmaddress_t retaddr = (mmaddress_t)__builtin_return_address(0);
+//	mmaddress_t retaddr = 0; \
+//	do { \
+//		asm volatile ("mov %0,a0\n" : "=&r" (retaddr));\
+//	} while (0);
 #else
 #error Unknown CONFIG_ARCH option, malloc debug feature wont work.
 #endif
@@ -263,9 +264,30 @@ typedef size_t mmaddress_t;		/* 32 bit address space */
  * size.  If set, then this is an allocated chunk.
  */
 
+//#define MM_NODE_DEBUG
+
+#ifdef MM_NODE_DEBUG
+#define MM_MAGIC_WORD 0xA5AA55A5
+#define ASSIGN_MAGICWORD(node) (node)->magicword1 = MM_MAGIC_WORD, (node)->magicword = MM_MAGIC_WORD
+#define VERIFY_MAGICWORD(node) ((node)->magicword1 == MM_MAGIC_WORD && (node)->magicword == MM_MAGIC_WORD)
+#define SIZEOFMAGICWORD (sizeof(uint32_t) * 2)
+#define VERIFY_HEAP(heap) (0 != heapinfo_check(heap))
+#else
+#define ASSIGN_MAGICWORD(node)
+#define VERIFY_MAGICWORD(node) true
+#define SIZEOFMAGICWORD 0
+#define VERIFY_HEAP(heap) true
+#endif
+
 struct mm_allocnode_s {
+#ifdef MM_NODE_DEBUG
+	uint32_t magicword1;				/* Magic Word for security */
+#endif
 	mmsize_t size;					/* Size of this chunk */
 	mmsize_t preceding;				/* Size of the preceding chunk */
+#ifdef MM_NODE_DEBUG
+	uint32_t magicword;				/* Magic Word for security */
+#endif
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 	mmaddress_t alloc_call_addr;			/* malloc call address */
 	pid_t pid;					/* PID info */
@@ -279,20 +301,20 @@ struct mm_allocnode_s {
 #ifdef CONFIG_MM_SMALL
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 /* 10 = (uint16_t + uint16_t + uint16_t + uint16_t + uint16_t ) */
-#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOF_MM_MALLOC_DEBUG_INFO)
+#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOFMAGICWORD + SIZEOF_MM_MALLOC_DEBUG_INFO)
 #else
 /* 4 = (uint16_t + uint16_t) */
-#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t))
+#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOFMAGICWORD)
 #endif
 
 #else
 
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 /* 16 = (uint32_t + uint32_t + uint32_t + uint16_t + uint16_t ) */
-#define SIZEOF_MM_ALLOCNODE  (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOF_MM_MALLOC_DEBUG_INFO)
+#define SIZEOF_MM_ALLOCNODE  (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOFMAGICWORD + SIZEOF_MM_MALLOC_DEBUG_INFO)
 #else
 /* 8 = (uint32_t + uint32_t) */
-#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t))
+#define SIZEOF_MM_ALLOCNODE   (sizeof(mmsize_t) + sizeof(mmsize_t) + SIZEOFMAGICWORD)
 #endif
 #endif
 
@@ -302,8 +324,14 @@ struct mm_allocnode_s {
 /* This describes a free chunk */
 
 struct mm_freenode_s {
+#ifdef MM_NODE_DEBUG
+	uint32_t magicword1;			/* Magic Word for security */
+#endif
 	mmsize_t size;				/* Size of this chunk */
 	mmsize_t preceding;			/* Size of the preceding chunk */
+#ifdef MM_NODE_DEBUG
+	uint32_t magicword;			/* Magic Word for security */
+#endif
 	FAR struct mm_freenode_s *flink;	/* Supports a doubly linked list */
 	FAR struct mm_freenode_s *blink;
 };
@@ -685,7 +713,9 @@ void mm_is_sem_available(void *address);
 /* Functions to get the address of heap structure */
 struct mm_heap_s *mm_get_heap(void *address);
 struct mm_heap_s *mm_get_heap_with_index(int index);
-
+#ifdef MM_NODE_DEBUG
+int heapinfo_check(struct mm_heap_s *heap);
+#endif
 int mm_get_heapindex(void *mem);
 #if CONFIG_MM_NHEAPS > 1
 struct heapinfo_total_info_s {
@@ -712,7 +742,7 @@ typedef struct heapinfo_total_info_s heapinfo_total_info_t;
  *   If there is no enough space to allocate, it will return NULL.
  * @param[in] heap_index Index of specific heap
  * @param[in] size size (in bytes) of the memory region to be allocated
- * 
+ *
  * @return On success, the address of the allocated memory is returned. On failure, NULL is returned.
  * @since TizenRT v2.1 PRE
  */
@@ -725,7 +755,7 @@ void *malloc_at(int heap_index, size_t size);
  * @param[in] heap_index Index of specific heap
  * @param[in] n the number of elements to be allocated
  * @param[in] elem_size the size of elements
- * 
+ *
  * @return On success, the address of the allocated memory is returned. On failure, NULL is returned.
  * @since TizenRT v2.1 PRE
  */
@@ -738,7 +768,7 @@ void *calloc_at(int heap_index, size_t n, size_t elem_size);
  * @param[in] heap_index Index of specific heap
  * @param[in] alignment A power of two for alignment
  * @param[in] size Allocated memory size
- * 
+ *
  * @return On success, the address of the allocated memory is returned. On failure, NULL is returned.
  * @since TizenRT v2.1 PRE
  */
@@ -751,7 +781,7 @@ void *memalign_at(int heap_index, size_t alignment, size_t size);
  * @param[in] heap_index Index of specific heap
  * @param[in] oldmem the pointer to a memory block previously allocated
  * @param[in] size the new size for the memory block
- * 
+ *
  * @return On success, the address of the allocated memory is returned. On failure, NULL is returned.
  * @since TizenRT v2.1 PRE
  */
@@ -763,7 +793,7 @@ void *realloc_at(int heap_index, void *oldmem, size_t size);
  *   If there is no enough space to allocate, it will return NULL.
  * @param[in] heap_index Index of specific heap
  * @param[in] size size (in bytes) of the memory region to be allocated
- * 
+ *
  * @return On success, the address of the allocated memory is returned. On failure, NULL is returned.
  * @since TizenRT v2.1 PRE
  */

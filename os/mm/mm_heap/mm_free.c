@@ -117,9 +117,13 @@ void mm_free(FAR struct mm_heap_s *heap, FAR void *mem)
 
 	mm_takesemaphore(heap);
 
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
 	/* Map the memory chunk into a free node */
 
 	node = (FAR struct mm_freenode_s *)((char *)mem - SIZEOF_MM_ALLOCNODE);
+	DEBUGASSERT(VERIFY_MAGICWORD(node));
+
 #ifdef CONFIG_DEBUG_DOUBLE_FREE
 	/* Assert on following logical error scenarios
 	 * 1) Attempt to free an unallocated memory or

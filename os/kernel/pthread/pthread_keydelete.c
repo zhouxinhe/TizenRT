@@ -97,6 +97,7 @@ int pthread_key_delete(pthread_key_t key)
 		for (pjoin = group->tg_joinhead; pjoin; pjoin = pjoin->next) {
 			ptcb = (struct pthread_tcb_s *)sched_gettcb((pid_t)pjoin->thread);
 			if (ptcb) {
+				DEBUGASSERT((ptcb->cmn.flags & TCB_FLAG_TTYPE_MASK) == TCB_FLAG_TTYPE_PTHREAD);
 				ptcb->key_data[key] = NULL;
 			}
 		}

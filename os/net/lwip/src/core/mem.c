@@ -113,11 +113,21 @@ void *mem_trim(void *mem, mem_size_t size)
 #ifndef mem_clib_free
 #define mem_clib_free free
 #endif
+
 #ifndef mem_clib_malloc
-#define mem_clib_malloc malloc
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+#define mem_clib_malloc(size) malloc_at(0,size)
+#else
+#define mem_clib_malloc(size) malloc(size)
 #endif
+#endif
+
 #ifndef mem_clib_calloc
-#define mem_clib_calloc calloc
+#ifdef CONFIG_KMM_FORCE_ALLOC_AT
+#define mem_clib_calloc(n,size) calloc_at(0,n,size)
+#else
+#define mem_clib_calloc(n,size) calloc(n,size)
+#endif
 #endif
 
 #if LWIP_STATS && MEM_STATS

@@ -72,6 +72,8 @@ void pthread_key_destroy(struct pthread_tcb_s *tcb)
 	pthread_key_t key_index;
 	int destr_count = 0;
 
+	DEBUGASSERT(group && (tcb->cmn.flags & TCB_FLAG_TTYPE_MASK) == TCB_FLAG_TTYPE_PTHREAD);
+
 	for (key_index = 0; key_index < PTHREAD_KEYS_MAX; key_index++) {
 		if (tcb->key_data[key_index] != NULL && group->tg_destructor[key_index] != NULL) {
 			/* Execute destructor with data if they are valid */

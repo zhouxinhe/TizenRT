@@ -56,7 +56,7 @@
 #include "nvs_flash.h"
 #include "esp_wifi_internal.h"
 
-#define WIFI_MAX_BEACON_INTERVAL        60000
+#define WIFI_MAX_BEACON_INTERVAL        100
 #define WIFI_MAX_STA_CONN           4
 
 #ifndef CONFIG_MAX_STA_CONN
@@ -245,7 +245,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		s_retry_num++;
 		int reason = event->event_info.disconnected.reason;
 		ESP_LOGI(TAG, "[%s] connect to the AP %s fail %d: %d; %d\n", __func__, event->event_info.disconnected.ssid, s_retry_num, event->event_info.disconnected.reason, isStaConnected);
-    
+
         /*give chance to other thread to continue*/
         sleep(1);
 		if (s_retry_num > 0) {

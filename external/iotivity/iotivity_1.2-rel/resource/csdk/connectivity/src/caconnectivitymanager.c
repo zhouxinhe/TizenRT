@@ -526,7 +526,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 #else
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return res;
 }
 

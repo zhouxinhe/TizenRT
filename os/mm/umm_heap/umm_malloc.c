@@ -222,6 +222,7 @@ FAR void *malloc(size_t size)
 	ret = heap_malloc(size, 0, CONFIG_RAM_MALLOC_PRIOR_INDEX, retaddr);
 #endif
 
+	mdbg("heap_malloc failed. size (%u)\n", size);
 	return ret;
 #endif /* CONFIG_BUILD_KERNEL */
 }

@@ -78,6 +78,9 @@ static void heapinfo_print_regions(void)
 		printf("    %2d    | 0x%8x | 0x%8x |%8d |    %2d    \n", region_idx, regionx_start[region_idx], regionx_start[region_idx] + regionx_size[region_idx], regionx_size[region_idx], regionx_heap_idx[region_idx]);
 	}
 }
+#endif
+
+#if CONFIG_MM_NHEAPS > 1
 static void heapinfo_print_nheaps(void)
 {
 	printf("\n****************************************************************\n");

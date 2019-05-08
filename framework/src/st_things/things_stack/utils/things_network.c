@@ -301,7 +301,8 @@ static void *__attribute__((optimize("O0"))) t_things_wifi_join_loop(void *args)
 
 void things_wifi_sta_connected(wifi_manager_result_e res)
 {
-	bool is_wifi_retry_connect = false;
+	static bool is_wifi_retry_connect;
+	is_wifi_retry_connect = false;
 	if (res == WIFI_MANAGER_FAIL) {
 		THINGS_LOG_E(TAG, "Failed to connect to the AP");
 
@@ -478,7 +479,7 @@ int things_wifi_state_changed_cb(int state, char *ap_name, char *ip_addr)
 {
 	bool Retry1Stop0 = false;
 
-	THINGS_LOG_D(TAG, "state=%d, ap_name=%s, ip_name=%s", state, ap_name, ip_addr);
+	THINGS_LOG_D(TAG, "state=%d, ap_name=%s, ip_addr=%s", state, ap_name, ip_addr);
 
 	// Process.
 	if (state == 1) {			// [Info] Always, when Soft-AP enabling, Call-Back State maintain disconnected. So, Soft-AP Check is not need.

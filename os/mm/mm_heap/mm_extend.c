@@ -107,6 +107,8 @@ void mm_extend(FAR struct mm_heap_s *heap, FAR void *mem, size_t size, int regio
 
 	mm_takesemaphore(heap);
 
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
 	/* Get the terminal node in the old heap.  The block to extend must
 	 * immediately follow this node.
 	 */

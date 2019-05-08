@@ -924,6 +924,11 @@ err_t tcp_send_empty_ack(struct tcp_pcb *pcb)
 		err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_TCP, netif);
 		NETIF_SET_HWADDRHINT(netif, NULL);
 	}
+
+#if TCP_INPUT_DEBUG
+	tcp_debug_print(tcphdr);
+#endif
+
 	pbuf_free(p);
 
 	if (err != ERR_OK) {
@@ -933,6 +938,7 @@ err_t tcp_send_empty_ack(struct tcp_pcb *pcb)
 		/* remove ACK flags from the PCB, as we sent an empty ACK now */
 		pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
 	}
+
 
 	return err;
 }
@@ -1237,6 +1243,11 @@ static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct
 	NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
 	err = ip_output_if(seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_TCP, netif);
 	NETIF_SET_HWADDRHINT(netif, NULL);
+
+#if TCP_INPUT_DEBUG
+	tcp_debug_print(seg->tcphdr);
+#endif
+
 	return err;
 }
 

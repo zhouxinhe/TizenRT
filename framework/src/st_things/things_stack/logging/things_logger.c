@@ -89,6 +89,7 @@ void things_log_set_version(char *version)
  */
 void things_log(things_log_level_e level, const char *tag, const char *func_name, const int16_t line_num, const char *logStr)
 {
+#if 0
 	struct timeval tv;
 	time_t nowtime = 0;
 	struct tm *nowtm = NULL;
@@ -98,17 +99,17 @@ void things_log(things_log_level_e level, const char *tag, const char *func_name
 	nowtime = tv.tv_sec;
 	nowtm = localtime(&nowtime);
 	strftime(buf, sizeof buf, "%m/%d %H:%M:%S", nowtm);
-
+#endif
 	/* If Version information is not NULL, display the Version Information
 	 * Logger Format is given below
 	 * [<MM/YY H:M:S.uS> <LOGGER_VERSION>] <LOG_LEVEL> <TAG> <API> <LINE_NO> <LOG_STR>
 	 */
 	pthread_mutex_lock(&lock);
-	if (p_version) {
-		dbg("[%s %s] %s %s %4d %s %s\n", buf, p_version, LEVEL[level], tag, line_num, func_name, logStr);
-	} else {
-		dbg("T%d [%s] %s %s %4d %s %s\n", getpid(), buf, LEVEL[level], tag, line_num, func_name, logStr);
-	}
+	//if (p_version) {
+	//	dbg("[%s %s] %s %s %4d %s %s\n", buf, p_version, LEVEL[level], tag, line_num, func_name, logStr);
+	//} else {
+		dbg("T%d %s %s %4d [%s]: %s\n", getpid(), LEVEL[level], tag, line_num, func_name, logStr);
+	///}
 	pthread_mutex_unlock(&lock);
 }
 

@@ -199,7 +199,8 @@ static inline int vsyslog_internal(FAR const char *fmt, va_list ap)
  *   using the stdarg variable argument list macros.
  *
  ****************************************************************************/
-
+#include <pthread.h>
+static pthread_mutex_t logmutex = PTHREAD_MUTEX_INITIALIZER;
 int vsyslog(int priority, FAR const char *fmt, va_list ap)
 {
 	int ret = 0;
@@ -207,12 +208,14 @@ int vsyslog(int priority, FAR const char *fmt, va_list ap)
 	/* Check if this priority is enabled */
 
 	if ((g_syslog_mask & LOG_MASK(priority)) != 0) {
+		pthread_mutex_lock(&logmutex);
 		/* Yes.. let vsylog_internal do the deed */
 #if defined(CONFIG_LOGM) && defined(CONFIG_SYSLOG2LOGM)
 		ret = logm_internal(LOGM_NORMAL, LOGM_UNKNOWN, priority, fmt, ap);
 #else
 		ret = vsyslog_internal(fmt, ap);
 #endif
+		pthread_mutex_unlock(&logmutex);
 	}
 
 	return ret;

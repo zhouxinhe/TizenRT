@@ -96,7 +96,7 @@
  * @def MMBED_TLS_DEBUG_LEVEL
  * @brief Logging level for mbedTLS library
  */
-#define MBED_TLS_DEBUG_LEVEL (4)
+#define MBED_TLS_DEBUG_LEVEL (3)
 
 /**
  * @def TLS_MSG_BUF_LEN
@@ -389,7 +389,7 @@ static void DebugSsl(void *ctx, int level, const char *file, int line, const cha
     ((void) line);
     ((void) ctx);
 
-    OIC_LOG_V(DEBUG, MBED_TLS_TAG, "%s", str);
+    OIC_LOG_V(DEBUG , MBED_TLS_TAG, "[%d][%s L%d] %s", level, file, line, str);
 }
 #endif
 
@@ -1163,7 +1163,7 @@ static SslEndPoint_t *GetSslPeerUsingUuid(const uint8_t *identity, size_t idLeng
 const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    
+
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
     {
@@ -2653,7 +2653,7 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(rsrcServerDeviceId, NET_SSL_TAG, "rsrcId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(provServerDeviceId, NET_SSL_TAG, "provId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(ownerPsk, NET_SSL_TAG, "ownerPSK is NULL", CA_STATUS_INVALID_PARAM);
-    
+
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
     {

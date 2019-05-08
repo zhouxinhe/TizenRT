@@ -867,6 +867,10 @@ wifi_manager_result_e _wifimgr_run_softap(wifi_manager_softap_config_s *config)
     /*Sometimes WiFi vender run dhcp server*/
 #ifndef CONFIG_WIFIMGR_DISABLE_DHCPS
 	WIFIMGR_CHECK_RESULT(_start_dhcps(), "[WM] Starting DHCP server failed.\n", WIFI_MANAGER_FAIL);
+#else
+#ifdef CONFIG_ENABLE_IOTIVITY
+	__tizenrt_manual_linkset("gen");
+#endif
 #endif
 	/* update wifi_manager_info */
 	WIFIMGR_SET_SOFTAP_SSID(config->ssid);
@@ -1325,8 +1329,10 @@ wifi_manager_result_e _handler_on_softap_state(_wifimgr_msg_s *msg)
 		WIFIMGR_STORE_PREV_STATE;
 		WIFIMGR_SET_STATE(WIFIMGR_SCANNING);
 	} else if (msg->event == EVT_JOINED) {
+#ifndef CONFIG_WIFIMGR_DISABLE_DHCPS
 		/* wifi manager passes the callback after the dhcp server gives a station an IP address*/
 	} else if (msg->event == EVT_DHCPD_GET_IP) {
+#endif
 		WIFIMGR_INC_NUM_CLIENT;
 		_handle_user_cb(CB_STA_JOINED, NULL);
 	} else if (msg->event == EVT_LEFT) {

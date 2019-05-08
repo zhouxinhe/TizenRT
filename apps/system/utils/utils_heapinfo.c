@@ -78,6 +78,9 @@ static void heapinfo_print_regions(void)
 		printf("    %2d    | 0x%8x | 0x%8x |%8d |    %2d    \n", region_idx, regionx_start[region_idx], regionx_start[region_idx] + regionx_size[region_idx], regionx_size[region_idx], regionx_heap_idx[region_idx]);
 	}
 }
+#endif
+
+#if CONFIG_MM_NHEAPS > 1
 static void heapinfo_print_nheaps(void)
 {
 	printf("\n****************************************************************\n");
@@ -342,7 +345,7 @@ int utils_heapinfo(int argc, char **args)
 
 #ifdef CONFIG_MM_KERNEL_HEAP
 	if (showing_kheap == true) {
-		kernel_option.mode = heapinfo_mode; 
+		kernel_option.mode = heapinfo_mode;
 		kernel_option.pid = heapinfo_pid;
 	}
 #endif

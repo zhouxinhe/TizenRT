@@ -1957,7 +1957,7 @@ void tcp_debug_print(struct tcp_hdr *tcphdr)
 	LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 	LWIP_DEBUGF(TCP_DEBUG, ("| %2" U16_F " |   |%" U16_F "%" U16_F "%" U16_F "%" U16_F "%" U16_F "%" U16_F "|     %5" U16_F "     | (hdrlen, flags (", TCPH_HDRLEN(tcphdr), (u16_t)(TCPH_FLAGS(tcphdr) >> 5 & 1), (u16_t)(TCPH_FLAGS(tcphdr) >> 4 & 1), (u16_t)(TCPH_FLAGS(tcphdr) >> 3 & 1), (u16_t)(TCPH_FLAGS(tcphdr) >> 2 & 1), (u16_t)(TCPH_FLAGS(tcphdr) >> 1 & 1), (u16_t)(TCPH_FLAGS(tcphdr) & 1), lwip_ntohs(tcphdr->wnd)));
 	tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
-	LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));
+	//LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));
 	LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 	LWIP_DEBUGF(TCP_DEBUG, ("|    0x%04" X16_F "     |     %5" U16_F "     | (chksum, urgp)\n", lwip_ntohs(tcphdr->chksum), lwip_ntohs(tcphdr->urgp)));
 	LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
@@ -1980,31 +1980,46 @@ void tcp_debug_print_state(enum tcp_state s)
  */
 void tcp_debug_print_flags(u8_t flags)
 {
+	char buffer[44] = {0};
+
 	if (flags & TCP_FIN) {
-		LWIP_DEBUGF(TCP_DEBUG, ("FIN "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("FIN "));
+		strcat(buffer, "FIN ");
 	}
 	if (flags & TCP_SYN) {
-		LWIP_DEBUGF(TCP_DEBUG, ("SYN "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("SYN "));
+		strcat(buffer, "SYN ");
 	}
 	if (flags & TCP_RST) {
-		LWIP_DEBUGF(TCP_DEBUG, ("RST "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("RST "));
+		strcat(buffer, "RST ");
 	}
 	if (flags & TCP_PSH) {
-		LWIP_DEBUGF(TCP_DEBUG, ("PSH "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("PSH "));
+		strcat(buffer, "PSH ");
 	}
 	if (flags & TCP_ACK) {
-		LWIP_DEBUGF(TCP_DEBUG, ("ACK "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("ACK "));
+		strcat(buffer, "ACK ");
 	}
 	if (flags & TCP_URG) {
-		LWIP_DEBUGF(TCP_DEBUG, ("URG "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("URG "));
+		strcat(buffer, "URG ");
 	}
 	if (flags & TCP_ECE) {
-		LWIP_DEBUGF(TCP_DEBUG, ("ECE "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("ECE "));
+		strcat(buffer, "ECE ");
 	}
 	if (flags & TCP_CWR) {
-		LWIP_DEBUGF(TCP_DEBUG, ("CWR "));
+		//LWIP_DEBUGF(TCP_DEBUG, ("CWR "));
+		strcat(buffer, "CWR ");
 	}
-	LWIP_DEBUGF(TCP_DEBUG, ("\n"));
+	//LWIP_DEBUGF(TCP_DEBUG, ("\n"));
+
+	strcat(buffer, "), win)\n");
+
+	extern int syslog(int priority, FAR const char *fmt, ...);
+	syslog(3, "%s", buffer);
 }
 
 /**

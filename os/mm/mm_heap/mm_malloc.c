@@ -146,7 +146,10 @@ FAR void *mm_malloc(FAR struct mm_heap_s *heap, size_t size)
 	 * other mm_nodelist[] entries.
 	 */
 
-	for (node = heap->mm_nodelist[ndx].flink; node && node->size < size; node = node->flink) ;
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
+	for (node = heap->mm_nodelist[ndx].flink; node && node->size < size; node = node->flink)
+		DEBUGASSERT(VERIFY_MAGICWORD(node));
 
 	/* If we found a node with non-zero size, then this is one to use. Since
 	 * the list is ordered, we know that is must be best fitting chunk
@@ -222,9 +225,9 @@ FAR void *mm_malloc(FAR struct mm_heap_s *heap, size_t size)
 
 #ifdef CONFIG_DEBUG_MM
 	if (!ret) {
-		mdbg("Allocation failed, size %u\n", size);
+		mdbg("Allocation failed, size %u, caller_retaddr 0x%x\n", size, caller_retaddr);
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
-		heapinfo_parse(heap, HEAPINFO_DETAIL_ALL, HEAPINFO_PID_ALL);
+		//heapinfo_parse(heap, HEAPINFO_DETAIL_ALL, HEAPINFO_PID_ALL);
 #endif
 	} else {
 		mvdbg("Allocated %p, size %u\n", ret, size);

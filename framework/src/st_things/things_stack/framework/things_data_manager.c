@@ -740,7 +740,7 @@ int set_json_string_into_file(const char *filename, const char *json_str)
 
 static int get_json_int(cJSON *json, int64_t *variable)
 {
-	THINGS_LOG_D(TAG, THINGS_FUNC_ENTRY);
+	//THINGS_LOG_D(TAG, THINGS_FUNC_ENTRY);
 
 	int res = 1;
 
@@ -756,14 +756,14 @@ static int get_json_int(cJSON *json, int64_t *variable)
 
 	*variable = json->valueint;
 
-	THINGS_LOG_D(TAG, THINGS_FUNC_EXIT);
+	//THINGS_LOG_D(TAG, THINGS_FUNC_EXIT);
 
 	return res;
 }
 
 static int get_json_string(cJSON *json, char **variable)
 {
-	THINGS_LOG_D(TAG, THINGS_FUNC_ENTRY);
+	//THINGS_LOG_D(TAG, THINGS_FUNC_ENTRY);
 
 	int res = 1;
 	int length = 0;
@@ -786,8 +786,8 @@ static int get_json_string(cJSON *json, char **variable)
 	}
 	memset(*variable, 0, length + 1);
 	memcpy(*variable, json->valuestring, length + 1);
-	THINGS_LOG_D(TAG, "(variable = %s)", json->valuestring);
-	THINGS_LOG_D(TAG, THINGS_FUNC_EXIT);
+	//THINGS_LOG_D(TAG, "(variable = %s)", json->valuestring);
+	//THINGS_LOG_D(TAG, THINGS_FUNC_EXIT);
 	return res;
 }
 
@@ -836,10 +836,21 @@ static int load_cloud_signup_data(cJSON *json, es_cloud_signup_s **cl_data)
 		THINGS_LOG_V(TAG, "Load JSON String user_id is failed");
 		res = -1;
 	}
+	#if 0
 	if (get_json_int(expire_time, &((*cl_data)->expire_time)) == 0) {
 		THINGS_LOG_V(TAG, "Load JSON String expire_time is failed");
 		res = -1;
 	}
+	#else
+	char *expire_time_str = NULL;
+	if (get_json_string(expire_time, &expire_time_str) == 0) {
+		THINGS_LOG_V(TAG, "Load JSON String expire_time is failed");
+		res = -1;
+	} else if (expire_time_str) {
+		(*cl_data)->expire_time = atoi(expire_time_str);
+		things_free(expire_time_str);
+	}
+	#endif
 	get_json_string(token_type, &((*cl_data)->token_type));
 	get_json_string(redirect_uri, &((*cl_data)->redirect_uri));
 	get_json_string(certificate, &((*cl_data)->certificate));
@@ -943,6 +954,11 @@ int parse_things_cloud_json(const char *filename)
 					}
 				}
 				cJSON_Delete(root);
+			} else {
+				THINGS_LOG_E(TAG, "[CLOUD] cJSON_Parse failed, json_str: %s", json_str);
+				if (set_json_string_into_file(filename, origin_cloud_json_str) == 0) {
+					THINGS_LOG_V(TAG, "[Error] Creating cloud file is failed.");
+				}
 			}
 		}
 		things_free(json_str);
@@ -1869,9 +1885,16 @@ static int update_things_cloud_json_by_cloud_signup(const char *filename, es_clo
 			if (cl_data->token_type != NULL && strlen(cl_data->token_type) > 0) {
 				cJSON_AddStringToObject(cloud, KEY_TOKEN_TYPE, cl_data->token_type);
 			}
+			#if 0
 			if (cl_data->expire_time != CLOUD_EXPIRESIN_INVALID) {
 				cJSON_AddNumberToObject(cloud, KEY_EXPIRE_TIME, cl_data->expire_time);
 			}
+			#else
+			if (cl_data->expire_time != CLOUD_EXPIRESIN_INVALID) {
+				char buffer[32] = {0};
+				cJSON_AddStringToObject(cloud, KEY_EXPIRE_TIME, itoa(cl_data->expire_time, buffer, 10));
+			}
+			#endif
 			if (cl_data->uid != NULL && strlen(cl_data->uid) > 0) {
 				cJSON_AddStringToObject(cloud, KEY_ID_USER, cl_data->uid);
 			}

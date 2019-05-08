@@ -141,6 +141,7 @@ void mm_addregion(FAR struct mm_heap_s *heap, FAR void *heapstart, size_t heapsi
 	heap->mm_heapstart[IDX]            = (FAR struct mm_allocnode_s *)heapbase;
 	heap->mm_heapstart[IDX]->size      = SIZEOF_MM_ALLOCNODE;
 	heap->mm_heapstart[IDX]->preceding = MM_ALLOC_BIT;
+	ASSIGN_MAGICWORD(heap->mm_heapstart[IDX]);
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 	/* fill magic number 0xDEAD as malloc info for head node */
 	heapinfo_update_node((FAR struct mm_allocnode_s *)heap->mm_heapstart[IDX], 0xDEAD);
@@ -153,6 +154,7 @@ void mm_addregion(FAR struct mm_heap_s *heap, FAR void *heapstart, size_t heapsi
 	heap->mm_heapend[IDX]            = (FAR struct mm_allocnode_s *)(heapend - SIZEOF_MM_ALLOCNODE);
 	heap->mm_heapend[IDX]->size      = SIZEOF_MM_ALLOCNODE;
 	heap->mm_heapend[IDX]->preceding = node->size | MM_ALLOC_BIT;
+	ASSIGN_MAGICWORD(heap->mm_heapend[IDX]);
 #ifdef CONFIG_DEBUG_MM_HEAPINFO
 	/* Fill magic number 0xDEADDEAD as malloc info for tail node */
 	heapinfo_update_node((FAR struct mm_allocnode_s *)heap->mm_heapend[IDX], 0xDEADDEAD);
@@ -215,9 +217,11 @@ void mm_initialize(FAR struct mm_heap_s *heap, FAR void *heapstart, size_t heaps
 	/* Initialize the node array */
 
 	memset(heap->mm_nodelist, 0, sizeof(struct mm_freenode_s) * MM_NNODES);
+	ASSIGN_MAGICWORD(&heap->mm_nodelist[0]);
 	for (i = 1; i < MM_NNODES; i++) {
 		heap->mm_nodelist[i - 1].flink = &heap->mm_nodelist[i];
 		heap->mm_nodelist[i].blink = &heap->mm_nodelist[i - 1];
+		ASSIGN_MAGICWORD(&heap->mm_nodelist[i]);
 	}
 
 	/* Initialize the malloc semaphore to one (to support one-at-

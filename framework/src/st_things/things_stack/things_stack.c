@@ -373,8 +373,8 @@ int things_start_stack(void)
 				return 0;
 			}
 			//call wifi scan ap.
-			if (!things_start_scanning_ap())
-				return 0;
+			//if (!things_start_scanning_ap())
+			//	return 0;
 		} else if (!things_network_connect_home_ap()) {
 			return 0;
 		}
@@ -757,7 +757,7 @@ static void *__attribute__((optimize("O0"))) t_things_reset_loop(reset_args_s *a
 	THINGS_LOG_D(TAG, "Reset Success.");
 	result = 1;
 	// After completed reset of device doing wifi scan
-	things_start_scanning_ap();
+	//things_start_scanning_ap();
 
 GOTO_OUT:
 	// 10. All Module Enable.

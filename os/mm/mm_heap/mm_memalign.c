@@ -141,6 +141,8 @@ FAR void *mm_memalign(FAR struct mm_heap_s *heap, size_t alignment, size_t size)
 
 	mm_takesemaphore(heap);
 
+	DEBUGASSERT(VERIFY_HEAP(heap));
+
 	/* Get the node associated with the allocation and the next node after
 	 * the allocation.
 	 */

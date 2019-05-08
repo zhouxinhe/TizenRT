@@ -94,6 +94,7 @@ void pthread_mutex_inconsistent(FAR struct pthread_tcb_s *tcb)
 	irqstate_t flags;
 
 	DEBUGASSERT(tcb != NULL);
+	DEBUGASSERT((tcb->cmn.flags & TCB_FLAG_TTYPE_MASK) == TCB_FLAG_TTYPE_PTHREAD);
 
 	sched_lock();
 

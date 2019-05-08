@@ -54,13 +54,12 @@ static void __attribute__((constructor)) s_set_default_wifi_log_level()
 //    esp_log_level_set("wifi", CONFIG_LOG_DEFAULT_LEVEL);
 }
 
+#if 0 // There should be configured via Kconfig
 #define CONFIG_ESP32_WIFI_DEBUG_LOG_ENABLE 1
-#define CONFIG_ESP32_WIFI_DEBUG_LOG_DEBUG 1
+#define CONFIG_ESP32_WIFI_DEBUG_LOG_VERBOSE 1
 #define CONFIG_ESP32_WIFI_DEBUG_LOG_MODULE_WIFI 1
-#define CONFIG_ESP32_WIFI_DEBUG_LOG_SUBMODULE_INIT 1
-#define CONFIG_ESP32_WIFI_DEBUG_LOG_SUBMODULE_CONN 1
-#define CONFIG_ESP32_WIFI_DEBUG_LOG_SUBMODULE_SCAN 1
-#define CONFIG_ESP32_WIFI_DEBUG_LOG_SUBMODULE_IOCTL 1
+#define CONFIG_ESP32_WIFI_DEBUG_LOG_SUBMODULE_ALL 1
+#endif
 
 static void esp_wifi_set_debug_log()
 {

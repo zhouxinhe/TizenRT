@@ -1145,6 +1145,7 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
             if (EWOULDBLOCK != errno)
             {
                 OIC_LOG_V(ERROR, TAG, "unicast ipv4tcp sendTo failed: %s", strerror(errno));
+                OIC_LOG_V(ERROR, TAG, "sockFd: %d data: 0x%x remainLen: 0x%x/0x%x", sockFd, data, remainLen, dlen);
                 CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
                                    len, false, strerror(errno));
                 return len;

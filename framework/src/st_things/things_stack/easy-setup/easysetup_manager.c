@@ -456,7 +456,7 @@ static void *wifi_prov_set_loop(void *param)
 	THINGS_LOG_D(TAG, "Open Loop Enter.");
 
 	static int timeout_handle_num = 100;
-	things_timeout_s timeout;
+	static things_timeout_s timeout; // can not be local var
 
 	es_set_state(ES_STATE_CONNECTING_TO_ENROLLER);
 	set_wifi_prov_state(WIFI_READY);

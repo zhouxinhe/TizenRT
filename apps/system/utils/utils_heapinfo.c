@@ -122,6 +122,17 @@ static void heapinfo_print_values(char *buf)
 	int i;
 	stat_data stat_info[PROC_STAT_MAX];
 
+	if (buf) {
+		//printf("heapinfo_print_values(%s) len %d\n", buf, strlen(buf));
+		if (strlen(buf) < 16) {
+			printf("heapinfo_print_values ignore abnormal string: %s, len %d\n", buf, strlen(buf));
+			return;
+		}
+	} else {
+		printf("heapinfo_print_values(null)\n");
+		return;
+	}
+
 	stat_info[0] = buf;
 
 	for (i = 0; i < PROC_STAT_MAX - 1; i++) {

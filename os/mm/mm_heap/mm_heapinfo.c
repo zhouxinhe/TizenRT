@@ -229,9 +229,9 @@ void heapinfo_parse(FAR struct mm_heap_s *heap, int mode, pid_t pid)
 	total_info.sum_of_stacks += stack_resource;
 	total_info.sum_of_heaps += heap_resource - (heap->mm_nregions * SIZEOF_MM_ALLOCNODE);
 
-	if (mode == HEAPINFO_SIMPLE) {
-		return;
-	}
+	//if (mode == HEAPINFO_SIMPLE) {
+	//	return;
+	//}
 #endif
 	printf("\n****************************************************************\n");
 	printf("     Summary of Heap Usages (Size in Bytes)\n");
@@ -441,7 +441,7 @@ void heapinfo_exclude_stacksize(void *stack_ptr)
  * Name: heapinfo_update_group_info
  *
  * Description:
- * when create or release task/thread, check that the task/thread is 
+ * when create or release task/thread, check that the task/thread is
  * in group list
  ****************************************************************************/
 void heapinfo_update_group_info(pid_t pid, int group, int type)

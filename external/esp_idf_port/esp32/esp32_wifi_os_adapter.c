@@ -105,7 +105,7 @@ static int32_t IRAM_ATTR semphr_take_from_isr_wrapper(void *semphr, void *hptw)
 {
     *(bool *) hptw = WIFI_ADAPTER_FALSE;
 	FAR struct tcb_s *stcb = NULL;
-    pid_t pid = getpid();   
+    pid_t pid = getpid();
     FAR struct tcb_s *rtcb = sched_gettcb(pid);
 	sem_t *sem = (sem_t *) semphr;
 	irqstate_t saved_state;
@@ -165,7 +165,7 @@ static int32_t IRAM_ATTR semphr_take_wrapper(void *semphr, uint32_t block_time_t
 
 	} else {
 		struct timespec abstime;
-	    calc_abs_time(&abstime, block_time_tick);	
+	    calc_abs_time(&abstime, block_time_tick);
         ret = sem_timedwait(semphr, &abstime);
 		if (ret == OK) {
 			return pdPASS;
@@ -470,12 +470,12 @@ static inline int32_t IRAM_ATTR esp_os_get_random_wrapper(uint8_t *buf, size_t l
 
 /*=================espwifi modem API=========================*/
 static inline esp_err_t esp_modem_sleep_enter_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_enter((modem_sleep_module_t) module);
 }
 
 static inline esp_err_t esp_modem_sleep_exit_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_exit((modem_sleep_module_t) module);
 }
 
@@ -485,7 +485,7 @@ static inline esp_err_t esp_modem_sleep_register_wrapper(uint32_t module)
 }
 
 static inline esp_err_t esp_modem_sleep_deregister_wrapper(uint32_t module)
-{   
+{
     return esp_modem_sleep_deregister((modem_sleep_module_t) module);
 }
 
@@ -760,7 +760,11 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
 	._task_get_current_task = task_get_current_task_wrapper,
 	._task_get_max_priority = task_get_max_priority_wrapper,
 	._is_in_isr = is_in_isr_wrapper,
+#if 1
+	._malloc = malloc_internal_wrapper,
+#else
 	._malloc = malloc,
+#endif
 	._free = free,
 	._get_free_heap_size = esp_get_free_heap_size,
 	._rand = esp_random,
@@ -801,10 +805,17 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
 	._realloc_internal = realloc_internal_wrapper,
 	._calloc_internal = calloc_internal_wrapper,
 	._zalloc_internal = zalloc_internal_wrapper,
+#if 1
+	._wifi_malloc = malloc_internal_wrapper,
+	._wifi_realloc = realloc_internal_wrapper,
+	._wifi_calloc = calloc_internal_wrapper,
+	._wifi_zalloc = zalloc_internal_wrapper,
+#else
 	._wifi_malloc = wifi_malloc,
 	._wifi_realloc = wifi_realloc,
 	._wifi_calloc = wifi_calloc,
 	._wifi_zalloc = wifi_zalloc_wrapper,
+#endif
 	._wifi_create_queue = wifi_create_queue_wrapper,
 	._wifi_delete_queue = wifi_delete_queue_wrapper,
 	._modem_sleep_enter = esp_modem_sleep_enter_wrapper,

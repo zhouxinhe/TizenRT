@@ -44,7 +44,7 @@ static char *ptr = CONFIG_HEAPINFO_USER_GROUP_LIST;
 const static char *end_list = CONFIG_HEAPINFO_USER_GROUP_LIST + sizeof(CONFIG_HEAPINFO_USER_GROUP_LIST) - 1;
 #endif
 
-#define HEAPINFO_BUFLEN 64
+#define HEAPINFO_BUFLEN (64 + CONFIG_TASK_NAME_SIZE)
 #define HEAPINFO_DISPLAY_ALL            0
 #define HEAPINFO_DISPLAY_SPECIFIC_HEAP  1
 #define HEAPINFO_DISPLAY_GROUP          2
@@ -121,17 +121,6 @@ static void heapinfo_print_values(char *buf)
 {
 	int i;
 	stat_data stat_info[PROC_STAT_MAX];
-
-	if (buf) {
-		//printf("heapinfo_print_values(%s) len %d\n", buf, strlen(buf));
-		if (strlen(buf) < 16) {
-			printf("heapinfo_print_values ignore abnormal string: %s, len %d\n", buf, strlen(buf));
-			return;
-		}
-	} else {
-		printf("heapinfo_print_values(null)\n");
-		return;
-	}
 
 	stat_info[0] = buf;
 
@@ -232,9 +221,19 @@ static void heapinfo_show_taskinfo(struct mm_heap_s *heap)
 #endif
 	printf("-------|-----------|-----------|----------\n");
 
+#if CONFIG_MM_NHEAPS > 1
+	int read_flag[CONFIG_MAX_TASKS] = {0};
+#endif
+
 	for (heap_idx = 0; heap_idx < CONFIG_MM_NHEAPS; heap_idx++) {
 		for (tcb_idx = 0; tcb_idx < CONFIG_MAX_TASKS; tcb_idx++) {
 			if (heap[heap_idx].alloc_list[tcb_idx].pid != HEAPINFO_INIT_INFO) {
+#if CONFIG_MM_NHEAPS > 1
+				if (read_flag[tcb_idx] == 1) {
+					continue;
+				}
+				read_flag[tcb_idx] = 1;
+#endif
 				heapinfo_read_proc(heap[heap_idx].alloc_list[tcb_idx].pid);
 			}
 		}

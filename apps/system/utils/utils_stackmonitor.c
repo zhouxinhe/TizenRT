@@ -84,10 +84,10 @@
  ****************************************************************************/
 #define STKMON_PREFIX "Stack Monitor: "
 
-#define STKMON_BUFLEN 64
+#define STKMON_BUFLEN (64 + CONFIG_TASK_NAME_SIZE)
 /* Configuration ************************************************************/
 
-#define STACKMONITOR_STACKSIZE 1024
+#define STACKMONITOR_STACKSIZE 2048
 
 #ifndef CONFIG_STACKMONITOR_PRIORITY
 #define CONFIG_STACKMONITOR_PRIORITY 100

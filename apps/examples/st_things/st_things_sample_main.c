@@ -53,7 +53,7 @@ int st_things_sample_main(int argc, char *argv[])
 	sparam.sched_priority = 100;
 
 	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, CONFIG_PTHREAD_STACK_DEFAULT);
+	pthread_attr_setstacksize(&attr, CONFIG_ST_THINGS_SAMPLE_THREAD_STACKSIZE);
 	pthread_attr_setschedparam(&attr, &sparam);
 
 	int status;

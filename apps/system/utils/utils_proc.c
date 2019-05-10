@@ -66,9 +66,9 @@ int utils_proc_pid_foreach(procentry_handler_t handler)
 	}
 
 	/* Read each directory entry */
-	
+
 	for (;;) {
-		
+
 		entryp = readdir(dirp);
 		if (!entryp) {
 			/* Finished with this directory */
@@ -122,6 +122,10 @@ int utils_readfile(FAR const char *filepath, char *buf, int buflen, utils_print_
 			print_func(buf);
 		} else {
 			printf("%s", buf);
+		}
+		if (nread == buflen - 1) {
+			printf("Warning: Maybe you should increase your buffer length! current length is %d.\n", buflen);
+			usleep(200);
 		}
 	} while (nread == buflen - 1);
 

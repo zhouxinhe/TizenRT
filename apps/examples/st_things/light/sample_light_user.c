@@ -179,13 +179,7 @@ void set_rep_push_mesg(void)
 	}
 	st_things_rep->set_str_value(st_things_rep, PUSH_MESG_SOURCE_ATTRIBUTE, "/alarms/vs/0");
 	st_things_rep->set_str_value(st_things_rep, PUSH_MESG_TYPE_ATTRIBUTE, "4");
-	if (g_switch_value) {
-		//char buffer[64];
-		//snprintf(buffer, sizeof(buffer), "Light On (Dimmer %lld Color temperature %lld)", g_dimming_setting, g_color_temp);
-		st_things_rep->set_str_value(st_things_rep, PUSH_MESG_CODE_ATTRIBUTE, "Light On");
-	} else {
-		st_things_rep->set_str_value(st_things_rep, PUSH_MESG_CODE_ATTRIBUTE, "Light Off");
-	}
+	st_things_rep->set_str_value(st_things_rep, PUSH_MESG_CODE_ATTRIBUTE, (g_switch_value ? "Light On" : "Light Off"));
 	int res = st_things_push_notification_to_cloud(g_push_res_uri, st_things_rep);
 	printf("[%s]Send push notifiation to cloud!! %d\n", TAG, res);
 }

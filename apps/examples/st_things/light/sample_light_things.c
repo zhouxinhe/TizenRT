@@ -72,24 +72,19 @@ static void button_scan_thread(void *user_data)
 {
 	int old_resetbutton = -1;
 	int old_switchbutton = -1;
-	int reset_lock_count = 0;
 	int val = 0;
 	int ret = 0;
 
-	//reset_lock_count = RESETBUTTON_LOCK_TIME;
 	while (1) {
-		if (reset_lock_count == 0){
-			ret = key_get_status(KEY_RESET_IO_NUM, &val);
-			if (OK == ret && old_resetbutton != val){
-				old_resetbutton = val;
+		ret = key_get_status(KEY_RESET_IO_NUM, &val);
+		if (OK == ret && old_resetbutton != val){
+			old_resetbutton = val;
 
-				if (old_resetbutton == KEY_RESET_PRESSED){
-					printf("gpio_callback_event RESET pressed!!\n");
-					printf("reset :: %d\n", st_things_reset());
-				}
-
-				//reset_lock_count = RESETBUTTON_LOCK_TIME;
+			if (old_resetbutton == KEY_RESET_PRESSED){
+				printf("gpio_callback_event RESET pressed!!\n");
+				st_things_reset();
 			}
+
 		}
 
 		ret = key_get_status(KEY_SWITCH_IO_NUM, &val);
@@ -99,15 +94,12 @@ static void button_scan_thread(void *user_data)
 			if (old_switchbutton == KEY_SWITCH_PRESSED){
 				printf("gpio_callback_event SWITCH to notify switch resource's observers manually!!\n");
 				change_switch_value();
-				printf("Notify to observer :: %d\n", st_things_notify_observers(g_res_switch));
+				st_things_notify_observers(g_res_switch);
 				set_rep_push_mesg();
 			}
 		}
 
 		usleep(BUTTON_SCAN_PEROID);
-		if (reset_lock_count > 0){
-			reset_lock_count--;
-		}
 	}
 }
 

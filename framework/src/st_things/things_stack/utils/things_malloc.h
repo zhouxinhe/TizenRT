@@ -19,14 +19,22 @@
 #ifndef THINGS_MALLOC_H_
 #define THINGS_MALLOC_H_
 
+#include <tinyara/config.h>
 #include <stdio.h>
 
 #ifndef ENABLE_THINGS_MALLOC
 
+#if (CONFIG_MM_NHEAPS >= 3)
+#define things_malloc(x) malloc_at(2, x)
+#define things_free(x) free(x)
+#define things_realloc(x, y) realloc_at(2, x, y)
+#define things_calloc(x, y) calloc_at(2, x, y)
+#else
 #define things_malloc(x) malloc(x)
 #define things_free(x) free(x)
 #define things_realloc(x, y) realloc(x, y)
 #define things_calloc(x, y) calloc(x, y)
+#endif
 
 #else
 

@@ -34,11 +34,21 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <tinyara/config.h>
 #include <stdio.h>
+
+#if (CONFIG_MM_NHEAPS >= 4)
+#define OICMalloc(x) malloc_at(3, x)
+#define OICCalloc(n,x) calloc_at(3, n,x)
+#define OICRealloc(p,x) realloc_at(3, p,x)
+#define OICFree(x) free(x)
+#else
 #define OICMalloc(x) malloc(x)
 #define OICCalloc(n,x) calloc(n,x)
 #define OICRealloc(p,x) realloc(p,x)
 #define OICFree(x) free(x)
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

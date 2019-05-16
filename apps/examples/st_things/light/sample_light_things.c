@@ -110,7 +110,7 @@ void start_button_thread(void)
 	sparam.sched_priority = 100;
 
 	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, CONFIG_PTHREAD_STACK_DEFAULT);
+	pthread_attr_setstacksize(&attr, 4096); // 2048 bytes are not enough
 	pthread_attr_setschedparam(&attr, &sparam);
 
 	pthread_t thread;

@@ -133,7 +133,8 @@ bool things_ping_terminate(void)
 		things_ping_s *ping = NULL;
 		while ((ping = (things_ping_s *) list->pop(list)) != NULL) {
 			THINGS_LOG_D(TAG, "Terminate ping.(%s)", ping->addr);
-			if (cas_mask(ping, PING_ST_STARTTHREAD, true, PING_ST_INIT) == true) {
+			//if (cas_mask(ping, PING_ST_STARTTHREAD, true, PING_ST_INIT) == true) { // Fixme: we should not clear PING_ST_STARTTHREAD before thread is running.
+			if (get_mask(ping, PING_ST_STARTTHREAD)) {
 				things_ping_destroy_thread(ping);
 			}
 			terminate_things_ping_s(ping);
@@ -301,13 +302,23 @@ static void *__attribute__((optimize("O0"))) thd_ping_loop(things_ping_s *ping)
 	int retry_cnt = MAX_RETRY_CNT;
 	do {						// /oic/ping Resource Finding Start
 		int sleepTime = find_resource_oic_ping(ping);
-		sleep(sleepTime);
+		THINGS_LOG_D(TAG, "sleep(%d) start", sleepTime);
+		for (int i = 0; i < sleepTime; i++) {
+			sleep(1);
+			THINGS_LOG_D(TAG, "sleep(%d/%d)", i + 1, sleepTime);
+			if (ping->continue_thread) {
+				THINGS_LOG_D(TAG, "Discovery Success, ping thread continue...");
+				break;
+			}
+		}
+		THINGS_LOG_D(TAG, "sleep(%d) end", sleepTime);
 	} while (!ping->continue_thread && ping->handle_thread && (retry_cnt--) > 0);
 
 	p_ping = ping;
 	int sleepDelay = 10;
 
-	THINGS_LOG_D(TAG, "Start common-Ping request for /oic/ping to Cloud(%s)", ping->addr);
+	THINGS_LOG_D(TAG, "Start common-Ping request for /oic/ping to Cloud(%s), continue_thread(%d)", ping->addr, ping->continue_thread);
+
 	while (ping->continue_thread) {	// common-ping request Sending Start
 
 		if (sleepMinute == 0) {
@@ -974,11 +985,9 @@ static bool things_ping_destroy_thread(things_ping_s *ping)
 	}
 
 	if (ping->handle_thread) {
-		pthread_t handle = ping->handle_thread;
-		ping->handle_thread = 0;
 		ping->continue_thread = false;
 #ifdef __ST_THINGS_RTOS__
-		pthread_detach(handle);
+		pthread_detach(ping->handle_thread);
 		while (1) {
 			if (get_mask(ping, PING_ST_STARTTHREAD) == true) {
 				THINGS_LOG_D(TAG, "Wait destroy ping thread 1 sec");
@@ -991,7 +1000,8 @@ static bool things_ping_destroy_thread(things_ping_s *ping)
 		pthread_cancel(ping->handle_thread);
 		pthread_detach(ping->handle_thread);
 #endif
-		ping->continue_thread = false;
+		ping->handle_thread = 0;
+		ping->continue_thread = false; // unnecessary
 		set_def_interval(ping);
 
 		unset_mask(ping, PING_ST_STARTTHREAD | PING_ST_DISCOVERY | PING_ST_REQUEST | PING_ST_INTUPDATE | PING_ST_TIMEOUT);

@@ -760,7 +760,7 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
 	._task_get_current_task = task_get_current_task_wrapper,
 	._task_get_max_priority = task_get_max_priority_wrapper,
 	._is_in_isr = is_in_isr_wrapper,
-#if 1
+#if 0
 	._malloc = malloc_internal_wrapper,
 #else
 	._malloc = malloc,
@@ -805,7 +805,7 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
 	._realloc_internal = realloc_internal_wrapper,
 	._calloc_internal = calloc_internal_wrapper,
 	._zalloc_internal = zalloc_internal_wrapper,
-#if 1
+#if 0
 	._wifi_malloc = malloc_internal_wrapper,
 	._wifi_realloc = realloc_internal_wrapper,
 	._wifi_calloc = calloc_internal_wrapper,

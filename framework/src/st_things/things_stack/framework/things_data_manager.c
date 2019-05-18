@@ -836,21 +836,10 @@ static int load_cloud_signup_data(cJSON *json, es_cloud_signup_s **cl_data)
 		THINGS_LOG_V(TAG, "Load JSON String user_id is failed");
 		res = -1;
 	}
-	#if 0
 	if (get_json_int(expire_time, &((*cl_data)->expire_time)) == 0) {
 		THINGS_LOG_V(TAG, "Load JSON String expire_time is failed");
 		res = -1;
 	}
-	#else
-	char *expire_time_str = NULL;
-	if (get_json_string(expire_time, &expire_time_str) == 0) {
-		THINGS_LOG_V(TAG, "Load JSON String expire_time is failed");
-		res = -1;
-	} else if (expire_time_str) {
-		(*cl_data)->expire_time = atoi(expire_time_str);
-		things_free(expire_time_str);
-	}
-	#endif
 	get_json_string(token_type, &((*cl_data)->token_type));
 	get_json_string(redirect_uri, &((*cl_data)->redirect_uri));
 	get_json_string(certificate, &((*cl_data)->certificate));
@@ -1885,16 +1874,9 @@ static int update_things_cloud_json_by_cloud_signup(const char *filename, es_clo
 			if (cl_data->token_type != NULL && strlen(cl_data->token_type) > 0) {
 				cJSON_AddStringToObject(cloud, KEY_TOKEN_TYPE, cl_data->token_type);
 			}
-			#if 0
 			if (cl_data->expire_time != CLOUD_EXPIRESIN_INVALID) {
 				cJSON_AddNumberToObject(cloud, KEY_EXPIRE_TIME, cl_data->expire_time);
 			}
-			#else
-			if (cl_data->expire_time != CLOUD_EXPIRESIN_INVALID) {
-				char buffer[32] = {0};
-				cJSON_AddStringToObject(cloud, KEY_EXPIRE_TIME, itoa(cl_data->expire_time, buffer, 10));
-			}
-			#endif
 			if (cl_data->uid != NULL && strlen(cl_data->uid) > 0) {
 				cJSON_AddStringToObject(cloud, KEY_ID_USER, cl_data->uid);
 			}

@@ -133,8 +133,7 @@ bool things_ping_terminate(void)
 		things_ping_s *ping = NULL;
 		while ((ping = (things_ping_s *) list->pop(list)) != NULL) {
 			THINGS_LOG_D(TAG, "Terminate ping.(%s)", ping->addr);
-			//if (cas_mask(ping, PING_ST_STARTTHREAD, true, PING_ST_INIT) == true) { // Fixme: we should not clear PING_ST_STARTTHREAD before thread is running.
-			if (get_mask(ping, PING_ST_STARTTHREAD)) {
+			if (get_mask(ping, PING_ST_STARTTHREAD) == true) {
 				things_ping_destroy_thread(ping);
 			}
 			terminate_things_ping_s(ping);
@@ -303,7 +302,8 @@ static void *__attribute__((optimize("O0"))) thd_ping_loop(things_ping_s *ping)
 	do {						// /oic/ping Resource Finding Start
 		int sleepTime = find_resource_oic_ping(ping);
 		THINGS_LOG_D(TAG, "sleep(%d) start", sleepTime);
-		for (int i = 0; i < sleepTime; i++) {
+		int i;
+		for (i = 0; i < sleepTime; i++) {
 			sleep(1);
 			THINGS_LOG_D(TAG, "sleep(%d/%d)", i + 1, sleepTime);
 			if (ping->continue_thread) {

@@ -23,7 +23,7 @@
 #include "st_things_sample.h"
 
 #ifndef CONFIG_ST_THINGS_SAMPLE_THREAD_STACKSIZE
-#define CONFIG_ST_THINGS_SAMPLE_THREAD_STACKSIZE CONFIG_PTHREAD_STACK_DEFAULT
+#define CONFIG_ST_THINGS_SAMPLE_THREAD_STACKSIZE 4096
 #endif
 
 //extern int utils_stackmonitor(int argc, char **args);

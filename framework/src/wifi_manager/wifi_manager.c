@@ -492,7 +492,7 @@ const wifimgr_handler g_handler[] = {
 #ifdef CONFIG_ENABLE_IOTIVITY
 void __tizenrt_manual_linkset(const char *msg)
 {
-	ndbg("[WM] __tizenrt_manual_linkset(%s)\n", msg);
+	nvdbg("[WM] send message : %s\n", msg);
 	int ret = mq_send(g_dw_nwevent_mqfd, msg, 3, 42);
 	if (ret < 0) {
 		ndbg("[WM] send message fail\n");

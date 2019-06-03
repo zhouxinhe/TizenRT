@@ -168,6 +168,8 @@ static void gpio_sample(FAR struct gpio_upperhalf_s *priv)
 	DEBUGASSERT(lower->ops && lower->ops->get);
 	sample = lower->ops->get(lower);
 
+	ets_printf("[gpio_sample] get sample %d, priv->gu_sample %d\n", sample, priv->gu_sample);
+
 #if !defined(CONFIG_DISABLE_POLL) || !defined(CONFIG_DISABLE_SIGNALS)
 	change  = sample ^ priv->gu_sample;
 	rising  = (change && sample);

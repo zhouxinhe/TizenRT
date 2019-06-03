@@ -344,7 +344,7 @@ void esp32_gpioirqenable(int irq, gpio_intrtype_t intrtype)
 	int cpu;
 	int pin;
 
-	DEBUGASSERT(irq <= ESP32_FIRST_GPIOIRQ && irq <= ESP32_LAST_GPIOIRQ);
+	DEBUGASSERT(irq >= ESP32_FIRST_GPIOIRQ && irq <= ESP32_LAST_GPIOIRQ);
 
 	/* Convert the IRQ number to a pin number */
 
@@ -403,8 +403,9 @@ void esp32_gpioirqdisable(int irq)
 	uintptr_t regaddr;
 	uint32_t regval;
 	int pin;
+	uint32_t status;
 
-	DEBUGASSERT(irq <= ESP32_FIRST_GPIOIRQ && irq <= ESP32_LAST_GPIOIRQ);
+	DEBUGASSERT(irq >= ESP32_FIRST_GPIOIRQ && irq <= ESP32_LAST_GPIOIRQ);
 
 	/* Convert the IRQ number to a pin number */
 
@@ -418,6 +419,16 @@ void esp32_gpioirqdisable(int irq)
 	regval = getreg32(regaddr);
 	regval &= ~(GPIO_PIN_INT_ENA_M | GPIO_PIN_INT_TYPE_M);
 	putreg32(regval, regaddr);
+	/* Clear the disabled interrupt*/
+	if (pin >= 0 && pin <= 31) {
+		//status = getreg32(GPIO_STATUS_REG);
+		status = (1ul << pin);
+		putreg32(status, GPIO_STATUS_W1TC_REG);
+	} else if (pin >= 32 && pin <= 39) {
+		//status = getreg32(GPIO_STATUS1_REG) & NGPIO_HMASK;
+		status = (1ul << (pin - 32));
+		putreg32(status, GPIO_STATUS1_W1TC_REG);
+	}
 
 	up_enable_irq(g_gpio_cpuint);
 }

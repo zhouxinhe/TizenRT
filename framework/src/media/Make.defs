@@ -47,11 +47,26 @@ DEPPATH += --dep-path src/media/codec/opus
 VPATH += :src/media/codec/opus
 endif
 
+DEPPATH += --dep-path src/media/demux/ts
+VPATH += :src/media/demux/ts
+
 ifeq ($(CONFIG_MEDIA_PLAYER), y)
 CXXSRCS += MediaPlayer.cpp PlayerWorker.cpp MediaPlayerImpl.cpp PlayerObserverWorker.cpp
 CXXSRCS += InputHandler.cpp
 CXXSRCS += InputDataSource.cpp FileInputDataSource.cpp
 CXXSRCS += HttpInputDataSource.cpp
+
+CXXSRCS += crc.cpp
+CXXSRCS += BaseDesc.cpp DescDefault.cpp DescMetadataPointer.cpp
+CXXSRCS += DescConfBase.cpp DescConfDVB.cpp
+CXXSRCS += DescriptorBase.cpp DescriptorDVB.cpp DescriptorHash.cpp Descriptor.cpp
+CXXSRCS += Section.cpp BaseSection.cpp SectionParser.cpp
+CXXSRCS += PATParser.cpp
+CXXSRCS += PMTElementary.cpp PMTInstance.cpp PMTParser.cpp
+CXXSRCS += ParseManager.cpp
+CXXSRCS += PESPacket.cpp PESParser.cpp
+CXXSRCS += TSParser.cpp
+
 ifeq ($(CONFIG_ENABLE_CURL), y)
 CXXSRCS += HttpStream.cpp
 endif

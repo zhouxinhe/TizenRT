@@ -30,6 +30,11 @@
 #include "StreamBufferWriter.h"
 #include "Decoder.h"
 
+#define CONFIG_MPEG2_TS 1
+#ifdef CONFIG_MPEG2_TS
+#include "demux/ts/TSParser.h"
+#endif
+
 namespace media {
 class MediaPlayerImpl;
 namespace stream {
@@ -81,6 +86,9 @@ public:
 private:
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
+#ifdef CONFIG_MPEG2_TS
+	std::shared_ptr<TSParser> mTSParser;
+#endif
 	std::shared_ptr<StreamBuffer> mStreamBuffer;
 	std::shared_ptr<StreamBufferReader> mBufferReader;
 	std::shared_ptr<StreamBufferWriter> mBufferWriter;

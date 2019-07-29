@@ -99,6 +99,16 @@ bool InputHandler::open()
 			mInputDataSource->setChannels(2);
 		}
 
+		if (1) // assume ts file for debugging
+		{
+			auto tsParser = TSParser::create();
+			if (!tsParser) {
+				meddbg("%s[line : %d] Fail : TSParser::create failed\n", __func__, __LINE__);
+				return false;
+			}
+			mTSParser = tsParser;
+		}
+
 		if (registerDecoder(mInputDataSource->getAudioType(), mInputDataSource->getChannels(), mInputDataSource->getSampleRate())) {
 			start();
 			return true;
@@ -187,29 +197,29 @@ void InputHandler::destroyWorker()
 
 void *InputHandler::workerMain(void *arg)
 {
-	auto stream = static_cast<InputHandler *>(arg);
-	auto worker = stream->mInputDataSource;
+	auto handler = static_cast<InputHandler *>(arg);
+	auto source = handler->mInputDataSource;
 
-	while (stream->mIsWorkerAlive) {
+	while (handler->mIsWorkerAlive) {
 		// Waken up by a reading/stopping operation
-		stream->sleepWorker();
+		handler->sleepWorker();
 
 		// Worker may be stoped
-		if (!stream->mIsWorkerAlive) {
+		if (!handler->mIsWorkerAlive) {
 			break;
 		}
 
-		auto size = stream->mBufferWriter->sizeOfSpace();
+		auto size = handler->mBufferWriter->sizeOfSpace();
 		if (size > 0) {
 			auto buf = new unsigned char[size];
-			if (worker->read(buf, size) <= 0) {
+			if (source->read(buf, size) <= 0) {
 				// Error occurred, or inputting finished
-				stream->mBufferWriter->setEndOfStream();
+				handler->mBufferWriter->setEndOfStream();
 				delete[] buf;
 				break;
 			}
 
-			stream->writeToStreamBuffer(buf, size);
+			handler->writeToStreamBuffer(buf, size);
 			delete[] buf;
 		}
 	}
@@ -313,6 +323,15 @@ void InputHandler::onBufferUpdated(ssize_t change, size_t current)
 ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 {
 	assert(buf != nullptr);
+
+#ifdef CONFIG_MPEG2_TS
+	if (mTSParser) {
+		size_t ret = mTSParser->pushData(buf, size);
+		assert(ret == size);
+		size = ret;
+		size_t size = mTSParser->pullData(buf, size);
+	}
+#endif
 
 	size_t written = 0;
 

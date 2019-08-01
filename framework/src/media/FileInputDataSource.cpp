@@ -74,7 +74,10 @@ bool FileInputDataSource::open()
 		case AUDIO_TYPE_AAC:
 			if (!utils::header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
 				meddbg("header parsing failed\n");
-				return false;
+				channel = 2;
+				sampleRate = 48000;
+				// for test ts aac audio stream
+				//return false;
 			}
 			setSampleRate(sampleRate);
 			setChannels(channel);

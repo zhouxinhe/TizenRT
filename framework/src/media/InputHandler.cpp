@@ -23,6 +23,7 @@
 #include "InputHandler.h"
 #include "MediaPlayerImpl.h"
 #include "Decoder.h"
+#include <assert.h>
 
 #ifndef CONFIG_HANDLER_STREAM_BUFFER_SIZE
 #define CONFIG_HANDLER_STREAM_BUFFER_SIZE 4096
@@ -210,6 +211,11 @@ void *InputHandler::workerMain(void *arg)
 		}
 
 		auto size = handler->mBufferWriter->sizeOfSpace();
+#ifdef CONFIG_MPEG2_TS
+		if (handler->mTSParser && size > 0) {
+			size = handler->mTSParser->sizeOfSpace();
+		}
+#endif
 		if (size > 0) {
 			auto buf = new unsigned char[size];
 			if (source->read(buf, size) <= 0) {
@@ -328,8 +334,25 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	if (mTSParser) {
 		size_t ret = mTSParser->pushData(buf, size);
 		assert(ret == size);
+
+		static bool bPreParsed = false;
+		static std::vector<unsigned short> programs;
+
+		if (!bPreParsed) {
+			bPreParsed = mTSParser->PreParse();
+			if (!bPreParsed) {
+				// need more data for pre-parse
+				printf("pre parser once is not enough...\n");
+				return size;
+			}
+
+			mTSParser->getPrograms(programs);
+			printf("There's %lu programs in current ts\n", programs.size());
+			assert(programs.size() > 0);
+		}
+
 		size = ret;
-		size_t size = mTSParser->pullData(buf, size);
+		size = mTSParser->pullData(buf, size, programs[0]);
 	}
 #endif
 

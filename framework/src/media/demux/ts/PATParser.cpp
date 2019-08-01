@@ -1,4 +1,4 @@
-
+#include "DTVmwType.h"
 #include "PATParser.h"
 
 //------------------------------------------------------------------
@@ -108,6 +108,7 @@ bool TCPATParser::t_Parse(unsigned char* pData, int size)
 
 		return false;
 	}*/
+	printf("[%s] data %p size %d\n", __FUNCTION__, pData, size);
 
 	// Multi Section
 	//BP_PRINT( CCDebugBP::M_DTV, CCDebugBP::INFO, "TCPATParser::t_Parse Callded, CRC[%x]",crc32);
@@ -124,8 +125,8 @@ bool TCPATParser::t_Parse(unsigned char* pData, int size)
 				{
 					t_AddProgram(PAT_program_number(pData, a), PAT_program_map_PID(pData, a));
 
-					//BP_PRINT( CCDebugBP::M_DTV, CCDebugBP::INFO, "Program Number[%d] ", PAT_program_number(pData, a));
-					//BP_PRINT( CCDebugBP::M_DTV, CCDebugBP::INFO, "PMT PID[%d]\n", PAT_program_map_PID(pData, a));
+					BP_PRINT( CCDebugBP::M_DTV, CCDebugBP::INFO, "Program Number[%d] ", PAT_program_number(pData, a));
+					BP_PRINT( CCDebugBP::M_DTV, CCDebugBP::INFO, "PMT PID[%d]\n", PAT_program_map_PID(pData, a));
 				}
 				return IsValid();
 			}
@@ -155,7 +156,7 @@ TTPN TCPATParser::ProgramNumber(int index)
 
 	int curr = 0;
 	auto it = m_programMap.begin();
-	while (it == m_programMap.end()) {
+	while (it != m_programMap.end()) {
 		if (index == curr++) {
 			return (TTPN)it->first;
 		}
@@ -169,9 +170,11 @@ TTPID TCPATParser::ProgramPID(TTPN programNumber)
 {
 	auto it = m_programMap.find(programNumber);
 	if (it == m_programMap.end()) {
+		printf("[ProgramPID] pn %d -> PID_INVALID\n", programNumber);
 		return PID_INVALID;
 	}
 
+	printf("[ProgramPID] pn %d -> pmt pid 0x%x\n", programNumber, it->second);
 	return it->second;
 }
 
@@ -194,6 +197,7 @@ TTPID TCPATParser::ProgramPID(TTPN programNumber)
 */
 void TCPATParser::t_AddProgram(TTPN programNumber, TTPID programPID)
 {
+	printf("[%s] prog %d, pid 0x%x\n", __FUNCTION__, programNumber, programPID);
 	// program number 0x0000 is reserved to specify the network PID
 	// PMT monitoring�� ���� �ʴ´�.
 	// Network PID�� ��쿡�� ProgramList�� �������� �ʰ� ���� �����Ѵ�. Program map PID�� ��쿡�� ProgramList�� ����.

@@ -1,10 +1,11 @@
-
-#include <iostream>
+#include <assert.h>
+#include "DTVmwType.h"
 #include "Section.h"
 #include "SectionParser.h"
 #include "TSParser.h"
 #include "ParseManager.h"
 #include "PMTInstance.h"
+#include "PMTElementary.h"
 
 //#include "DescLinkage.h"
 
@@ -68,10 +69,12 @@ bool CParserManager::IsPatReceived(void)
 {
 	TCSectionParser* pTableParser = t_Parser(TCPATParser::TABLE_ID);
 	if (pTableParser == NULL) {
+		printf("[%s] no PAT parser\n", __FUNCTION__);
 		return false;
 	}
 
 	TCPATParser *pPATParser = static_cast<TCPATParser*>(pTableParser);
+	printf("[%s] return %d\n", __FUNCTION__, pPATParser->IsRecv());
 	return pPATParser->IsRecv();
 }
 
@@ -110,10 +113,71 @@ bool CParserManager::IsPmtReceived(void)
 	return false;
 }
 
+bool CParserManager::GetAudioPESPid(TTPN progNum, TTPID &pid)
+{
+	pid = -1;
+
+	TCPMTParser *pPMTParser = static_cast<TCPMTParser*>(t_Parser(TCPMTParser::TABLE_ID));
+	TCPMTInstance *pPMTInstance = pPMTParser->PMTInstance(progNum);
+
+
+	if (pPMTInstance && pPMTInstance->IsValid()) {
+		int i;
+		int num = pPMTInstance->NumOfElementary();
+		for (i = 0; i < num; i++) {
+			TCPMTElementary *pStream = pPMTInstance->PMTElementary(i);
+			assert(pStream);
+			switch (pStream->StreamType()) {
+				case STREAM_TYPE_AUDIO_AAC:
+				case STREAM_TYPE_AUDIO_MPEG2:
+				case STREAM_TYPE_AUDIO_AC3:
+				case STREAM_TYPE_AUDIO_MPEG1:
+				case STREAM_TYPE_AUDIO_HE_AAC:
+					pid = pStream->ElementaryPID();
+					printf("[%s] stream type 0x%02x, pid 0x%x\n", __FUNCTION__, pStream->StreamType(), pid);
+					break;
+				case 0x15: //?
+					break;
+			}
+		}
+	}
+
+	return (pid != -1);
+}
+
+bool CParserManager::GetPrograms(std::vector<TTPN> &programs)
+{
+    int i, num;
+
+	TCSectionParser* pTableParser = t_Parser(TCPATParser::TABLE_ID);
+	if (!pTableParser) {
+		return false;
+	}
+
+    TCPATParser* pPATParser = static_cast<TCPATParser*>(pTableParser);
+    if (!pPATParser->IsRecv())
+    {
+        printf("Pat IsRecv return false!!!\n");
+        return false;
+    }
+
+    programs.clear();
+
+    num = pPATParser->NumOfProgramList();
+    for (i = 0; i < num; i++) {
+        programs.push_back(pPATParser->ProgramNumber(i));
+        printf("%d: program number %d\n", i, pPATParser->ProgramNumber(i));
+    }
+
+    return true;
+}
+
 bool CParserManager::GetPmtPidInfo(void)
 {
     int i, num;
-    int pid;
+    short pid;
+
+	printf("[%s] \n", __FUNCTION__);
 
 	TCSectionParser* pTableParser = t_Parser(TCPATParser::TABLE_ID);
 	if (pTableParser == NULL)
@@ -135,7 +199,7 @@ bool CParserManager::GetPmtPidInfo(void)
     {
         pid = pPATParser->ProgramPID(pPATParser->ProgramNumber(i));
         m_PmtPids.push_back(pid);
-        //printf("pmt %d pid 0x%02x\n", i, pid);
+        printf("[%s] index %d, pmt pid 0x%02x\n", __FUNCTION__, i, pid);
     }
 
     return true;
@@ -143,17 +207,16 @@ bool CParserManager::GetPmtPidInfo(void)
 
 bool CParserManager::IsPmtPid(short pid)
 {
-    vector<int>::iterator iter;
+    auto iter = m_PmtPids.begin();;
+    while (iter != m_PmtPids.end()) {
+        if (*iter++ == pid) {
+			printf("[%s] pid 0x%x, true\n", __FUNCTION__, pid);
+			return true;
+		}
+	}
 
-    for (iter = m_PmtPids.begin(); iter != m_PmtPids.end(); ++iter)
-    {
-        if (*iter == pid)
-        {
-            return true;
-        }
-    }
-
-    return false;
+	printf("[%s] pid 0x%x, false\n", __FUNCTION__, pid);
+	return false;
 }
 
 bool CParserManager::BeingFiltered(short pid)
@@ -223,6 +286,7 @@ bool CParserManager::BeingFiltered(short pid)
 
 bool CParserManager::processSection(short pid, Section *pSection)
 {
+	printf("[processSection] pid 0x%04x ... \n", pid);
     if (!pSection->VerifyCrc32()) {
         printf("[CRC Error] section pid:0x%02x len:0x%04x tid:%02x tid_ext:%04x num %d/%d\n",
 			pid, pSection->Length(), pSection->Data()[0], ((pSection->Data()[3] << 8) | pSection->Data()[4]),
@@ -270,7 +334,7 @@ TCSectionParser* CParserManager::t_Parser(unsigned char tableId)
 {
 	auto it = t_tableParserHash.find(tableId);
 	if (it == t_tableParserHash.end()) {
-		// parser not exist
+		printf("[%s] do not find matched parser for taibleid: 0x%02x\n", __FUNCTION__, tableId);
 		return NULL;
 	}
 
@@ -283,6 +347,7 @@ bool CParserManager::t_Parse(short pid, Section *pSection)
     unsigned char *pData = pSection->Data();
 	TCSectionParser* pTableParser = t_Parser(SI_table_id(pData));
 	if (pTableParser == NULL) {
+		printf("No parser for tableid: 0x%02x\n", SI_table_id(pData));
 		return false;
 	}
 

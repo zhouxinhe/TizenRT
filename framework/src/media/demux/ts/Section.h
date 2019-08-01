@@ -1,6 +1,7 @@
 #ifndef __SECTION_H__
 #define __SECTION_H__
 
+#include <memory>
 #include <stdint.h>
 #include "DTVmwType.h"
 

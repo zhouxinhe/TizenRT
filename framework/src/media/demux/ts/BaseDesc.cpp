@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "DTVmwType.h"
 #include "BaseDesc.h"
 //#include "Descriptor.h"

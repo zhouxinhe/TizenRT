@@ -4,9 +4,8 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#include "crc.h"
 #include "Section.h"
+#include "../../utils/MediaUtils.h"
 
 using namespace std;
 
@@ -111,10 +110,10 @@ bool Section::AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu
 
 bool Section::VerifyCrc32(void)
 {
-    if (CRC::CRC_MPEG32(m_data, m_offset) == 0) {
+    if (media::utils::CRC32_MPEG2(m_data, m_offset) == 0) {
         return true;
     }
-
+	printf("Section::VerifyCrc32 failed\n");
     return false;
 }
 

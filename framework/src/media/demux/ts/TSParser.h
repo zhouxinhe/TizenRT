@@ -7,19 +7,26 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <memory>
 
-#include "crc.h"
-#include "Section.h"
-#include "SectionParser.h"
-#include "ParseManager.h"
-#include "PESPacket.h"
-
+//#include "crc.h"
+//#include "Section.h"
+//#include "SectionParser.h"
+//#include "ParseManager.h"
+//#include "PESPacket.h"
+//#include "PESParser.h"
+#include "DTVmwType.h"
 
 #define TS_PACKET_SIZE          188
-#define SYNC_COUNT    3
+#define SYNC_COUNT              3
 #define SYNCCODE                0x47
 #define PES_PACKET_CODE_PREFIX  0x000001
 #define TS_PACKET_HEAD_LEN      4
+
+class CParserManager;
+class Section;
+class PESParser;
+class PESPacket;
 
 namespace media {
 namespace stream {
@@ -55,18 +62,21 @@ private:
 class AdaptationField
 {
 public:
-    AdaptationField() : adaptation_field_length(0) ,
-                            discontinuity_indicator(0) ,
-                            random_access_indicator(0) {}
+    AdaptationField() : adaptation_field_length(0) {}
     virtual ~AdaptationField() {}
     bool Parse(unsigned char *pAdaptationField);
     unsigned char FieldLenght() { return adaptation_field_length; }
 
 private:
     unsigned char adaptation_field_length;
-    unsigned char discontinuity_indicator;
-    unsigned char random_access_indicator;
-    //...
+    unsigned char discontinuity_indicator : 1;
+    unsigned char random_access_indicator : 1;
+    unsigned char elementary_stream_priority_indicator : 1;
+    unsigned char pcr_flag : 1;
+    unsigned char opcr_flag : 1;
+    unsigned char splicing_point_flag : 1;
+    unsigned char transport_private_data_flag : 1;
+    unsigned char adaptation_field_extension_flag : 1;
 };
 
 class TSParser
@@ -74,19 +84,22 @@ class TSParser
 public:
     TSParser();
     virtual ~TSParser();
-    static std::shared_ptr<TSParser> create();
+    static std::shared_ptr<TSParser> create(void);
 
     bool init(void);
 	// push TS data
+	size_t sizeOfSpace(void);
 	size_t pushData(unsigned char *buf, size_t size);
 	// pull PES data
 	size_t pullData(unsigned char *buf, size_t size, TTPN progNum = -1);
 
-    int PreParse(void);
-    ssize_t Parse(void);
-    void Dump(void);
+    bool getPrograms(std::vector<TTPN> &progs);
 
-    bool ReadPESPacket(TSHeader &, unsigned char *, unsigned char **, unsigned short *);
+    int PreParse(void);
+    //int Parse(void);
+    void DumpBuffer(unsigned char *buffer, size_t size, const char *tips = "");
+
+    //bool ReadPESPacket(TSHeader &, unsigned char *, unsigned char **, unsigned short *);
     unsigned int GetTotalTsPacketNum() {return m_total_packet_num;}
     bool IsPsiPid(unsigned short u16Pid);
 	bool IsPidNeeded(unsigned short pid);
@@ -99,7 +112,7 @@ private:
 
     bool PSIUnpack(TSHeader &tsHeader, Section **ppSection);
 	bool PESUnpack(TSHeader &tsHeader, PESPacket **ppPESPacket);
-	int Adjust(unsigned char *pPacketData);
+	int Adjust(unsigned char *pPacketData, size_t readOffset);
 	void ResetPidSection(void);
 	//void StatusReport(int count = 10000);
 	std::shared_ptr<CParserManager> getParserManager(void);
@@ -121,8 +134,9 @@ private:
 	size_t mReaderOffset;
 
 	std::shared_ptr<CParserManager> mParserManager;
-	unsigned short mPESPid;
+	TTPID mPESPid;
 	PESPacket *mPESPacket;
+	std::shared_ptr<PESParser> mPESParser;
 	size_t mPESDataUsed;
 
 };

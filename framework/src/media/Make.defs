@@ -54,9 +54,7 @@ ifeq ($(CONFIG_MEDIA_PLAYER), y)
 CXXSRCS += MediaPlayer.cpp PlayerWorker.cpp MediaPlayerImpl.cpp PlayerObserverWorker.cpp
 CXXSRCS += InputHandler.cpp
 CXXSRCS += InputDataSource.cpp FileInputDataSource.cpp
-CXXSRCS += HttpInputDataSource.cpp
 
-CXXSRCS += crc.cpp
 CXXSRCS += BaseDesc.cpp DescDefault.cpp DescMetadataPointer.cpp
 CXXSRCS += DescConfBase.cpp DescConfDVB.cpp
 CXXSRCS += DescriptorBase.cpp DescriptorDVB.cpp DescriptorHash.cpp Descriptor.cpp
@@ -68,6 +66,7 @@ CXXSRCS += PESPacket.cpp PESParser.cpp
 CXXSRCS += TSParser.cpp
 
 ifeq ($(CONFIG_ENABLE_CURL), y)
+CXXSRCS += HttpInputDataSource.cpp
 CXXSRCS += HttpStream.cpp
 endif
 CXXSRCS += Decoder.cpp audio_decoder.cpp wav_decoder_api.cpp

@@ -8,9 +8,6 @@
 class PESPacket
 {
 public:
-    static int SavePacket(PESPacket *pPacket);
-
-public:
     PESPacket();
     PESPacket(unsigned short u16Pid, unsigned char continuityCounter, unsigned char *pu8Data, unsigned short u16Size);
     virtual ~PESPacket();
@@ -27,14 +24,15 @@ public:
     unsigned char  StreamId(void) { return m_stream_id; }
 
 private:
-    unsigned short m_offset;
     unsigned short m_pid;
-    unsigned char *m_data;
     unsigned char  m_continuity_counter;
+    unsigned char *m_data;
+    unsigned short m_data_length;
+    unsigned short m_offset;
+
     unsigned int   m_packet_start_code_prefix; // 24bits: 0x000001
     unsigned char  m_stream_id; // 1 byte
     unsigned short m_packet_length;
-    unsigned short m_data_length;
 };
 
 #endif

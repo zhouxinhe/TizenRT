@@ -2,9 +2,10 @@
 #include <iostream>
 #include <iomanip>
 #include <stdio.h>
-
-#include "crc.h"
+#include <string.h>
+#include <assert.h>
 #include "PESPacket.h"
+#include "../../utils/MediaUtils.h"
 
 using namespace std;
 
@@ -85,11 +86,12 @@ bool PESPacket::AppendData(unsigned short u16Pid, unsigned char continuityCounte
 
 bool PESPacket::VerifyCrc32()
 {
-    if (CRC::CRC_MPEG32(m_data, m_offset) == 0)
+    if (media::utils::CRC32_MPEG2(m_data, m_offset) == 0)
     {
         return true;
     }
 
+	printf("PESPacket::VerifyCrc32 failed\n");
     return false;
 }
 
@@ -101,47 +103,5 @@ bool PESPacket::ValidPacket()
 bool PESPacket::IsPESPacketCompleted()
 {
 	return (m_data_length == m_offset);
-}
-
-int PESPacket::SavePacket(PESPacket *pPacket)
-{
-	if (pPacket == NULL)
-		return -1;
-
-	// write pes data
-
-	unsigned char *pu8Data = pPacket->Data() + 6;
-	unsigned char pts_dts_flag = (pu8Data[1] & 0xc0) >> 6;
-	//unsigned char header_data_length = pu8Data[2];
-	if (pts_dts_flag & 0x2)
-	{	// has PTS
-	#if 0
-		unsigned long long pts; // TODO: 64bits type
-		unsigned long long pts32_30;
-		unsigned short pts29_15, pts14_0;
-		#define MKWORD(h, l) (((h) << 8) | (l))
-
-		pts32_30 = (pu8Data[i] & 0x0e) >> 1;
-		pts29_15 = MKWORD(pu8Data[i+1], pu8Data[i+2] & 0xfe) >> 1;
-		pts14_0  = MKWORD(pu8Data[i+3], pu8Data[i+4] & 0xfe) >> 1;
-		pts = (pts32_30 << 30) | (pts29_15 << 15) | pts14_0;
-		pts = pts / 90000;
-	#endif
-//		unsigned char buffer[5+4+2]; // pts + offset + len
-//		memcpy(buffer, pu8Data + 3, 5); // 5bytes PTS
-//
-//		buffer[5] = (offset >> 24) & 0xFF;
-//		buffer[6] = (offset >> 16) & 0xFF;
-//		buffer[7] = (offset >>  8) & 0xFF;
-//		buffer[8] = (offset      ) & 0xFF;
-//
-//		unsigned short len = pPacket->DataLength();
-//		buffer[9]  = (len >> 8) & 0xFF;
-//		buffer[10] = (len     ) & 0xFF;
-
-		// write index data
-	}
-
-	return 0;
 }
 

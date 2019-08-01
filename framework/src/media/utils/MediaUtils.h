@@ -109,6 +109,12 @@ bool writeWavHeader(FILE *fp, unsigned int channel, unsigned int sampleRate, aud
  * @since TizenRT v2.1 PRE
  */
 unsigned int splitChannel(unsigned int layout, const signed short *stream, unsigned int frames, unsigned int channels, ...);
+
+/*
+ * Calculates the MPEG2 32 bit CRC
+ */
+unsigned int CRC32_MPEG2(unsigned char *data, unsigned int length);
+
 } // namespace utils
 } // namespace media
 

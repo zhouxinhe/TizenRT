@@ -20,7 +20,7 @@ class CParserManager
 private:
     //static CParserManager *m_pTableParse;  // singleton
 
-    std::vector<int> m_PmtPids;
+    std::vector<short> m_PmtPids;
 
 	//TCFilterManager t_filterManager;
 
@@ -43,7 +43,8 @@ public:
 	bool IsPatReceived(void);
 	bool IsPmtReceived(TTPN progNum);
 	bool IsPmtReceived(void);
-
+	bool GetAudioPESPid(TTPN progNum, TTPID &pid);
+    bool GetPrograms(std::vector<TTPN> &programs);
     bool GetPmtPidInfo(void);
     bool IsPmtPid(short pid);
 

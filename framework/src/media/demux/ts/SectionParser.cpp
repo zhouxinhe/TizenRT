@@ -150,13 +150,14 @@ void TCSectionParser::Initialize(void)
 bool TCSectionParser::Parse(short pid, unsigned char* pData)
 {
 	m_bRecv                  = true;
-
 	t_pid                    = pid;
 	t_pSectionData           = pData;
 	t_tableId                = SI_table_id(pData);
 	t_sectionSyntaxIndicator = SI_section_syntax_indicator(pData);
 	t_privateIndicator       = SI_private_indicator(pData);
 	t_sectionLength          = SI_section_length(pData);
+
+	printf("[%s] table id: 0x%02x\n", __FUNCTION__, t_tableId);
 
 	if (t_sectionSyntaxIndicator)
 	{

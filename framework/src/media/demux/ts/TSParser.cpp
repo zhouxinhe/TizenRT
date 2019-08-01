@@ -4,18 +4,18 @@
 #include <map>
 
 #include <stdio.h>
+#include <string.h>
 #include <debug.h>
 #include <assert.h>
 
-
+#include "Section.h"
+//#include "SectionParser.h"
 #include "ParseManager.h"
 #include "TSParser.h"
 #include "PESPacket.h"
-//#include "DVBEITItem.h"
-//#include "DVBEITItemEvent.h"
+#include "PESParser.h"
 #include "BaseDesc.h"
 #include "Descriptor.h"
-//#include "DescShortEvent.h"
 
 #include "../../StreamBuffer.h"
 #include "../../StreamBufferReader.h"
@@ -70,8 +70,15 @@ bool AdaptationField::Parse(unsigned char *pAdaptationField)
 		return true;
 	}
 
-	discontinuity_indicator = (pAdaptationField[1] & 0x80) >> 7;
-	random_access_indicator = (pAdaptationField[1] & 0x40) >> 6;
+	discontinuity_indicator              = (pAdaptationField[1] >> 7) & 0x01;
+	random_access_indicator              = (pAdaptationField[1] >> 6) & 0x01;
+	elementary_stream_priority_indicator = (pAdaptationField[1] >> 5) & 0x01;
+	pcr_flag                             = (pAdaptationField[1] >> 4) & 0x01;
+	opcr_flag                            = (pAdaptationField[1] >> 3) & 0x01;
+	splicing_point_flag                  = (pAdaptationField[1] >> 2) & 0x01;
+	transport_private_data_flag          = (pAdaptationField[1] >> 1) & 0x01;
+	adaptation_field_extension_flag      = (pAdaptationField[1]) & 0x01;
+
 	//printf("AdaptationField: field_length %d discontinuity %d random_access %d\n",
 	//					      adaptation_field_length, discontinuity_indicator, random_access_indicator);
 
@@ -82,9 +89,13 @@ TSParser::TSParser()
 	: m_data(nullptr)
 	, m_total_packet_num(0)
 	, mPESPid(-1)
-	, mPESPacket(nullptr)
 	, mReaderOffset(0)
+	, mPESDataUsed(0)
 {
+	mPatRecvFlag = false;
+	mPmtRecvFlag = false;
+	mPESPacket = NULL;
+	// init other members
 }
 
 TSParser::~TSParser()
@@ -96,7 +107,7 @@ TSParser::~TSParser()
 	// delete pPESPacket
 }
 
-std::shared_ptr<TSParser> TSParser::create()
+std::shared_ptr<TSParser> TSParser::create(void)
 {
 	auto instance = std::make_shared<TSParser>();
 	if (instance && instance->init()) {
@@ -134,6 +145,12 @@ bool TSParser::init(void)
 		return false;
 	}
 
+	mPESParser = std::make_shared<PESParser>();
+	if (!mPESParser) {
+		printf("mPESParser is nullptr!\n");
+		return false;
+	}
+
     m_data = new unsigned char[TS_PACKET_SIZE];
     if (m_data == nullptr)
     {
@@ -149,6 +166,11 @@ std::shared_ptr<CParserManager> TSParser::getParserManager(void)
 	return mParserManager;
 }
 
+size_t TSParser::sizeOfSpace(void)
+{
+	return mBufferWriter->sizeOfSpace();
+}
+
 size_t TSParser::pushData(unsigned char *buf, size_t size)
 {
 	size_t written = 0;
@@ -161,63 +183,73 @@ size_t TSParser::pushData(unsigned char *buf, size_t size)
 
 size_t TSParser::pullData(unsigned char *buf, size_t size, TTPN progNum)
 {
-	size_t ret = 0;
-	if (mPESPacket) {
-		// get remaining payload in last PES packet
-		if (size > mPESPacket->DataLength() - mPESDataUsed) {
-			size = mPESPacket->DataLength() - mPESDataUsed;
-		}
+	printf("[%s] progNum %d, size %lu\n", __FUNCTION__, progNum, size);
 
-		memcpy(buf, mPESPacket->Data() + mPESDataUsed, size);
-		mPESDataUsed += size;
-
-		if (mPESDataUsed == mPESPacket->DataLength()) {
-			delete mPESPacket;
-			mPESPacket = NULL;
-			mPESDataUsed = 0;
-		}
-
-		return size;
-	}
-
-	if (!mPmtRecvFlag) {
-		// Need to pre-parse ts data to get PAT and PMT information
-		int res = PreParse();
-		if (res <= 0) {
-			// data not enough or error occurred
+	if (mPESPid == -1) {
+		// setup PES pid
+		if (!mParserManager->GetAudioPESPid(progNum, mPESPid)) {
+			printf("[%s] get audio pes pid failed\n", __FUNCTION__);
 			return 0;
 		}
 
-		// select program and setup PES pid
-
+		printf("[%s] setup audio pes pid: 0x%x\n", __FUNCTION__, mPESPid);
 	}
 
-	Parse();
+	size_t fill = 0;
+	size_t need;
+	while (fill < size) {
+		need = size - fill;
+		if (mPESPacket) {
+			printf("[%s] already used %lu, packetlen %lu\n", __FUNCTION__, mPESDataUsed, mPESParser->ESDataLength());
+			// get remaining payload in last PES packet
+			if (need > mPESParser->ESDataLength() - mPESDataUsed) {
+				need = mPESParser->ESDataLength() - mPESDataUsed;
+			}
 
-	// refine logic, remove dumplicated code
-	if (mPESPacket) {
-		mPESDataUsed = 0;
+			memcpy(&buf[fill], mPESParser->ESData() + mPESDataUsed, need);
+			mPESDataUsed += need;
+			fill += need;
 
-		if (size > mPESPacket->DataLength()) {
-			size = mPESPacket->DataLength();
+			if (mPESDataUsed == mPESParser->ESDataLength()) {
+				printf("[%s] read whole es data in one pes packet\n", __FUNCTION__);
+				delete mPESPacket;
+				mPESPacket = NULL;
+				mPESDataUsed = 0;
+			}
+
+			printf("[%s] read %lu/%lu bytes\n", __FUNCTION__, fill, size);
+			continue;
 		}
 
-		memcpy(buf, mPESPacket->Data(), size);
-		mPESDataUsed += size;
+		// get new PES packet
+		if (getPESPacket(&mPESPacket) <= 0) {
+			// 0 / -1
+			break;
+		}
 
-		if (mPESDataUsed == mPESPacket->DataLength()) {
-			delete mPESPacket;
-			mPESPacket = NULL;
+		// dump PES packet
+		assert(mPESPacket);
+		//DumpBuffer(mPESPacket->Data(), mPESPacket->DataLength(), "PES packet");
+
+		// parse PES packet
+		if (mPESParser->Parse(mPESPacket->Data(), mPESPacket->DataLength())) {
+			//DumpBuffer(mPESParser->ESData(), mPESParser->ESDataLength(), "ES");
 			mPESDataUsed = 0;
+		} else {
+			printf("[%s] PES parse failed\n", __FUNCTION__);
+			assert(0);
 		}
-
-		return size;
 	}
 
-	return 0;
+	return fill;
 }
 
-int TSParser::Adjust(unsigned char *pPacketData)
+bool TSParser::getPrograms(std::vector<TTPN> &progs)
+{
+	return mParserManager->GetPrograms(progs);
+}
+
+int TSParser::Adjust(unsigned char *pPacketData, size_t readOffset)
 {
 	unsigned char buffer[TS_PACKET_SIZE];
 	TSHeader tsHeader;
@@ -225,10 +257,7 @@ int TSParser::Adjust(unsigned char *pPacketData)
 	int syncOffset;
 	int count;
 
-	//if (mBufferReader->sizeOfData() < (SYNC_COUNT * TS_PACKET_SIZE)) {
-	//	// data in buffer is not enough
-	//	return -1; // TODO: return error
-	//}
+	printf("Adjust called at offet: 0x %08x\n", readOffset);
 
     for (syncOffset = 0; syncOffset < TS_PACKET_SIZE; syncOffset++) {
         if (pPacketData[syncOffset] != SYNCCODE) {
@@ -237,7 +266,7 @@ int TSParser::Adjust(unsigned char *pPacketData)
 
 		// found sync byte, now do sync verification!
 		for (count = 1; count < SYNC_COUNT; count++) {
-			szRead = mBufferReader->copy(buffer, TS_PACKET_SIZE, mReaderOffset + syncOffset + count * TS_PACKET_SIZE);
+			szRead = mBufferReader->copy(buffer, TS_PACKET_SIZE, readOffset + syncOffset + count * TS_PACKET_SIZE);
 			if (szRead != TS_PACKET_SIZE) {
 				// data in buffer is not enough for sync verification
 				return -1;
@@ -478,12 +507,9 @@ void TSParser::ResetPidSection(void)
 
 bool TSParser::IsPsiPid(unsigned short pid)
 {
+	//printf("[%s] pid 0x%x\n", __FUNCTION__, pid);
     switch (pid) {
         case TCPATParser::PAT_PID:
-			if (mPatRecvFlag) {
-				// PAT is received already, we don't detect PAT version currently.
-				return false;
-			}
 			return true;
 
         default:
@@ -493,50 +519,8 @@ bool TSParser::IsPsiPid(unsigned short pid)
 
 bool TSParser::IsPESPid(unsigned short pid)
 {
+	//printf("[%s] pid 0x%x = %x \n", __FUNCTION__, pid, mPESPid);
 	return (pid == mPESPid);
-}
-
-// return value
-// 0: run out of ts packets in buffer
-// TS_PACKET_SIZE: got a ts packet
-// -1: negative value means failure, maybe not a transport stream
-ssize_t TSParser::readPacket(unsigned char *buf, size_t size)
-{
-	TSHeader tsHeader;
-
-	if (mBufferReader->sizeOfData() < TS_PACKET_SIZE) {
-		// data in buffer is not enough
-		return 0;
-	}
-
-	// read packet data from stream buffer
-	assert(size == TS_PACKET_SIZE);
-	size = mBufferReader->read(buf, TS_PACKET_SIZE, false);
-	assert(size == TS_PACKET_SIZE);
-
-	// packet validation
-    if (!tsHeader.Parse(buf)) {
-		int offset = Adjust(buf);
-        if (offset < 0) {
-			// data in buffer is not enough to find a valid packet
-            return 0;
-        }
-
-		if (offset >= TS_PACKET_SIZE) {
-			// sync failed
-			return -1;
-		}
-
-		assert(offset != 0);
-		memcpy(buf, buf + offset, TS_PACKET_SIZE - offset);
-		size = mBufferReader->read(buf + TS_PACKET_SIZE - offset, offset, false);
-		assert(size == offset);
-
-		//tsHeader.Parse(buf);
-	}
-
-	// packet loaded
-	return TS_PACKET_SIZE;
 }
 
 // return value
@@ -546,7 +530,7 @@ ssize_t TSParser::readPacket(unsigned char *buf, size_t size)
 ssize_t TSParser::loadPacket(unsigned char *buf, size_t size, bool sync)
 {
 	TSHeader tsHeader;
-	int offset = 0;
+	int syncOffset = 0;
 
 	// load one ts packet data from stream buffer
 	assert(size == TS_PACKET_SIZE);
@@ -558,53 +542,34 @@ ssize_t TSParser::loadPacket(unsigned char *buf, size_t size, bool sync)
 
 	// if force sync or packet invalid, then need resync...
     if (sync || !tsHeader.Parse(buf)) {
-		offset = Adjust(buf);
-        if (offset < 0) {
+		syncOffset = Adjust(buf, mReaderOffset);
+        if (syncOffset < 0) {
 			// data in buffer is not enough to find a valid packet
             return 0; // TODO: add error code
         }
 
-		if (offset >= TS_PACKET_SIZE) {
+		if (syncOffset >= TS_PACKET_SIZE) {
 			// sync failed
 			return -1;
 		}
 
-		if (offset != 0) {
-			size = mBufferReader->copy(buf, TS_PACKET_SIZE, mReaderOffset + (size_t)offset);
+		if (syncOffset != 0) {
+			size = mBufferReader->copy(buf, TS_PACKET_SIZE, mReaderOffset + (size_t)syncOffset);
 			assert(size == TS_PACKET_SIZE);
-			mReaderOffset += offset;
+			mReaderOffset += syncOffset;
 		}
 
 		//tsHeader.Parse(buf); // need reparse header if tsHeader is class member
 	}
 
+	//DumpBuffer(buf, size, "TS Packet");
+
 	// valid ts packet loaded
 	mReaderOffset += TS_PACKET_SIZE;
+	mBufferReader->read(NULL, mReaderOffset, false);
+	mReaderOffset = 0;
+
 	return TS_PACKET_SIZE;
-}
-
-
-// return value
-// 0: run out of ts packets in buffer
-// 1: got a PES packet
-// -1: negative value means failure, maybe not a transport stream
-int TSParser::getPESPacket(PESPacket **ppPESPacket)
-{
-	ssize_t ret;
-	TSHeader tsHeader;
-
-	while (ret = loadPacket(m_data, TS_PACKET_SIZE, false) && ret == TS_PACKET_SIZE) {
-		tsHeader.Parse(m_data);
-		if (IsPESPid(tsHeader.Pid())) {
-			// PES packets
-			if (PESUnpack(tsHeader, ppPESPacket)) {
-				// get new PES packet
-				return 1;
-			}
-		}
-	}
-
-	return ret;
 }
 
 
@@ -612,25 +577,26 @@ int TSParser::getPESPacket(PESPacket **ppPESPacket)
 // 0: run out of ts packets in buffer
 // TS_PACKET_SIZE: got a PES packet
 // -1: negative value means failure, maybe not a transport stream
-int TSParser::Parse(void)
+int TSParser::getPESPacket(PESPacket **ppPESPacket)
 {
-	int ret;
+	ssize_t ret;
+	TSHeader tsHeader;
 
-	// read and parse ts packets as much as possible,
-	// until we collect a entire PES packet or run out of ts packets in stream buffer.
-	while (ret = readPacket(m_data, TS_PACKET_SIZE) && ret == TS_PACKET_SIZE) {
-		TSHeader tsHeader;
+	//printf("[%s] \n", __FUNCTION__);
+
+	while ((ret = loadPacket(m_data, TS_PACKET_SIZE, false)) && (ret == TS_PACKET_SIZE)) {
 		tsHeader.Parse(m_data);
 		if (IsPESPid(tsHeader.Pid())) {
 			// PES packets
-			PESPacket *pPESPacket = nullptr;
-			if (PESUnpack(tsHeader, &pPESPacket)) {
-				mPESPacket = pPESPacket;
-				break;
+			if (PESUnpack(tsHeader, ppPESPacket)) {
+				// get new PES packet
+				printf("[%s] succeed\n", __FUNCTION__);
+				return ret;
 			}
 		}
 	}
 
+	//printf("[%s] failed, ret %lu\n", __FUNCTION__, ret);
 	return ret;
 }
 
@@ -644,6 +610,8 @@ int TSParser::PreParse(void)
 {
 	TSHeader tsHeader;
 	ssize_t ret;
+
+	printf("[%s] \n", __FUNCTION__);
 
 	// Load 1st ts packet with force resync
 	ret = loadPacket(m_data, TS_PACKET_SIZE, true);
@@ -677,6 +645,19 @@ int TSParser::PreParse(void)
 	}
 
 	return ret;
+}
+
+void TSParser::DumpBuffer(unsigned char *buffer, size_t size, const char *tips)
+{
+	size_t i;
+	printf("\n### %s data %p size 0x%x(%lu) ###", tips, buffer, size, size);
+	for (i = 0; i < size; i++) {
+		if (i % 16 == 0) {
+			printf("\n");
+		}
+		printf("%02x ", buffer[i]);
+	}
+	printf("\n\n");
 }
 
 } // namespace stream

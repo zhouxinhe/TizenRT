@@ -1,5 +1,3 @@
-#include "HashInt.h"
-#include "DescriptorBase.h"
 #include "Descriptor.h"
 #include "DescriptorDVB.h"
 
@@ -13,7 +11,6 @@ TCDescriptor::TCDescriptor() : m_pImp(0)
 
 TCDescriptor::~TCDescriptor()
 {
-    ASSERT(m_pImp);
     delete m_pImp;
     m_pImp = NULL;
 }

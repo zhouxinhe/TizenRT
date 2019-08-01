@@ -9,8 +9,8 @@
 #include <assert.h>
 
 #include "Section.h"
-//#include "SectionParser.h"
 #include "ParseManager.h"
+#include "PMTElementary.h"
 #include "TSParser.h"
 #include "PESPacket.h"
 #include "PESParser.h"
@@ -20,7 +20,6 @@
 #include "../../StreamBuffer.h"
 #include "../../StreamBufferReader.h"
 #include "../../StreamBufferWriter.h"
-
 
 
 using namespace std;
@@ -187,7 +186,8 @@ size_t TSParser::pullData(unsigned char *buf, size_t size, TTPN progNum)
 
 	if (mPESPid == -1) {
 		// setup PES pid
-		if (!mParserManager->GetAudioPESPid(progNum, mPESPid)) {
+		unsigned char streamType;
+		if (!mParserManager->GetAudioStreamInfo(progNum, streamType, mPESPid)) {
 			printf("[%s] get audio pes pid failed\n", __FUNCTION__);
 			return 0;
 		}
@@ -247,6 +247,28 @@ size_t TSParser::pullData(unsigned char *buf, size_t size, TTPN progNum)
 bool TSParser::getPrograms(std::vector<TTPN> &progs)
 {
 	return mParserManager->GetPrograms(progs);
+}
+
+audio_type_t TSParser::getAudioType(TTPN progNum)
+{
+	unsigned char streamType;
+	TTPID streamPid;
+	if (mParserManager->GetAudioStreamInfo(progNum, streamType, streamPid)) {
+		switch (streamType) {
+		case STREAM_TYPE_AUDIO_AAC:
+		case STREAM_TYPE_AUDIO_HE_AAC:
+			return AUDIO_TYPE_AAC;
+		case STREAM_TYPE_AUDIO_MPEG1:
+			return AUDIO_TYPE_MP3;
+		default:
+			printf("unsupported audio type 0x%x\n", streamType);
+			break;
+		}
+	} else {
+		printf("didn't get any audio stream info\n");
+	}
+
+	return AUDIO_TYPE_INVALID;
 }
 
 int TSParser::Adjust(unsigned char *pPacketData, size_t readOffset)

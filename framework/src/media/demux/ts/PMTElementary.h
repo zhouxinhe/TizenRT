@@ -8,7 +8,6 @@ enum EStreamType
 {
 	STREAM_TYPE_AUDIO_MPEG1 			= 0x03, //Common
 	STREAM_TYPE_AUDIO_MPEG2 			= 0x04, //Common
-	STREAM_TYPE_PRIVATE_PES_PACKET		= 0x06, //DVB
 	STREAM_TYPE_AUDIO_AAC				= 0x0F, //Common
 	STREAM_TYPE_AUDIO_HE_AAC			= 0x11, //Common
 	STREAM_TYPE_AUDIO_AC3				= 0x81, //Common

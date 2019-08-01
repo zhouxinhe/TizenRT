@@ -20,6 +20,8 @@
 #include <debug.h>
 #include <errno.h>
 
+#include "../demux/ts/TSParser.h"
+
 namespace media {
 namespace utils {
 
@@ -618,6 +620,44 @@ bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t
 		free(header);
 	}
 	return true;
+}
+
+bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+{
+	// create temporary ts parser
+	auto tsParser = media::stream::TSParser::create();
+	if (!tsParser) {
+		meddbg("TSParser::create failed\n");
+		return false;
+	}
+
+	// push the given (ts) data into tsparser buffer
+	size_t ret = tsParser->pushData(buffer, bufferSize);
+	medvdbg("TSParser accept data %u/%u\n", ret, bufferSize);
+
+	// do parsing PAT & PMT
+	if (!tsParser->PreParse()) {
+		meddbg("TSParser parse failed\n");
+		return false;
+	}
+
+	// get programs in ts, usually we select the 1th one as default.
+	std::vector<unsigned short> programs;
+	tsParser->getPrograms(programs);
+	medvdbg("There's %lu programs in the given transport stream\n", programs.size());
+	if (programs.empty()) {
+		meddbg("TSParser didn't find any program! Failed!\n");
+		return false;
+	}
+
+	// get audio type (from PMT component stream type field)
+	*audioType = tsParser->getAudioType(programs[0]);
+
+	// get ES data (we expect the given ts data is enough to form a PES packet)
+	unsigned char audioES[64]; // 64 bytes should be enough for header parsing
+	size_t audioESLen = tsParser->pullData(audioES, sizeof(audioES), programs[0]);
+
+	return header_parsing(audioES, audioESLen, *audioType, channel, sampleRate, pcmFormat);
 }
 
 struct wav_header_s {

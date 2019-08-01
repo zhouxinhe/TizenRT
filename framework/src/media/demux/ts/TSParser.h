@@ -9,7 +9,9 @@
 #include <list>
 #include <memory>
 
-//#include "crc.h"
+#include <media/MediaTypes.h>
+
+
 //#include "Section.h"
 //#include "SectionParser.h"
 //#include "ParseManager.h"
@@ -94,6 +96,7 @@ public:
 	size_t pullData(unsigned char *buf, size_t size, TTPN progNum = -1);
 
     bool getPrograms(std::vector<TTPN> &progs);
+	audio_type_t getAudioType(TTPN progNum);
 
     int PreParse(void);
     //int Parse(void);

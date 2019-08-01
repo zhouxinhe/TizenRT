@@ -113,13 +113,10 @@ bool CParserManager::IsPmtReceived(void)
 	return false;
 }
 
-bool CParserManager::GetAudioPESPid(TTPN progNum, TTPID &pid)
+bool CParserManager::GetAudioStreamInfo(TTPN progNum, unsigned char &streamType, TTPID &pid)
 {
-	pid = -1;
-
 	TCPMTParser *pPMTParser = static_cast<TCPMTParser*>(t_Parser(TCPMTParser::TABLE_ID));
 	TCPMTInstance *pPMTInstance = pPMTParser->PMTInstance(progNum);
-
 
 	if (pPMTInstance && pPMTInstance->IsValid()) {
 		int i;
@@ -133,16 +130,15 @@ bool CParserManager::GetAudioPESPid(TTPN progNum, TTPID &pid)
 				case STREAM_TYPE_AUDIO_AC3:
 				case STREAM_TYPE_AUDIO_MPEG1:
 				case STREAM_TYPE_AUDIO_HE_AAC:
+					streamType = pStream->StreamType();
 					pid = pStream->ElementaryPID();
-					printf("[%s] stream type 0x%02x, pid 0x%x\n", __FUNCTION__, pStream->StreamType(), pid);
-					break;
-				case 0x15: //?
-					break;
+					printf("[%s] stream type 0x%02x, pid 0x%x\n", __FUNCTION__, streamType, pid);
+					return true;
 			}
 		}
 	}
 
-	return (pid != -1);
+	return false;
 }
 
 bool CParserManager::GetPrograms(std::vector<TTPN> &programs)

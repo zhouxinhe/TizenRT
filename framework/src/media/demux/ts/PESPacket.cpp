@@ -19,14 +19,14 @@ PESPacket::PESPacket()
 }
 
 PESPacket::PESPacket(unsigned short u16Pid, unsigned char continuityCounter, unsigned char *pu8Data, unsigned short u16Size)
-: m_packet_start_code_prefix(0),
-  m_stream_id(0),
-  m_data(NULL),
-  m_packet_length(0),
-  m_data_length(0),
-  m_offset(0),
-  m_pid(u16Pid),
-  m_continuity_counter(continuityCounter)
+    : m_packet_start_code_prefix(0)
+    , m_stream_id(0)
+    , m_data(NULL)
+    , m_packet_length(0)
+    , m_data_length(0)
+    , m_offset(0)
+    , m_pid(u16Pid)
+    , m_continuity_counter(continuityCounter)
 {
 	assert(u16Size >= 6);
 	m_packet_start_code_prefix = (pu8Data[0] << 16) | (pu8Data[1] << 8) | pu8Data[2];

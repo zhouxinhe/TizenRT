@@ -1,6 +1,6 @@
 #include "DTVmwType.h"
 #include "PMTElementary.h"
-#include "Descriptor.h"
+//#include "Descriptor.h"
 #include "PMTParser.h"
 
 #define ES_BODY_LEN					(5)
@@ -37,7 +37,7 @@ TCPMTElementary::TCPMTElementary()
 */
 TCPMTElementary::~TCPMTElementary()
 {
-	m_descriptorHash.Destroy();
+	//m_descriptorHash.Destroy();
 }
 
 /*!
@@ -55,7 +55,7 @@ TCPMTElementary::~TCPMTElementary()
 */
 bool TCPMTElementary::Create(void)
 {
-	return m_descriptorHash.Create(TCDescriptor::DEFAULT_NUM_OF_DESC);
+	return true;//m_descriptorHash.Create(TCDescriptor::DEFAULT_NUM_OF_DESC);
 }
 
 /*!
@@ -142,15 +142,16 @@ TTPID TCPMTElementary::ElementaryPID(void)
 */
 int TCPMTElementary::Parse(unsigned char* pData)
 {
-	INT_ASSERT(m_descriptorHash.FlagCreate() != false);
+	//INT_ASSERT(m_descriptorHash.FlagCreate() != false);
 
-	TCDescriptor desc;
 	m_esInfoLength = PMT_ES_info_length(pData);
 
 	m_streamType     = PMT_stream_type(pData);
 	m_elementary_PID = PMT_elementary_PID(pData);
 
-	desc.Parse(&pData[ES_BODY_LEN], m_esInfoLength, m_descriptorHash, TCPMTParser::TABLE_ID);
+	// Ignore ES info descriptors
+	//TCDescriptor desc;
+	//desc.Parse(&pData[ES_BODY_LEN], m_esInfoLength, m_descriptorHash, TCPMTParser::TABLE_ID);
 	return ES_BODY_LEN + m_esInfoLength;
 }
 

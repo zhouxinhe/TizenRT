@@ -3,12 +3,12 @@
 
 #include "DTVmwType.h"
 #include "BaseSection.h"
-#include "DescriptorHash.h"
+//#include "DescriptorHash.h"
 
 class TCPMTElementary;
 
 //! The class for parsing the PMT packet
-class TCPMTInstance : public TCBaseSection , public IDescriptorContainer
+class TCPMTInstance : public TCBaseSection //, public IDescriptorContainer
 {
 private:
 
@@ -31,7 +31,7 @@ private:
 	//! The list of the stream
 	PCList    m_streamList;
 	//! The hash table of the descriptor
-	TCDescriptorHash m_descriptorHash;
+	//TCDescriptorHash m_descriptorHash;
 	//! Parses the packet
 	bool m_Parse(unsigned char* pData, int size);
 public:
@@ -63,7 +63,7 @@ public:
 	//! Program Info Length�� ��ȯ�Ѵ�(Outer Descriptor�� ����).
 	short            ProgramInfoLength(void)    { return m_programInfoLength; }
 
-#if 1
+#if 0
     /// @name API interface from IDescriptorContainer.  This class provides the
     /// IDescriptorContainer API.  Any class that uses this class can then
     /// also derive from IDescriptorContainer to provide a consistent API for

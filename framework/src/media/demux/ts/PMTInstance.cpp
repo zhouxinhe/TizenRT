@@ -1,5 +1,5 @@
 #include "DTVmwType.h"
-#include "Descriptor.h"
+//#include "Descriptor.h"
 #include "PMTElementary.h"
 #include "PMTInstance.h"
 #include "PMTParser.h"
@@ -32,9 +32,9 @@ bool TCPMTInstance::m_Parse(unsigned char* pData, int size)
 
 	if(m_programInfoLength <=  size-PMT_CRC_SIZE)
 	{
-		TCDescriptor desc;
-		desc.Parse(pData, m_programInfoLength, m_descriptorHash,
-				   TCPMTParser::TABLE_ID);
+		// Ignore program info descriptors
+		//TCDescriptor desc;
+		//desc.Parse(pData, m_programInfoLength, m_descriptorHash, TCPMTParser::TABLE_ID);
 		int length = size - m_programInfoLength - PMT_CRC_SIZE;
 
 		pData += m_programInfoLength;
@@ -105,19 +105,19 @@ TCPMTInstance::~TCPMTInstance(void)
 	DeleteAll();
 
 	m_streamList.clear();
-	m_descriptorHash.Destroy();
+	//m_descriptorHash.Destroy();
 }
 
 bool TCPMTInstance::Create(TTPID Pid)
 {
 	m_pid = Pid;
-	return m_descriptorHash.Create(TCDescriptor::DEFAULT_NUM_OF_DESC);
+	return true;//m_descriptorHash.Create(TCDescriptor::DEFAULT_NUM_OF_DESC);
 }
 
 void TCPMTInstance::DeleteAll(void)
 {
 	DELETE_LIST(TCPMTElementary, m_streamList);
-	m_descriptorHash.DeleteAll();
+	//m_descriptorHash.DeleteAll();
 	m_programInfoLength = 0;
 }
 

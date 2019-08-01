@@ -14,8 +14,8 @@
 #include "TSParser.h"
 #include "PESPacket.h"
 #include "PESParser.h"
-#include "BaseDesc.h"
-#include "Descriptor.h"
+//#include "BaseDesc.h"
+//#include "Descriptor.h"
 
 #include "../../StreamBuffer.h"
 #include "../../StreamBufferReader.h"

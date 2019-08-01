@@ -2,7 +2,7 @@
 #define __DSPMW_PMT_ITEM_STREAM_H__
 
 #include "DTVmwType.h"
-#include "DescriptorHash.h"
+//#include "DescriptorHash.h"
 
 enum EStreamType
 {
@@ -13,8 +13,8 @@ enum EStreamType
 	STREAM_TYPE_AUDIO_AC3				= 0x81, //Common
 };
 
-class TCBaseDesc;
-class TCPMTElementary : public IDescriptorContainer
+//class TCBaseDesc;
+class TCPMTElementary //: public IDescriptorContainer
 {
 private :
 
@@ -25,7 +25,7 @@ private :
     //! ES_info_length
 	short m_esInfoLength;
 	//! The hash table of the descriptor
-	TCDescriptorHash m_descriptorHash;
+	//TCDescriptorHash m_descriptorHash;
 
 public:
 
@@ -37,7 +37,7 @@ public:
 	TTPID ElementaryPID(void);
 
 	int Parse(unsigned char* pData);
-
+#if 0
     // Override IDescriptorContainer interface
     virtual unsigned int NumOfDescriptors(int tag)
         { return m_descriptorHash.NumOfDescriptors(tag); }
@@ -53,6 +53,7 @@ public:
 
     virtual bool GetDescriptor(PCList* pDesc)
         { return m_descriptorHash.GetDescriptor(pDesc); }
+#endif
 };
 
 #endif /* __DSPMW_PMT_ITEM_STREAM_H__ */

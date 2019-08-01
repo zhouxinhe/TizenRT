@@ -55,9 +55,9 @@ CXXSRCS += MediaPlayer.cpp PlayerWorker.cpp MediaPlayerImpl.cpp PlayerObserverWo
 CXXSRCS += InputHandler.cpp
 CXXSRCS += InputDataSource.cpp FileInputDataSource.cpp
 
-CXXSRCS += BaseDesc.cpp DescDefault.cpp DescMetadataPointer.cpp
-CXXSRCS += DescConfBase.cpp DescConfDVB.cpp
-CXXSRCS += DescriptorBase.cpp DescriptorDVB.cpp DescriptorHash.cpp Descriptor.cpp
+#CXXSRCS += BaseDesc.cpp DescDefault.cpp DescMetadataPointer.cpp
+#CXXSRCS += DescConfBase.cpp DescConfDVB.cpp
+#CXXSRCS += DescriptorBase.cpp DescriptorDVB.cpp DescriptorHash.cpp Descriptor.cpp
 CXXSRCS += Section.cpp BaseSection.cpp SectionParser.cpp
 CXXSRCS += PATParser.cpp
 CXXSRCS += PMTElementary.cpp PMTInstance.cpp PMTParser.cpp

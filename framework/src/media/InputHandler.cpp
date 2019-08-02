@@ -22,6 +22,7 @@
 
 #include "InputHandler.h"
 #include "MediaPlayerImpl.h"
+#include "utils/MediaUtils.h"
 #include "Decoder.h"
 #include <assert.h>
 
@@ -41,6 +42,8 @@ InputHandler::InputHandler() :
 	mDecoder(nullptr),
 	mWorker(0),
 	mIsWorkerAlive(false),
+	mPreloadData(nullptr),
+	mPreloadLength(0),
 	mState(BUFFER_STATE_EMPTY),
 	mTotalBytes(0)
 {
@@ -92,22 +95,14 @@ bool InputHandler::open()
 	}
 
 	if (mInputDataSource->open()) {
+		registerDemux(getContainerFormat());
+
 		/* Media f/w playback supports only mono and stereo.
 		 * In case of multiple channel audio, we ask decoder always outputting stereo PCM data.
 		 */
 		if (mInputDataSource->getChannels() > 2) {
 			medvdbg("Set multiple channel %u to stereo forcely!\n", mInputDataSource->getChannels());
 			mInputDataSource->setChannels(2);
-		}
-
-		if (1) // assume ts file for debugging
-		{
-			auto tsParser = TSParser::create();
-			if (!tsParser) {
-				meddbg("%s[line : %d] Fail : TSParser::create failed\n", __func__, __LINE__);
-				return false;
-			}
-			mTSParser = tsParser;
 		}
 
 		if (registerDecoder(mInputDataSource->getAudioType(), mInputDataSource->getChannels(), mInputDataSource->getSampleRate())) {
@@ -123,6 +118,7 @@ bool InputHandler::close()
 {
 	stop();
 	unregisterDecoder();
+	unregisterDemux();
 	return mInputDataSource->close();
 }
 
@@ -210,19 +206,21 @@ void *InputHandler::workerMain(void *arg)
 			break;
 		}
 
-		auto size = handler->mBufferWriter->sizeOfSpace();
-#ifdef CONFIG_MPEG2_TS
-		if (handler->mTSParser && size > 0) {
-			size = handler->mTSParser->sizeOfSpace();
-		}
-#endif
+		auto size = handler->sizeOfSpace();
 		if (size > 0) {
-			auto buf = new unsigned char[size];
-			if (source->read(buf, size) <= 0) {
-				// Error occurred, or inputting finished
-				handler->mBufferWriter->setEndOfStream();
-				delete[] buf;
-				break;
+			unsigned char *buf;
+			if (handler->mPreloadData) {
+				size = handler->mPreloadLength;
+				buf = handler->mPreloadData;
+				handler->mPreloadData = NULL;
+			} else {
+				buf = new unsigned char[size];
+				if ((size = source->read(buf, size)) <= 0) {
+					// Error occurred, or inputting finished
+					handler->mBufferWriter->setEndOfStream();
+					delete[] buf;
+					break;
+				}
 			}
 
 			handler->writeToStreamBuffer(buf, size);
@@ -326,6 +324,26 @@ void InputHandler::onBufferUpdated(ssize_t change, size_t current)
 	}
 }
 
+size_t InputHandler::sizeOfSpace()
+{
+	size_t size;
+
+	// if has demuxer
+#ifdef CONFIG_MPEG2_TS
+	if (mTSParser) {
+		size = mTSParser->sizeOfSpace();
+		return size;
+	}
+#endif
+
+	// if has decoder
+	// return space size of decoder buffer
+	// TODO:
+
+	// return PCM buffer space size
+	return mBufferWriter->sizeOfSpace();
+}
+
 ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 {
 	assert(buf != nullptr);
@@ -335,12 +353,11 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 		size_t ret = mTSParser->pushData(buf, size);
 		assert(ret == size);
 
-		static bool bPreParsed = false;
 		static std::vector<unsigned short> programs;
 
-		if (!bPreParsed) {
-			bPreParsed = mTSParser->PreParse();
-			if (!bPreParsed) {
+		if (!mTSParser->IsReady()) {
+			mTSParser->PreParse();
+			if (!mTSParser->IsReady()) {
 				// need more data for pre-parse
 				printf("pre parser once is not enough...\n");
 				return size;
@@ -384,6 +401,60 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	}
 
 	return (ssize_t)written;
+}
+
+audio_container_t InputHandler::getContainerFormat()
+{
+	mPreloadLength = 1024; // fixme
+
+	mPreloadData = new unsigned char[mPreloadLength];
+	if (!mPreloadData) {
+		// out of memory
+		return AUDIO_CONTAINER_NONE;
+	}
+
+	// preload data from source
+	size_t size = 0;
+	while (size < mPreloadLength) {
+		ssize_t ret = mInputDataSource->read(mPreloadData + size, mPreloadLength - size);
+		if (ret <= 0) {
+			// can not load more
+			mPreloadLength = size;
+			return AUDIO_CONTAINER_NONE;
+		}
+		size += ret;
+	}
+
+	return media::utils::getAudioContainerFromStream(mPreloadData, mPreloadLength);
+}
+
+bool InputHandler::registerDemux(audio_container_t audioContainer)
+{
+	switch (audioContainer) {
+	case AUDIO_CONTAINER_NONE:
+		return true;
+#ifdef CONFIG_MPEG2_TS
+	case AUDIO_CONTAINER_MPEG2TS: {
+		auto tsParser = TSParser::create();
+		if (!tsParser) {
+			meddbg("TSParser::create failed\n");
+			return false;
+		}
+		mTSParser = tsParser;
+		return true;
+	}
+#endif
+	default:
+		meddbg("audioContainer %d is not supported\n", audioContainer);
+		return false;
+	}
+}
+
+void InputHandler::unregisterDemux()
+{
+#ifdef CONFIG_MPEG2_TS
+	mTSParser = nullptr;
+#endif
 }
 
 bool InputHandler::registerDecoder(audio_type_t audioType, unsigned int channels, unsigned int sampleRate)

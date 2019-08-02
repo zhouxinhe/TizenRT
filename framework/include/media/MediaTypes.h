@@ -83,6 +83,26 @@ typedef enum audio_sample_rate_e {
 } audio_sample_rate_t;
 
 /**
+ * @brief Container format exclusive to audio
+ * @details
+ * @since TizenRT v2.1
+ */
+typedef enum audio_container_e {
+	/* Unknown container format */
+	AUDIO_CONTAINER_UNKNOWN = 0,
+	/* No container */
+	AUDIO_CONTAINER_NONE,
+	/* MPEG-2 transport stream */
+	AUDIO_CONTAINER_MPEG2TS,
+	/* MP4, for the MPEG-4 multimedia portfolio */
+	AUDIO_CONTAINER_MP4,
+	/* Ogg, for Xiph.org audio formats Vorbis and Opus */
+	AUDIO_CONTAINER_OGG,
+	/* WAV, RIFF file format */
+	AUDIO_CONTAINER_WAV,
+} audio_container_t;
+
+/**
  * @brief Audio type.
  * @details
  * @since TizenRT v2.0

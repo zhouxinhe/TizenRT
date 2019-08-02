@@ -49,6 +49,17 @@ void toLowerString(std::string& str);
  * @since TizenRT v2.0
  */
 void toUpperString(std::string& str);
+
+/**
+ * @brief Gets the audio container format from path.
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] path The path of audio data
+ * @return The audio container format
+ * @since TizenRT v2.1
+ */
+audio_container_t getAudioContainerFromPath(std::string datapath);
+audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length);
+
 /**
  * @brief Gets the audio type in path.
  * @details @b #include <media/MediaUtils.h>
@@ -81,6 +92,9 @@ bool header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, uns
  * @since TizenRT v2.0
  */
 bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+
+bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+
 /**
  * @brief Create a wav header in file.
  * @details @b #include <media/MediaUtils.h>

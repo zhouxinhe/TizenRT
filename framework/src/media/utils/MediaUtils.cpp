@@ -20,7 +20,7 @@
 #include <debug.h>
 #include <errno.h>
 
-#include "../demux/ts/TSParser.h"
+#include "../demux/mpeg2_ts/TSParser.h"
 
 namespace media {
 namespace utils {
@@ -161,6 +161,51 @@ void toUpperString(std::string &str)
 		}
 	}
 }
+
+audio_container_t getAudioContainerFromPath(std::string datapath)
+{
+	std::string basename = datapath.substr(datapath.find_last_of("/") + 1);
+	std::string extension;
+
+	if (basename.find(".") == std::string::npos) {
+		extension = "";
+	} else {
+		extension = basename.substr(basename.find_last_of(".") + 1);
+	}
+
+	toLowerString(extension);
+
+	if (extension.compare("wav") == 0) {
+		return AUDIO_CONTAINER_WAV;
+	} else if ((extension.compare("ogg") == 0) || (extension.compare("oga") == 0)) {
+		return AUDIO_CONTAINER_OGG;
+	} else if ((extension.compare("mp4") == 0) || (extension.compare("m4a") == 0)) {
+		return AUDIO_CONTAINER_MP4;
+	} else if (extension.compare("ts") == 0) {
+		return AUDIO_CONTAINER_MPEG2TS;
+	} else {
+		auto audioType = getAudioTypeFromPath(datapath);
+		if (audioType != AUDIO_TYPE_INVALID) {
+			return AUDIO_CONTAINER_NONE;
+		}
+
+		medvdbg("unknown (not supported) container\n");
+		return AUDIO_CONTAINER_UNKNOWN;
+	}
+}
+
+audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length)
+{
+	// TODO： install all supported in a static map<container_type, check_method>...
+	if (media::stream::TSParser::IsMpeg2Ts(stream, length)) {
+		return AUDIO_CONTAINER_MPEG2TS;
+	}
+	// else try others
+	// mp4/ogg...
+
+	return AUDIO_CONTAINER_NONE;
+}
+
 
 audio_type_t getAudioTypeFromPath(std::string datapath)
 {

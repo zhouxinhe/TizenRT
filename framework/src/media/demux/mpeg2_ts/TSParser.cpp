@@ -555,7 +555,7 @@ ssize_t TSParser::loadPacket(unsigned char *buf, size_t size, bool sync)
 	int syncOffset = 0;
 
 	// load one ts packet data from stream buffer
-	assert(size == TS_PACKET_SIZE);
+	assert(size >= TS_PACKET_SIZE);
 	size = mBufferReader->copy(buf, TS_PACKET_SIZE, mReaderOffset);
 	if (size != TS_PACKET_SIZE) {
 		// data in buffer is not enough
@@ -622,6 +622,11 @@ int TSParser::getPESPacket(PESPacket **ppPESPacket)
 	return ret;
 }
 
+bool TSParser::IsReady(void)
+{
+	return (mPatRecvFlag && mPmtRecvFlag);
+}
+
 // preparse ts stream buffer, get PAT and PMT info.
 // return value
 // 0: run out of ts packets in buffer
@@ -667,6 +672,41 @@ int TSParser::PreParse(void)
 	}
 
 	return ret;
+}
+
+bool TSParser::IsMpeg2Ts(const unsigned char *buffer, size_t size)
+{
+	if (!buffer || size < TS_PACKET_SIZE) {
+		printf("[%s] invalid params\n", __FUNCTION__);
+		return false;
+	}
+
+	int count;
+	int syncOffset;
+	for (syncOffset = 0; syncOffset < TS_PACKET_SIZE; syncOffset++) {
+		if (buffer[syncOffset] != SYNCCODE) {
+			continue;
+		}
+
+		if (size < syncOffset + SYNC_COUNT * TS_PACKET_SIZE) {
+			printf("[%s] data in buffer is not enough for sync verification\n", __FUNCTION__);
+			return false;
+		}
+
+		for (count = 1; count < SYNC_COUNT; count++) {
+			if (buffer[syncOffset + count * TS_PACKET_SIZE] != SYNCCODE) {
+				// sync not match
+				break;
+			}
+		}
+
+		if (count == SYNC_COUNT) {
+			// sync verification succeed
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void TSParser::DumpBuffer(unsigned char *buffer, size_t size, const char *tips)

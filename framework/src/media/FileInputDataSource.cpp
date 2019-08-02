@@ -56,10 +56,11 @@ FileInputDataSource &FileInputDataSource::operator=(const FileInputDataSource &s
 bool FileInputDataSource::open()
 {
 	if (!mFp) {
-		unsigned int channel;
+		unsigned int channel = 0;
 		unsigned int sampleRate;
 		audio_format_type_t pcmFormat;
-		audio_type_t audioType;
+		audio_container_t audioContainer;
+		audio_type_t audioType = AUDIO_TYPE_INVALID;
 
 		mFp = fopen(mDataPath.c_str(), "rb");
 		if (!mFp) {
@@ -67,12 +68,50 @@ bool FileInputDataSource::open()
 			return false;
 		}
 
-		audioType = utils::getAudioTypeFromPath(mDataPath);
+		audioContainer = utils::getAudioContainerFromPath(mDataPath);
+		if (audioContainer == AUDIO_CONTAINER_NONE || audioContainer == AUDIO_CONTAINER_UNKNOWN) {
+			audioType = utils::getAudioTypeFromPath(mDataPath);
+		} else {
+			// get audio type with container parsing methods
+			meddbg("get audio type with container(%d) parsing methods\n", audioContainer); ////////////// debug
+			switch (audioContainer) {
+			case AUDIO_CONTAINER_MPEG2TS: {
+				#define PREPARE_BUFFER_BASE_SIZE 4096
+				#define PREPARE_BUFFER_MORE_SIZE 2048
+				int i;
+				size_t bufferSize;
+				unsigned char *buffer = NULL;
+				for (i = 0; i < 3; i++) {
+					bufferSize = PREPARE_BUFFER_BASE_SIZE + (i * PREPARE_BUFFER_MORE_SIZE);
+					buffer = new unsigned char[bufferSize];
+					if (!buffer) {
+						meddbg("run out of memory! size %u\n", bufferSize);
+						return false;
+					}
+					// read file
+					fseek(mFp, 0, SEEK_SET);
+					bufferSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
+					fseek(mFp, 0, SEEK_SET);
+					// parse ts
+					bool ret = utils::ts_parsing(buffer, bufferSize, &audioType, &channel, &sampleRate, &pcmFormat);
+					delete[] buffer;
+					if (ret) {
+						meddbg("ts_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat); ///////// verbos
+						break;
+					}
+				}
+			} break;
+
+			default:
+				break;
+			}
+		}
+
 		setAudioType(audioType);
 		switch (audioType) {
 		case AUDIO_TYPE_MP3:
 		case AUDIO_TYPE_AAC:
-			if (!utils::header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
+			if (channel == 0 && !utils::header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
 				meddbg("header parsing failed\n");
 				channel = 2;
 				sampleRate = 48000;
@@ -83,7 +122,7 @@ bool FileInputDataSource::open()
 			setChannels(channel);
 			break;
 		case AUDIO_TYPE_WAVE:
-			if (!utils::header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
+			if (channel == 0 && !utils::header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
 				meddbg("header parsing failed\n");
 				return false;
 			}

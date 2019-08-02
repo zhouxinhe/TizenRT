@@ -98,9 +98,8 @@ public:
     bool getPrograms(std::vector<TTPN> &progs);
 	audio_type_t getAudioType(TTPN progNum);
 
+    bool IsReady(void);
     int PreParse(void);
-    //int Parse(void);
-    void DumpBuffer(unsigned char *buffer, size_t size, const char *tips = "");
 
     //bool ReadPESPacket(TSHeader &, unsigned char *, unsigned char **, unsigned short *);
     unsigned int GetTotalTsPacketNum() {return m_total_packet_num;}
@@ -108,6 +107,9 @@ public:
 	bool IsPidNeeded(unsigned short pid);
 	bool IsPESPid(unsigned short pid);
 	int getPESPacket(PESPacket **ppPESPacket);
+
+	static bool IsMpeg2Ts(const unsigned char *buffer, size_t size);
+    static void DumpBuffer(unsigned char *buffer, size_t size, const char *tips = "");
 
 private:
 	ssize_t readPacket(unsigned char *buf, size_t size);
@@ -121,10 +123,8 @@ private:
 	std::shared_ptr<CParserManager> getParserManager(void);
 
 private:
-    int mStatus; // -1: failed 0: INIT, 1: PAT received, 2:PMT received, 3: PESPid need 4: PES filtering
     bool mPatRecvFlag;
     bool mPmtRecvFlag;
-    //PCFile m_tsfile;
     unsigned char *m_data;
 
 	unsigned int            m_total_packet_num;

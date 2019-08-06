@@ -9,13 +9,13 @@
 #include <assert.h>
 
 #include "Section.h"
+#include "PATParser.h"
 #include "ParseManager.h"
 #include "PMTElementary.h"
 #include "TSParser.h"
 #include "PESPacket.h"
 #include "PESParser.h"
-//#include "BaseDesc.h"
-//#include "Descriptor.h"
+#include "Mpeg2TsTypes.h"
 
 #include "../../StreamBuffer.h"
 #include "../../StreamBufferReader.h"
@@ -28,22 +28,21 @@ namespace media {
 namespace stream {
 
 TSHeader::TSHeader()
-: m_sync_byte(SYNCCODE),
-  m_transport_error_indicator(0),
-  m_payload_unit_start_indicator(0),
-  m_transport_priority(0),
-  m_pid(PID_INVALID),
-  m_transport_scrambling_control(0),
-  m_adaptation_field_control(0),
-  m_continuity_counter(0)
+	: m_sync_byte(SYNCCODE)
+	, m_transport_error_indicator(0)
+	, m_payload_unit_start_indicator(0)
+	, m_transport_priority(0)
+	, m_pid(INVALID_PID)
+	, m_transport_scrambling_control(0)
+	, m_adaptation_field_control(0)
+	, m_continuity_counter(0)
 {
 }
 
-bool TSHeader::Parse(unsigned char *pbPacketHeader)
+bool TSHeader::Parse(uint8_t *pbPacketHeader)
 {
     m_sync_byte = pbPacketHeader[0];
-    if (m_sync_byte != SYNCCODE)
-    {
+    if (m_sync_byte != SYNCCODE) {
         printf("[TSHeader::Parse] %02x %02x %02x %02x\n", pbPacketHeader[0], pbPacketHeader[1], pbPacketHeader[2], pbPacketHeader[3]);
         return false;
     }
@@ -60,11 +59,10 @@ bool TSHeader::Parse(unsigned char *pbPacketHeader)
     return true;
 }
 
-bool AdaptationField::Parse(unsigned char *pAdaptationField)
+bool AdaptationField::Parse(uint8_t *pAdaptationField)
 {
 	adaptation_field_length = pAdaptationField[0];
-	if (adaptation_field_length <= 0)
-	{
+	if (adaptation_field_length <= 0) {
 		printf("AdaptationField:: adaptation_field_length 0\n");
 		return true;
 	}
@@ -86,9 +84,8 @@ bool AdaptationField::Parse(unsigned char *pAdaptationField)
 
 TSParser::TSParser()
 	: m_data(nullptr)
-	, m_total_packet_num(0)
-	, mPESPid(-1)
 	, mReaderOffset(0)
+	, mPESPid(-1)
 	, mPESDataUsed(0)
 {
 	mPatRecvFlag = false;
@@ -138,7 +135,7 @@ bool TSParser::init(void)
 		return false;
 	}
 
-	mParserManager = std::make_shared<CParserManager>();
+	mParserManager = std::make_shared<ParserManager>();
 	if (!mParserManager) {
 		printf("mParserManager is nullptr!\n");
 		return false;
@@ -150,7 +147,7 @@ bool TSParser::init(void)
 		return false;
 	}
 
-    m_data = new unsigned char[TS_PACKET_SIZE];
+    m_data = new uint8_t[TS_PACKET_SIZE];
     if (m_data == nullptr)
     {
         printf("TS packet buffer allocate failed!\n");
@@ -160,7 +157,7 @@ bool TSParser::init(void)
     return true;
 }
 
-std::shared_ptr<CParserManager> TSParser::getParserManager(void)
+std::shared_ptr<ParserManager> TSParser::getParserManager(void)
 {
 	return mParserManager;
 }
@@ -170,7 +167,7 @@ size_t TSParser::sizeOfSpace(void)
 	return mBufferWriter->sizeOfSpace();
 }
 
-size_t TSParser::pushData(unsigned char *buf, size_t size)
+size_t TSParser::pushData(uint8_t *buf, size_t size)
 {
 	size_t written = 0;
 	if (mBufferWriter) {
@@ -180,13 +177,13 @@ size_t TSParser::pushData(unsigned char *buf, size_t size)
 	return written;
 }
 
-size_t TSParser::pullData(unsigned char *buf, size_t size, TTPN progNum)
+size_t TSParser::pullData(uint8_t *buf, size_t size, prog_num_t progNum)
 {
 	printf("[%s] progNum %d, size %lu\n", __FUNCTION__, progNum, size);
 
 	if (mPESPid == -1) {
 		// setup PES pid
-		unsigned char streamType;
+		uint8_t streamType;
 		if (!mParserManager->GetAudioStreamInfo(progNum, streamType, mPESPid)) {
 			printf("[%s] get audio pes pid failed\n", __FUNCTION__);
 			return 0;
@@ -244,21 +241,21 @@ size_t TSParser::pullData(unsigned char *buf, size_t size, TTPN progNum)
 	return fill;
 }
 
-bool TSParser::getPrograms(std::vector<TTPN> &progs)
+bool TSParser::getPrograms(std::vector<prog_num_t> &progs)
 {
 	return mParserManager->GetPrograms(progs);
 }
 
-audio_type_t TSParser::getAudioType(TTPN progNum)
+audio_type_t TSParser::getAudioType(prog_num_t progNum)
 {
-	unsigned char streamType;
-	TTPID streamPid;
+	uint8_t streamType;
+	ts_pid_t streamPid;
 	if (mParserManager->GetAudioStreamInfo(progNum, streamType, streamPid)) {
 		switch (streamType) {
-		case STREAM_TYPE_AUDIO_AAC:
-		case STREAM_TYPE_AUDIO_HE_AAC:
+		case PMTElementary::STREAM_TYPE_AUDIO_AAC:
+		case PMTElementary::STREAM_TYPE_AUDIO_HE_AAC:
 			return AUDIO_TYPE_AAC;
-		case STREAM_TYPE_AUDIO_MPEG1:
+		case PMTElementary::STREAM_TYPE_AUDIO_MPEG1:
 			return AUDIO_TYPE_MP3;
 		default:
 			printf("unsupported audio type 0x%x\n", streamType);
@@ -271,9 +268,9 @@ audio_type_t TSParser::getAudioType(TTPN progNum)
 	return AUDIO_TYPE_INVALID;
 }
 
-int TSParser::Adjust(unsigned char *pPacketData, size_t readOffset)
+int TSParser::Adjust(uint8_t *pPacketData, size_t readOffset)
 {
-	unsigned char buffer[TS_PACKET_SIZE];
+	uint8_t buffer[TS_PACKET_SIZE];
 	TSHeader tsHeader;
 	size_t szRead;
 	int syncOffset;
@@ -318,8 +315,8 @@ bool TSParser::PSIUnpack(TSHeader &tsHeader, Section **ppSection)
 	std::map<int, Section *>::iterator it;
 
 	AdaptationField adaptation_field;
-	unsigned char *pu8Payload = &m_data[4];
-	unsigned char  lenPayload = 188 - 4;
+	uint8_t *pu8Payload = &m_data[4];
+	uint8_t  lenPayload = 188 - 4;
 
 	assert(ppSection != nullptr);
 
@@ -327,24 +324,24 @@ bool TSParser::PSIUnpack(TSHeader &tsHeader, Section **ppSection)
 		//printf("\nTS: PayloadUnitStartIndicator %d AdaptationFieldControl %d ContinuityCounter %d\n",
 		//	tsHeader.PayloadUnitStartIndicator(), tsHeader.AdaptationFieldControl(), tsHeader.ContinuityCounter());
 
-		if (tsHeader.TransportErrorIndicator() != 0)
-		{	// error
+		if (tsHeader.TransportErrorIndicator() != 0) {
+			// error
 			break;
 		}
 
-		if (tsHeader.AdaptationFieldControl() == 0)
-		{	// reserved
+		if (tsHeader.AdaptationFieldControl() == 0) {
+			// reserved
 			break;
 		}
 
-		if (tsHeader.AdaptationFieldControl() == 2)
-		{	// no playload, 183 bytes adaption field only
+		if (tsHeader.AdaptationFieldControl() == 2) {
+			// no playload, 183 bytes adaption field only
 			adaptation_field.Parse(&m_data[4]);
 			break;
 		}
 
-		if (tsHeader.AdaptationFieldControl() == 3)
-		{	// 0~182 bytes adaption field + playload
+		if (tsHeader.AdaptationFieldControl() == 3) {
+			// 0~182 bytes adaption field + playload
 			adaptation_field.Parse(&m_data[4]);
 			lenPayload = 188 - 4 - (1 + adaptation_field.FieldLenght());
 			pu8Payload = &m_data[188 - lenPayload];
@@ -352,28 +349,19 @@ bool TSParser::PSIUnpack(TSHeader &tsHeader, Section **ppSection)
 			//getchar();
 		}
 
-        if (tsHeader.PayloadUnitStartIndicator() == 1)
-        {   /* new section */
-            unsigned char u8PointerField = pu8Payload[0]; // first byte in payload is the pointer field in case of unit start indicator is 1
-            if (u8PointerField != 0)
-            {   /* prev section tail + next section head in this packet */
+        if (tsHeader.PayloadUnitStartIndicator() == 1) {
+			/* new section */
+            uint8_t u8PointerField = pu8Payload[0]; // first byte in payload is the pointer field in case of unit start indicator is 1
+            if (u8PointerField != 0) {
+				/* prev section tail + next section head in this packet */
                 it = m_pid_section.find(tsHeader.Pid());
-                if (it != m_pid_section.end())
-                {
+                if (it != m_pid_section.end()) {
                     pSection = it->second;
                     pSection->AppendData(tsHeader.Pid(), tsHeader.ContinuityCounter(), pu8Payload + 1, u8PointerField); // skip u8PointerField byte
-                    if (pSection->IsSectionCompleted())
-                    {
-                        //event.type = CParserManager::EVENT_SECTION_DATA;
-                        //event.receiver = (PCHandler *)(CParserManager::Instance());
-                        //event.param.l[0] = (long)tsHeader.Pid();
-                        //event.param.l[1] = (long)pSection;
-                        //PCTask::Send(&event, sync);
+                    if (pSection->IsSectionCompleted()) {
 						*ppSection = pSection;
                         // no return
-                    }
-                    else
-                    {   // section should finished, abnormal...
+                    } else {   // section should finished, abnormal...
                         delete it->second;
                     }
 					// anyway, erase from map
@@ -384,25 +372,18 @@ bool TSParser::PSIUnpack(TSHeader &tsHeader, Section **ppSection)
 
 			// new section start
             pSection = new Section(tsHeader.Pid(), tsHeader.ContinuityCounter(), pu8Payload + 1 + u8PointerField, lenPayload - 1 - u8PointerField); // skip u8PointerField byte and u8PointerField data
-            if (pSection->IsSectionCompleted())
-            {
+            if (pSection->IsSectionCompleted()) {
 				*ppSection = pSection;
                 return true;
-            }
-            else
-            {	// insert to map
+            } else { // insert to map
                 m_pid_section.insert(pair<int, Section *>(tsHeader.Pid(), pSection));
             }
-        }
-        else
-        {
+        } else {
             it = m_pid_section.find(tsHeader.Pid());
-            if (it != m_pid_section.end())
-            {
+            if (it != m_pid_section.end()) {
                 pSection = it->second;
                 pSection->AppendData(tsHeader.Pid(), tsHeader.ContinuityCounter(), pu8Payload, lenPayload); // no point filed
-                if (pSection->IsSectionCompleted())
-                {
+                if (pSection->IsSectionCompleted()) {
 					*ppSection = pSection;
                     it->second = NULL;
                     m_pid_section.erase(it);
@@ -410,7 +391,7 @@ bool TSParser::PSIUnpack(TSHeader &tsHeader, Section **ppSection)
                 }
             }
         }
-    } while(0);
+    } while (0);
 
     return false;
 }
@@ -421,63 +402,47 @@ bool TSParser::PESUnpack(TSHeader &tsHeader, PESPacket **ppPESPacket)
 	std::map<int, PESPacket *>::iterator it;
 
 	AdaptationField adaptation_field;
-	unsigned char *pu8Payload = &m_data[4];
-	unsigned char  lenPayload = 188 - 4;
+	uint8_t *pu8Payload = &m_data[4];
+	uint8_t  lenPayload = 188 - 4;
 
 	assert(ppPESPacket != nullptr);
 
-    do
-    {
+    do {
 		//printf("\nTS: PayloadUnitStartIndicator %d AdaptationFieldControl %d ContinuityCounter %d\n",
 		//	tsHeader.PayloadUnitStartIndicator(), tsHeader.AdaptationFieldControl(), tsHeader.ContinuityCounter());
 
-		if (tsHeader.TransportErrorIndicator() != 0)
-		{	// error
+		if (tsHeader.TransportErrorIndicator() != 0) {
+			// error
 			break;
 		}
 
-		if (tsHeader.AdaptationFieldControl() == 0)
-		{	// reserved
+		if (tsHeader.AdaptationFieldControl() == 0) {
+			// reserved
 			break;
 		}
 
-//		if (IsTTXPid(tsHeader.Pid()) && tsHeader.AdaptationFieldControl() != 1)
-//		{	// EBU Teletext, adaptation field control flag is always 1.
-//			break;
-//		}
-
-		if (tsHeader.AdaptationFieldControl() == 2)
-		{	// no playload, 183 bytes adaption field only
+		if (tsHeader.AdaptationFieldControl() == 2) {
+			// no playload, 183 bytes adaption field only
 			adaptation_field.Parse(&m_data[4]);
 			break;
 		}
 
-		if (tsHeader.AdaptationFieldControl() == 3)
-		{	// 0~182 bytes adaption field + playload
+		if (tsHeader.AdaptationFieldControl() == 3) {
+			// 0~182 bytes adaption field + playload
 			adaptation_field.Parse(&m_data[4]);
 			lenPayload = 188 - 4 - (1 + adaptation_field.FieldLenght());
 			pu8Payload = &m_data[188 - lenPayload];
 		}
 
-		if (tsHeader.PayloadUnitStartIndicator() == 1)
-		{	/* new pes packet start */
+		if (tsHeader.PayloadUnitStartIndicator() == 1) {
+			/* new pes packet start */
 			pPESPacket = new PESPacket(tsHeader.Pid(), tsHeader.ContinuityCounter(), pu8Payload, lenPayload);
-			if (pPESPacket->IsPESPacketCompleted())
-			{
-				// send pes packet
-				//event.type = PCTask::EVENT_USER;
-				//event.receiver = (PCHandler *)(CParserManager::Instance());
-				//event.param.l[0] = (long)tsHeader.Pid();
-				//event.param.l[1] = (long)pPESPacket;
-				//PCTask::Send(&event, sync);
+			if (pPESPacket->IsPESPacketCompleted()) {
 				*ppPESPacket = pPESPacket;
 				return true;
-			}
-			else
-			{
+			} else {
 				it = m_pid_pespacket.find(tsHeader.Pid());
-				if (it != m_pid_pespacket.end())
-				{
+				if (it != m_pid_pespacket.end()) {
 					printf("PES packet exist, delete firstly!\n");
 					delete it->second;
 					it->second = NULL;
@@ -486,21 +451,15 @@ bool TSParser::PESUnpack(TSHeader &tsHeader, PESPacket **ppPESPacket)
 
 				m_pid_pespacket.insert(pair<int, PESPacket *>(tsHeader.Pid(), pPESPacket));
 			}
-		}
-		else
-		{
+		} else {
 			it = m_pid_pespacket.find(tsHeader.Pid());
-			if (it == m_pid_pespacket.end())
-			{
+			if (it == m_pid_pespacket.end()) {
 				// nothing
 				printf("PES packet not exit, drop this ts packet!\n");
-			}
-			else
-			{
+			} else {
 				pPESPacket = it->second;
 				pPESPacket->AppendData(tsHeader.Pid(), tsHeader.ContinuityCounter(), pu8Payload, lenPayload);
-				if (pPESPacket->IsPESPacketCompleted())
-				{
+				if (pPESPacket->IsPESPacketCompleted()) {
 					// send pes packet
 					*ppPESPacket = pPESPacket;
 
@@ -510,36 +469,35 @@ bool TSParser::PESUnpack(TSHeader &tsHeader, PESPacket **ppPESPacket)
 				}
 			}
 		}
-    } while(0);
+    } while (0);
 
     return false;
 }
 
 void TSParser::ResetPidSection(void)
 {
-    map<int, Section *>::iterator it;
+    auto it = m_pid_section.begin();
 
-    for (it = m_pid_section.begin(); it != m_pid_section.end(); /*NULL*/)
-    {
-        if (it->second != NULL)
+    while (it != m_pid_section.end()) {
+        if (it->second != NULL) {
             delete it->second;
-        m_pid_section.erase(it++);
+		}
+        m_pid_section.erase(it);
+		it++;
     }
 }
 
-bool TSParser::IsPsiPid(unsigned short pid)
+bool TSParser::IsPsiPid(uint16_t pid)
 {
-	//printf("[%s] pid 0x%x\n", __FUNCTION__, pid);
     switch (pid) {
-        case TCPATParser::PAT_PID:
-			return true;
-
-        default:
-            return mParserManager->IsPmtPid(pid);
+    case PATParser::PAT_PID:
+		return true;
+    default:
+        return mParserManager->IsPmtPid(pid);
     }
 }
 
-bool TSParser::IsPESPid(unsigned short pid)
+bool TSParser::IsPESPid(uint16_t pid)
 {
 	//printf("[%s] pid 0x%x = %x \n", __FUNCTION__, pid, mPESPid);
 	return (pid == mPESPid);
@@ -549,7 +507,7 @@ bool TSParser::IsPESPid(unsigned short pid)
 // 0: run out of ts packets in buffer
 // TS_PACKET_SIZE: got a ts packet
 // -1: negative value means failure, maybe not a transport stream
-ssize_t TSParser::loadPacket(unsigned char *buf, size_t size, bool sync)
+ssize_t TSParser::loadPacket(uint8_t *buf, size_t size, bool sync)
 {
 	TSHeader tsHeader;
 	int syncOffset = 0;
@@ -649,11 +607,13 @@ int TSParser::PreParse(void)
 			Section *pSection = nullptr;
 			PSIUnpack(tsHeader, &pSection);
 			mParserManager->processSection(tsHeader.Pid(), pSection);
+			delete pSection;
+
 			if (!mPatRecvFlag) {
 				mPatRecvFlag = mParserManager->IsPatReceived();
 				if (mPatRecvFlag) {
 					// PAT received
-					mParserManager->GetPmtPidInfo();
+					//mParserManager->GetPmtPidInfo();
 				}
 			} else if (!mPmtRecvFlag) {
 				mPmtRecvFlag = mParserManager->IsPmtReceived();
@@ -674,7 +634,7 @@ int TSParser::PreParse(void)
 	return ret;
 }
 
-bool TSParser::IsMpeg2Ts(const unsigned char *buffer, size_t size)
+bool TSParser::IsMpeg2Ts(const uint8_t *buffer, size_t size)
 {
 	if (!buffer || size < TS_PACKET_SIZE) {
 		printf("[%s] invalid params\n", __FUNCTION__);
@@ -682,7 +642,7 @@ bool TSParser::IsMpeg2Ts(const unsigned char *buffer, size_t size)
 	}
 
 	int count;
-	int syncOffset;
+	size_t syncOffset;
 	for (syncOffset = 0; syncOffset < TS_PACKET_SIZE; syncOffset++) {
 		if (buffer[syncOffset] != SYNCCODE) {
 			continue;
@@ -709,7 +669,7 @@ bool TSParser::IsMpeg2Ts(const unsigned char *buffer, size_t size)
 	return false;
 }
 
-void TSParser::DumpBuffer(unsigned char *buffer, size_t size, const char *tips)
+void TSParser::DumpBuffer(uint8_t *buffer, size_t size, const char *tips)
 {
 	size_t i;
 	printf("\n### %s data %p size 0x%x(%lu) ###", tips, buffer, size, size);

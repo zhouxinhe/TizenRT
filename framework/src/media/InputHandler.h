@@ -32,7 +32,7 @@
 
 #define CONFIG_MPEG2_TS 1
 #ifdef CONFIG_MPEG2_TS
-#include "demux/mpeg2_ts/TSParser.h"
+#include "demux/mpeg2ts/TSParser.h"
 #endif
 
 namespace media {

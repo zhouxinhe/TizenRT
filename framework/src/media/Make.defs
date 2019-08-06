@@ -47,8 +47,8 @@ DEPPATH += --dep-path src/media/codec/opus
 VPATH += :src/media/codec/opus
 endif
 
-DEPPATH += --dep-path src/media/demux/mpeg2_ts
-VPATH += :src/media/demux/mpeg2_ts
+DEPPATH += --dep-path src/media/demux/mpeg2ts
+VPATH += :src/media/demux/mpeg2ts
 
 ifeq ($(CONFIG_MEDIA_PLAYER), y)
 CXXSRCS += MediaPlayer.cpp PlayerWorker.cpp MediaPlayerImpl.cpp PlayerObserverWorker.cpp

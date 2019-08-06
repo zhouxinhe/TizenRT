@@ -1,10 +1,10 @@
 #ifndef __SECTION_H__
 #define __SECTION_H__
 
+#include "Mpeg2TsTypes.h"
+
 #include <memory>
 #include <stdint.h>
-#include "DTVmwType.h"
-
 
 class Section
 {
@@ -19,7 +19,7 @@ public:
     bool AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size);
     bool VerifyCrc32(void);
     bool IsSectionCompleted(void);
-    uint8_t* Data(void);
+    uint8_t *Data(void);
     uint16_t Length(void);
 
 private:

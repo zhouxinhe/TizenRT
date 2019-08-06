@@ -20,7 +20,7 @@
 #include <debug.h>
 #include <errno.h>
 
-#include "../demux/mpeg2_ts/TSParser.h"
+#include "../demux/mpeg2ts/TSParser.h"
 
 namespace media {
 namespace utils {
@@ -678,7 +678,9 @@ bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *au
 
 	// push the given (ts) data into tsparser buffer
 	size_t ret = tsParser->pushData(buffer, bufferSize);
-	medvdbg("TSParser accept data %u/%u\n", ret, bufferSize);
+	if (ret < bufferSize) {
+		medwdbg("TSParser accept part of data %u/%u\n", ret, bufferSize);
+	}
 
 	// do parsing PAT & PMT
 	if (!tsParser->PreParse()) {

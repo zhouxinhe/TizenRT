@@ -12,8 +12,8 @@ using namespace std;
 Section::Section()
 	: m_section_length(0)
 	, m_offset(0)
-	, m_pid(PID_INVALID)
-	, m_data(NULL)
+	, m_pid(INVALID_PID)
+	, m_data(nullptr)
 	, m_continuity_counter(0xFF)
 {
 }
@@ -126,7 +126,7 @@ bool Section::IsSectionCompleted(void)
     return false;
 }
 
-uint8_t* Section::Data(void)
+uint8_t *Section::Data(void)
 {
 	return m_data;
 }

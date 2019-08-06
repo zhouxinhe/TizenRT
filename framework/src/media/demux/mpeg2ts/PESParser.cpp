@@ -16,8 +16,13 @@
  *
  ******************************************************************/
 
+#include <debug.h>
+#include <assert.h>
 #include "Mpeg2TsTypes.h"
 #include "PESParser.h"
+
+
+#define PES_PACKET_START_CODE_PREFIX 0x000001
 
 PESParser::PESParser()
 {
@@ -38,7 +43,6 @@ bool PESParser::Parse(uint8_t *pData, size_t dataLength)
 
 	assert(m_start_code_prefix == PES_PACKET_START_CODE_PREFIX);
 	assert((size_t)6 + m_packet_length <= dataLength);
-	printf("[%s] stream_id: 0x%x, m_packet_length 0x%x(%d)\n", __FUNCTION__, m_stream_id, m_packet_length, m_packet_length);
 
 	return t_Parse(&pData[6], m_packet_length);
 }
@@ -65,11 +69,9 @@ bool PESParser::t_Parse(uint8_t *pData, uint32_t size)
 		m_pes_header_data_length = pData[2];
 		assert(m_fixed_01 == 0x2);
 		return true;
-	} else {
-		// not supported
-		printf("[%s] stream_id: 0x%x is not supported!\n", __FUNCTION__, m_stream_id);
 	}
 
+	meddbg("stream_id: 0x%x is not supported!\n", m_stream_id);
 	return false;
 }
 

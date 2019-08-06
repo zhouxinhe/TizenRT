@@ -39,24 +39,6 @@
 #define SHORT_FORM(buffer)                  (&(buffer[3]))
 
 
-#if 0
-#define SI_RSV1(buffer)      ((buffer[1]>>4)&0x03)
-#define SI_TIDE(buffer)      ((buffer[3]<<8)+buffer[4])
-
-#define SI_PN(buffer)        ((buffer[3]<<8)+buffer[4])
-#define SI_SID(buffer)       ((buffer[3]<<8)+buffer[4])
-#define SI_RR(buffer)        (buffer[4])
-#define SI_RSV2(buffer)      ((buffer[5]>>6)&0x03)// si codereview 070725
-#define SI_CNI(buffer)       (buffer[5]&0x01)
-#define SI_SN(buffer)        (buffer[6])
-#define SI_LSN(buffer)       (buffer[7])
-#define PSIP_PV(buffer)        (buffer[8])
-#define PSIP_DATA(buffer)      (&(buffer[9]))
-#define SHORT_FORM(buffer)		(&(buffer[3]))
-#define LONG_FORM(buffer)		(&(buffer[9]))
-//==================================================================
-#endif
-
 SectionParser::SectionParser(table_id_t tableId)
 {
 	t_bRecv = false;
@@ -99,8 +81,6 @@ bool SectionParser::Parse(ts_pid_t pid, uint8_t *pData)
 	t_sectionSyntaxIndicator = SECTION_SYNTAX_INDICATOR(pData);
 	t_privateIndicator       = PRIVATE_INDICATOR(pData);
 	t_sectionLength          = SECTION_LENGTH(pData);
-
-	printf("[%s] table id: 0x%02x\n", __FUNCTION__, t_tableId);
 
 	if (t_sectionSyntaxIndicator) {
 		//Long form

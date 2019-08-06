@@ -23,10 +23,8 @@
 
 #define PMT_PROG_INFO_LENGTH(buffer)       (((buffer[0] & 0x0F) << 8) + buffer[1])
 #define LENGTH_FIELD_BYTES                 (2)
-
 #define PMT_PCR_PID(buffer)                (((buffer[0] & 0x1F) << 8) + buffer[1])
 #define PID_FIELD_BYTES                    (2)
-
 #define PMT_CRC_BYTES                      (4)
 
 bool PMTInstance::m_Parse(uint8_t *pData, uint32_t size)
@@ -57,9 +55,9 @@ bool PMTInstance::m_Parse(uint8_t *pData, uint32_t size)
 	return true;
 }
 
-PMTInstance::PMTInstance()
+PMTInstance::PMTInstance(ts_pid_t pid)
 {
-	m_pid           = (ts_pid_t)INFINITY;
+	m_pid           = pid;
 	m_programNumber = (prog_num_t)INFINITY;
 	m_pcrPID        = (ts_pid_t)INFINITY;
 	m_programInfoLength = 0;
@@ -75,12 +73,6 @@ PMTInstance::~PMTInstance(void)
 	DeleteAll();
 
 	m_streamList.clear();
-}
-
-bool PMTInstance::Create(ts_pid_t Pid)
-{
-	m_pid = Pid;
-	return true;
 }
 
 void PMTInstance::DeleteAll(void)

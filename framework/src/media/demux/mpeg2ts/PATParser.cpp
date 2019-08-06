@@ -21,8 +21,8 @@
 #include "PATParser.h"
 
 
-#define PAT_UNTIL_LAST_SECTION_NUMBER_LEN		(9)
-#define PAT_PROG_NUM_PID_LEN					(4)
+#define PAT_UNTIL_LAST_SECTION_NUMBER_LEN       (9)
+#define PAT_PROG_NUM_PID_LEN                    (4)
 #define PAT_PROGRAM_NUMBER(buffer,idx)          ((buffer[4*(idx)]<<8)+(buffer[4*(idx)+1]))
 #define PAT_PROGRAM_NUMBER_PID(buffer,idx)      ((((buffer[4*(idx)+2])&0x1F)<<8)+(buffer[4*(idx)+3]))
 
@@ -38,11 +38,6 @@ PATParser::PATParser()
 PATParser::~PATParser()
 {
 	Initialize();
-}
-
-bool PATParser::t_Create(void)
-{
-	return true;
 }
 
 void PATParser::t_Initialize(void)

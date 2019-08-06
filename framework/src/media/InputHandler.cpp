@@ -18,13 +18,16 @@
 
 #include <tinyara/config.h>
 
+#include <debug.h>
 #include <pthread.h>
 
 #include "InputHandler.h"
 #include "MediaPlayerImpl.h"
 #include "utils/MediaUtils.h"
 #include "Decoder.h"
-#include <assert.h>
+#ifdef CONFIG_MPEG2_TS
+#include "demux/mpeg2ts/TSParser.h"
+#endif
 
 #ifndef CONFIG_HANDLER_STREAM_BUFFER_SIZE
 #define CONFIG_HANDLER_STREAM_BUFFER_SIZE 4096
@@ -194,36 +197,36 @@ void InputHandler::destroyWorker()
 
 void *InputHandler::workerMain(void *arg)
 {
-	auto handler = static_cast<InputHandler *>(arg);
-	auto source = handler->mInputDataSource;
+	auto stream = static_cast<InputHandler *>(arg);
+	auto worker = stream->mInputDataSource;
 
-	while (handler->mIsWorkerAlive) {
+	while (stream->mIsWorkerAlive) {
 		// Waken up by a reading/stopping operation
-		handler->sleepWorker();
+		stream->sleepWorker();
 
 		// Worker may be stoped
-		if (!handler->mIsWorkerAlive) {
+		if (!stream->mIsWorkerAlive) {
 			break;
 		}
 
-		auto size = handler->sizeOfSpace();
+		auto size = stream->sizeOfSpace();
 		if (size > 0) {
 			unsigned char *buf;
-			if (handler->mPreloadData) {
-				size = handler->mPreloadLength;
-				buf = handler->mPreloadData;
-				handler->mPreloadData = NULL;
+			if (stream->mPreloadData) {
+				size = stream->mPreloadLength;
+				buf = stream->mPreloadData;
+				stream->mPreloadData = NULL;
 			} else {
 				buf = new unsigned char[size];
-				if ((size = source->read(buf, size)) <= 0) {
+				if ((size = worker->read(buf, size)) <= 0) {
 					// Error occurred, or inputting finished
-					handler->mBufferWriter->setEndOfStream();
+					stream->mBufferWriter->setEndOfStream();
 					delete[] buf;
 					break;
 				}
 			}
 
-			handler->writeToStreamBuffer(buf, size);
+			stream->writeToStreamBuffer(buf, size);
 			delete[] buf;
 		}
 	}
@@ -326,13 +329,10 @@ void InputHandler::onBufferUpdated(ssize_t change, size_t current)
 
 size_t InputHandler::sizeOfSpace()
 {
-	size_t size;
-
 	// if has demuxer
 #ifdef CONFIG_MPEG2_TS
 	if (mTSParser) {
-		size = mTSParser->sizeOfSpace();
-		return size;
+		return mTSParser->sizeOfSpace();
 	}
 #endif
 
@@ -350,26 +350,18 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 
 #ifdef CONFIG_MPEG2_TS
 	if (mTSParser) {
-		size_t ret = mTSParser->pushData(buf, size);
-		assert(ret == size);
-
-		static std::vector<unsigned short> programs;
+		mTSParser->pushData(buf, size);
 
 		if (!mTSParser->IsReady()) {
 			mTSParser->PreParse();
 			if (!mTSParser->IsReady()) {
 				// need more data for pre-parse
-				printf("pre parser once is not enough...\n");
+				meddbg("pre parser once is not enough...\n");
 				return size;
 			}
-
-			mTSParser->getPrograms(programs);
-			printf("There's %lu programs in current ts\n", programs.size());
-			assert(programs.size() > 0);
 		}
 
-		size = ret;
-		size = mTSParser->pullData(buf, size, programs[0]);
+		size = mTSParser->pullData(buf, size);
 	}
 #endif
 
@@ -409,7 +401,7 @@ audio_container_t InputHandler::getContainerFormat()
 
 	mPreloadData = new unsigned char[mPreloadLength];
 	if (!mPreloadData) {
-		// out of memory
+		meddbg("memory allocation failed!\n");
 		return AUDIO_CONTAINER_NONE;
 	}
 

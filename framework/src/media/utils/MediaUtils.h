@@ -51,13 +51,22 @@ void toLowerString(std::string& str);
 void toUpperString(std::string& str);
 
 /**
- * @brief Gets the audio container format from path.
+ * @brief Gets the audio container format from path
  * @details @b #include <media/MediaUtils.h>
  * @param[in] path The path of audio data
  * @return The audio container format
  * @since TizenRT v2.1
  */
 audio_container_t getAudioContainerFromPath(std::string datapath);
+
+/**
+ * @brief Gets the audio container format stream data
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] stream Pointer to audio stream data
+ * @param[in] length Length in bytes of the audio stream data
+ * @return The audio container format
+ * @since TizenRT v2.1
+ */
 audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length);
 
 /**
@@ -92,9 +101,14 @@ bool header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, uns
  * @since TizenRT v2.0
  */
 bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
-
+/**
+ * @brief Parsing the mpeg2 transport stream data in buffer, to get audio stream codec type and other informations
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] buffer, buffer size, and audio type, channel, sample rate, pcm format adderss to receive.
+ * @return ture - parsing success. false - parsing fail.
+ * @since TizenRT v2.1
+ */
 bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
-
 /**
  * @brief Create a wav header in file.
  * @details @b #include <media/MediaUtils.h>
@@ -123,9 +137,13 @@ bool writeWavHeader(FILE *fp, unsigned int channel, unsigned int sampleRate, aud
  * @since TizenRT v2.1 PRE
  */
 unsigned int splitChannel(unsigned int layout, const signed short *stream, unsigned int frames, unsigned int channels, ...);
-
-/*
- * Calculates the MPEG2 32 bit CRC
+/**
+ * @brief Calculates the MPEG2 32 bit CRC
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] data, pointer to the data to be calculated
+ * @param[in] length, length in bytes of the data should be calculated
+ * @return CRC value
+ * @since TizenRT v2.1
  */
 unsigned int CRC32_MPEG2(unsigned char *data, unsigned int length);
 

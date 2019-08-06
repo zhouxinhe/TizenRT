@@ -29,13 +29,13 @@
 #include "TSParser.h"
 #include "ParseManager.h"
 
-#define TABILE_ID(buffer) 	((buffer)[0])
+#define TABILE_ID(buffer)   ((buffer)[0])
 
 ParserManager::ParserManager()
 {
 	// Add PAT parser
 	t_AddParser(new PATParser());
-    // Add PMT parser
+	// Add PMT parser
 	t_AddParser(new PMTParser());
 }
 
@@ -49,12 +49,11 @@ bool ParserManager::IsPatReceived(void)
 {
 	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
 	if (pTableParser == NULL) {
-		printf("[%s] no PAT parser\n", __FUNCTION__);
+		meddbg("no PAT parser\n");
 		return false;
 	}
 
 	PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
-	printf("[%s] return %d\n", __FUNCTION__, pPATParser->IsRecv());
 	return pPATParser->IsRecv();
 }
 
@@ -112,7 +111,7 @@ bool ParserManager::GetAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, 
 				case PMTElementary::STREAM_TYPE_AUDIO_HE_AAC:
 					streamType = pStream->StreamType();
 					pid = pStream->ElementaryPID();
-					printf("[%s] stream type 0x%02x, pid 0x%x\n", __FUNCTION__, streamType, pid);
+					medvdbg("stream type 0x%02x, pid 0x%x\n", streamType, pid);
 					return true;
 			}
 		}
@@ -123,53 +122,49 @@ bool ParserManager::GetAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, 
 
 bool ParserManager::GetPrograms(std::vector<prog_num_t> &programs)
 {
-    size_t i, num;
+	size_t i, num;
 
 	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
 	if (!pTableParser) {
 		return false;
 	}
 
-    PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
-    if (!pPATParser->IsRecv())
-    {
-        printf("Pat IsRecv return false!!!\n");
-        return false;
-    }
+	PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
+	if (!pPATParser->IsRecv()) {
+		meddbg("Pat IsRecv return false!!!\n");
+		return false;
+	}
 
-    programs.clear();
+	programs.clear();
 
-    num = pPATParser->NumOfProgramList();
-    for (i = 0; i < num; i++) {
-        programs.push_back(pPATParser->ProgramNumber(i));
-        printf("%d: program number %d\n", i, pPATParser->ProgramNumber(i));
-    }
+	num = pPATParser->NumOfProgramList();
+	for (i = 0; i < num; i++) {
+		programs.push_back(pPATParser->ProgramNumber(i));
+	}
 
-    return true;
+	return true;
 }
 
 bool ParserManager::GetPmtPidInfo(void)
 {
-    size_t i, num;
-    ts_pid_t pid;
+	size_t i, num;
+	ts_pid_t pid;
 	prog_num_t progNum;
 	std::map<int, ts_pid_t> pmt_elements;
-
-	printf("[%s] \n", __FUNCTION__);
 
 	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
 	if (pTableParser == NULL) {
 		return false;
 	}
 
-    PATParser *pPATParser = static_cast<PATParser*>(t_Parser(PATParser::TABLE_ID));
+	PATParser *pPATParser = static_cast<PATParser*>(t_Parser(PATParser::TABLE_ID));
 	assert(pPATParser);
-    if (!pPATParser->IsRecv()) {
-        printf("Pat IsRecv return false!!!\n");
-        return false;
-    }
+	if (!pPATParser->IsRecv()) {
+		meddbg("Pat IsRecv return false!!!\n");
+		return false;
+	}
 
-    m_PmtPids.clear();
+	m_PmtPids.clear();
 
 	num = pPATParser->NumOfProgramList();
 	for (i = 0; i < num; ++i) {
@@ -179,7 +174,7 @@ bool ParserManager::GetPmtPidInfo(void)
 			int key = PMTParser::makeKey(pid, progNum);
 			pmt_elements[key] = pid;
 			m_PmtPids.push_back(pid);
-			printf("[%s] index %d, pmt pid 0x%02x\n", __FUNCTION__, i, pid);
+			medvdbg("index %d, pmt pid 0x%02x\n", i, pid);
 		}
 	}
 
@@ -187,30 +182,27 @@ bool ParserManager::GetPmtPidInfo(void)
 	assert(pPMTParser);
 	pPMTParser->Initialize();
 	pPMTParser->UpdatePMTElements(pmt_elements);
-    return true;
+	return true;
 }
 
 bool ParserManager::IsPmtPid(ts_pid_t pid)
 {
-    auto iter = m_PmtPids.begin();;
-    while (iter != m_PmtPids.end()) {
-        if (*iter++ == pid) {
-			printf("[%s] pid 0x%x, true\n", __FUNCTION__, pid);
+	auto iter = m_PmtPids.begin();;
+	while (iter != m_PmtPids.end()) {
+		if (*iter++ == pid) {
 			return true;
 		}
 	}
 
-	printf("[%s] pid 0x%x, false\n", __FUNCTION__, pid);
 	return false;
 }
 
 bool ParserManager::processSection(ts_pid_t pid, Section *pSection)
 {
-	medvdbg("[processSection] pid 0x%04x ... \n", pid);
-    if (!pSection->VerifyCrc32()) {
-        meddbg("section crc32 verify failed!\n");
+	if (!pSection->VerifyCrc32()) {
+		meddbg("section crc32 verify failed!\n");
 		return false;
-    }
+	}
 
 	return t_Parse(pid, pSection);
 }
@@ -243,7 +235,7 @@ SectionParser *ParserManager::t_Parser(table_id_t tableId)
 {
 	auto it = t_tableParserMap.find(tableId);
 	if (it == t_tableParserMap.end()) {
-		printf("[%s] do not find matched parser for taibleid: 0x%02x\n", __FUNCTION__, tableId);
+		meddbg("No parser for taibleid: 0x%02x\n", tableId);
 		return nullptr;
 	}
 
@@ -257,7 +249,7 @@ bool ParserManager::t_Parse(ts_pid_t pid, Section *pSection)
 	table_id_t tableId = TABILE_ID(pData);
 	SectionParser *pTableParser = t_Parser(tableId);
 	if (!pTableParser) {
-		printf("table parser is null!\n");
+		meddbg("table parser is null!\n");
 		return false;
 	}
 

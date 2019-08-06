@@ -30,7 +30,7 @@ class SectionParser;
 class ParserManager
 {
 public:
-    ParserManager();
+	ParserManager();
 	virtual ~ParserManager();
 
 	bool processSection(ts_pid_t pid, Section *pSection);
@@ -38,9 +38,9 @@ public:
 	bool IsPmtReceived(prog_num_t progNum);
 	bool IsPmtReceived(void);
 	bool GetAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid);
-    bool GetPrograms(std::vector<prog_num_t> &programs);
-    bool GetPmtPidInfo(void);
-    bool IsPmtPid(ts_pid_t pid);
+	bool GetPrograms(std::vector<prog_num_t> &programs);
+	bool GetPmtPidInfo(void);
+	bool IsPmtPid(ts_pid_t pid);
 
 protected:
 	bool t_AddParser(SectionParser *pParser);

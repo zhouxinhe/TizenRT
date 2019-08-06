@@ -52,8 +52,6 @@ public:
 	bool IsRecv(void);
 
 protected:
-	virtual bool t_Create(void);
-
 	virtual void t_Initialize(void);
 
 	virtual bool t_Parse(uint8_t *pData, uint32_t size);

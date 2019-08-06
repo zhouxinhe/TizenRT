@@ -111,6 +111,12 @@ config BUFFER_DATASOURCE_STREAM_BUFFER_THRESHOLD
 	int "Buffer DataSource stream buffer threshold"
 	default 1
 
+config MPEG2_TS
+	bool "Support MPEG2 Transport Stream Demuxing"
+	default n
+	---help---
+		Enable MPEG2-TS demux feature
+
 endif #MEDIA
 
 config AUDIO_CODEC

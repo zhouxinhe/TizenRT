@@ -73,7 +73,6 @@ bool FileInputDataSource::open()
 			audioType = utils::getAudioTypeFromPath(mDataPath);
 		} else {
 			// get audio type with container parsing methods
-			meddbg("get audio type with container(%d) parsing methods\n", audioContainer); ////////////// debug
 			switch (audioContainer) {
 			case AUDIO_CONTAINER_MPEG2TS: {
 				#define PREPARE_BUFFER_BASE_SIZE 4096
@@ -113,10 +112,7 @@ bool FileInputDataSource::open()
 		case AUDIO_TYPE_AAC:
 			if (channel == 0 && !utils::header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
 				meddbg("header parsing failed\n");
-				channel = 2;
-				sampleRate = 48000;
-				// for test ts aac audio stream
-				//return false;
+				return false;
 			}
 			setSampleRate(sampleRate);
 			setChannels(channel);

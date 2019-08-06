@@ -32,12 +32,6 @@ PMTParser::~PMTParser()
 	Initialize();
 }
 
-bool PMTParser::t_Create(void)
-{
-	m_PMTElements.clear();
-	return true;
-}
-
 void PMTParser::t_Initialize(void)
 {
 	m_programNumber = (prog_num_t)INFINITY;
@@ -67,13 +61,11 @@ bool PMTParser::t_Parse(uint8_t *pData, uint32_t size)
 
 	PMTInstance *pInstance = m_PmtInstances[m_programNumber];
 	if (pInstance == NULL) {
-		pInstance = new PMTInstance();
+		pInstance = new PMTInstance(t_pid);
 		assert(pInstance);
-		pInstance->Create(t_pid);
-
 		// add PMT instance
 		m_PmtInstances[m_programNumber] = pInstance;
-        medvdbg("add pmt instance: programnumber %d, pid 0x%x\n", m_programNumber, t_pid);
+		medvdbg("add pmt instance: programnumber %d, pid 0x%x\n", m_programNumber, t_pid);
 	}
 
 	return pInstance->Parse(pData, size, t_tableIdExtension, t_versionNumber,
@@ -97,7 +89,7 @@ PMTInstance *PMTParser::GetPMTInstance(prog_num_t programNumber)
 		return it->second;
 	}
 
-    return nullptr;
+	return nullptr;
 }
 
 PMTInstance *PMTParser::PMTInstanceOfIndex(uint32_t index)

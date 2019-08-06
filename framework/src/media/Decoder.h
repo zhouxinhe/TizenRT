@@ -22,8 +22,8 @@
 #include <tinyara/config.h>
 #include <stdio.h>
 #include <memory>
-
 #include <media/MediaTypes.h>
+
 #ifdef CONFIG_AUDIO_CODEC
 #include "codec/audio_decoder.h"
 #endif

@@ -21,6 +21,7 @@
 #include <memory>
 
 #include <sys/types.h>
+#include <tinyara/config.h>
 
 #include <media/InputDataSource.h>
 #include <media/BufferObserverInterface.h>
@@ -30,14 +31,13 @@
 #include "StreamBufferWriter.h"
 #include "Decoder.h"
 
-#define CONFIG_MPEG2_TS 1
-#ifdef CONFIG_MPEG2_TS
-#include "demux/mpeg2ts/TSParser.h"
-#endif
-
 namespace media {
 class MediaPlayerImpl;
 namespace stream {
+
+#ifdef CONFIG_MPEG2_TS
+class TSParser;
+#endif
 
 typedef enum buffer_state_e : int {
 	BUFFER_STATE_EMPTY,
@@ -82,7 +82,6 @@ public:
 
 	bool registerDemux(audio_container_t audioContainer);
 	void unregisterDemux();
-
 	bool registerDecoder(audio_type_t audioType, unsigned int channels, unsigned int sampleRate);
 	void unregisterDecoder();
 	size_t getDecodeFrames(unsigned char *buf, size_t *size);
@@ -93,11 +92,11 @@ private:
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
 #ifdef CONFIG_MPEG2_TS
-	std::shared_ptr<TSParser> mTSParser; // TODO: we need a demux base class
+	std::shared_ptr<TSParser> mTSParser; // TODO: we need a demux base class as class Decoder
 #endif
-	std::shared_ptr<StreamBuffer> mStreamBuffer; // PCM buffer
-	std::shared_ptr<StreamBufferReader> mBufferReader; // read from PCM to playback
-	std::shared_ptr<StreamBufferWriter> mBufferWriter; // decoder -> write to PCM buffer
+	std::shared_ptr<StreamBuffer> mStreamBuffer;
+	std::shared_ptr<StreamBufferReader> mBufferReader;
+	std::shared_ptr<StreamBufferWriter> mBufferWriter;
 	pthread_t mWorker;
 	bool mIsWorkerAlive;
 	std::weak_ptr<MediaPlayerImpl> mPlayer;

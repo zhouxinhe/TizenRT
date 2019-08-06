@@ -42,10 +42,9 @@ private:
 	bool m_Parse(uint8_t *pData, uint32_t size);
 
 public:
-	PMTInstance();
+	PMTInstance(ts_pid_t pid);
 	virtual ~PMTInstance();
 
-	bool Create(ts_pid_t PID);
 	bool Parse(uint8_t *pData, uint32_t size, prog_num_t programNum, int8_t  versionNumber, uint8_t sectionNumber, uint8_t lastSectionNumber, uint32_t crc32, bool currentNextIndicator);
 	void DeleteAll(void);
 

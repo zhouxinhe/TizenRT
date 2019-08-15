@@ -26,7 +26,7 @@
 #include "utils/MediaUtils.h"
 #include "Decoder.h"
 #ifdef CONFIG_MPEG2_TS
-#include "demux/mpeg2ts/TSParser.h"
+#include "demux/mpeg2ts/TSDemux.h"
 #endif
 
 #ifndef CONFIG_HANDLER_STREAM_BUFFER_SIZE
@@ -331,8 +331,8 @@ size_t InputHandler::sizeOfSpace()
 {
 	// if has demuxer
 #ifdef CONFIG_MPEG2_TS
-	if (mTSParser) {
-		return mTSParser->sizeOfSpace();
+	if (mTSDemux) {
+		return mTSDemux->sizeOfSpace();
 	}
 #endif
 
@@ -349,19 +349,23 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	assert(buf != nullptr);
 
 #ifdef CONFIG_MPEG2_TS
-	if (mTSParser) {
-		mTSParser->pushData(buf, size);
+	if (mTSDemux) {
+		mTSDemux->pushData(buf, size);
 
-		if (!mTSParser->IsReady()) {
-			mTSParser->PreParse();
-			if (!mTSParser->IsReady()) {
-				// need more data for pre-parse
-				meddbg("pre parser once is not enough...\n");
+		if (!mTSDemux->isReady()) {
+			if (mTSDemux->preParse() < 0) {
+				meddbg("pre parser failed!\n");
 				return size;
 			}
 		}
 
-		size = mTSParser->pullData(buf, size);
+		auto lenES  = mTSDemux->pullData(buf, size);
+		if (lenES < 0) {
+			medwdbg("Can not pull any ES data currently! ret: %d\n", lenES);
+			return size;
+		}
+		// update `size` to real ES data length
+		size = (size_t)lenES;
 	}
 #endif
 
@@ -406,11 +410,13 @@ audio_container_t InputHandler::getContainerFormat()
 	}
 
 	// preload data from source
+	// we need to read more than one time to get enough data.
 	size_t size = 0;
+	ssize_t ret;
 	while (size < mPreloadLength) {
-		ssize_t ret = mInputDataSource->read(mPreloadData + size, mPreloadLength - size);
+		ret = mInputDataSource->read(mPreloadData + size, mPreloadLength - size);
 		if (ret <= 0) {
-			// can not load more
+			meddbg("Can not preload enough data required!\n");
 			mPreloadLength = size;
 			return AUDIO_CONTAINER_NONE;
 		}
@@ -423,19 +429,23 @@ audio_container_t InputHandler::getContainerFormat()
 bool InputHandler::registerDemux(audio_container_t audioContainer)
 {
 	switch (audioContainer) {
-	case AUDIO_CONTAINER_NONE:
+	case AUDIO_CONTAINER_NONE: {
+		// No container, do not need a demuxer.
 		return true;
+	}
+
 #ifdef CONFIG_MPEG2_TS
 	case AUDIO_CONTAINER_MPEG2TS: {
-		auto tsParser = TSParser::create();
-		if (!tsParser) {
-			meddbg("TSParser::create failed\n");
+		auto tsDemux = TSDemux::create();
+		if (!tsDemux) {
+			meddbg("TSDemux::create failed\n");
 			return false;
 		}
-		mTSParser = tsParser;
+		mTSDemux = tsDemux;
 		return true;
 	}
 #endif
+
 	default:
 		meddbg("audioContainer %d is not supported\n", audioContainer);
 		return false;
@@ -445,7 +455,7 @@ bool InputHandler::registerDemux(audio_container_t audioContainer)
 void InputHandler::unregisterDemux()
 {
 #ifdef CONFIG_MPEG2_TS
-	mTSParser = nullptr;
+	mTSDemux = nullptr;
 #endif
 }
 

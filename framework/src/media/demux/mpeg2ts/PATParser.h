@@ -16,55 +16,55 @@
  *
  ******************************************************************/
 
-#ifndef __PAT_PARSER_H__
-#define __PAT_PARSER_H__
+#ifndef __PAT_PARSER_H
+#define __PAT_PARSER_H
 
 #include <map>
+
 #include "Mpeg2TsTypes.h"
 #include "SectionParser.h"
-#include "BaseSection.h"
+#include "TableBase.h"
 
-
-class PATParser : public SectionParser, public BaseSection
+class PATParser : public SectionParser, public TableBase
 {
 public:
 	enum {
-		TABLE_ID = 0x00,
-		NETWORK_PID = 0x00,
+		TABLE_ID = 0x00,         // table id (0x00) of PAT
+		NETWORK_PID_PN = 0x0000, // program number 0 specifies the network PID
 	};
 
 	PATParser();
-
 	virtual ~PATParser();
 
-	virtual void DeleteAll(void);
+	virtual void DeleteAll(void) override;
+	// get nubmer of programs in PAT table
+	size_t sizeOfProgram(void);
+	// get program number by index
+	prog_num_t getProgramNumber(uint32_t index);
+	// get program map PID by program number
+	ts_pid_t getProgramMapPID(prog_num_t programNumber);
+	// get transport stream id
+	uint16_t getTansportStreamId(void);
+	// get NIT table PID
+	ts_pid_t getNetworkPID(void);
 
-	size_t NumOfProgramList(void);
-
-	prog_num_t ProgramNumber(uint32_t index);
-
-	ts_pid_t ProgramPID(prog_num_t programNumber);
-
-	stream_id_t TansportStreamId(void);
-
-	ts_pid_t NetworkPID(void);
-
-	bool IsRecv(void);
+	bool isRecv(void);
 
 protected:
-	virtual void t_Initialize(void);
-
+	virtual void clearParser(void);
+	// parse PAT section body to get program number and map information
 	virtual bool t_Parse(uint8_t *pData, uint32_t size);
-
-	void t_AddProgram(prog_num_t programNumber, ts_pid_t programPID);
+	// add new program information
+	void addProgram(prog_num_t programNumber, ts_pid_t programPID);
 
 private:
-	std::map<prog_num_t, ts_pid_t> m_programMap;
-
-	stream_id_t m_transportStreamId;
-
-	ts_pid_t m_networkPID;
+	// program information <program number, program map table PID>
+	std::map<prog_num_t, ts_pid_t> mProgramMap;
+	// tansport stream id
+	uint16_t mTransportStreamId;
+	// PID of network information table
+	ts_pid_t mNetworkPID;
 };
 
-#endif /* __PAT_PARSER_H__ */
+#endif /* __PAT_PARSER_H */
 

@@ -89,17 +89,17 @@ typedef enum audio_sample_rate_e {
  */
 typedef enum audio_container_e {
 	/* Unknown container format */
-	AUDIO_CONTAINER_UNKNOWN = 0,
-	/* No container */
-	AUDIO_CONTAINER_NONE,
+	AUDIO_CONTAINER_UNKNOWN = -1,
+	/* No container, raw audio stream */
+	AUDIO_CONTAINER_NONE = 0,
 	/* MPEG-2 transport stream */
-	AUDIO_CONTAINER_MPEG2TS,
+	AUDIO_CONTAINER_MPEG2TS = 1,
 	/* MP4, for the MPEG-4 multimedia portfolio */
-	AUDIO_CONTAINER_MP4,
+	AUDIO_CONTAINER_MP4 = 3,
 	/* Ogg, for Xiph.org audio formats Vorbis and Opus */
-	AUDIO_CONTAINER_OGG,
+	AUDIO_CONTAINER_OGG = 4,
 	/* WAV, RIFF file format */
-	AUDIO_CONTAINER_WAV,
+	AUDIO_CONTAINER_WAV = 5,
 } audio_container_t;
 
 /**

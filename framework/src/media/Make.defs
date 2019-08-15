@@ -57,12 +57,11 @@ CXXSRCS += InputDataSource.cpp FileInputDataSource.cpp
 CXXSRCS += HttpInputDataSource.cpp
 
 ifeq ($(CONFIG_MPEG2_TS), y)
-CXXSRCS += Section.cpp BaseSection.cpp SectionParser.cpp
-CXXSRCS += PATParser.cpp
-CXXSRCS += PMTElementary.cpp PMTInstance.cpp PMTParser.cpp
+CXXSRCS += Section.cpp TableBase.cpp SectionParser.cpp
+CXXSRCS += PMTElementary.cpp PMTInstance.cpp PMTParser.cpp PATParser.cpp
+CXXSRCS += PESPacket.cpp PESParser.cpp TSPacket.cpp
 CXXSRCS += ParseManager.cpp
-CXXSRCS += PESPacket.cpp PESParser.cpp
-CXXSRCS += TSParser.cpp
+CXXSRCS += TSDemux.cpp
 endif
 
 ifeq ($(CONFIG_ENABLE_CURL), y)

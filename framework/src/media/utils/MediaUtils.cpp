@@ -22,7 +22,7 @@
 #include <tinyara/config.h>
 
 #ifdef CONFIG_MPEG2_TS
-#include "../demux/mpeg2ts/TSParser.h"
+#include "../demux/mpeg2ts/TSDemux.h"
 #endif
 
 namespace media {
@@ -114,7 +114,7 @@ audio_container_t getAudioContainerFromPath(std::string datapath)
 audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length)
 {
 #ifdef CONFIG_MPEG2_TS
-	if (media::stream::TSParser::IsMpeg2Ts(stream, length)) {
+	if (media::stream::TSDemux::isMpeg2Ts(stream, length)) {
 		return AUDIO_CONTAINER_MPEG2TS;
 	}
 #endif
@@ -583,50 +583,51 @@ bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t
 	return true;
 }
 
+#ifdef CONFIG_MPEG2_TS
 bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
 {
-#ifdef CONFIG_MPEG2_TS
 	// create temporary ts parser
-	auto tsParser = media::stream::TSParser::create();
-	if (!tsParser) {
-		meddbg("TSParser::create failed\n");
+	auto tsDemux = media::stream::TSDemux::create();
+	if (!tsDemux) {
+		meddbg("TSDemux::create failed\n");
 		return false;
 	}
 
-	// push the given (ts) data into tsparser buffer
-	size_t ret = tsParser->pushData(buffer, bufferSize);
+	// push the given (ts) data into demux buffer
+	size_t ret = tsDemux->pushData(buffer, bufferSize);
 	if (ret < bufferSize) {
-		medwdbg("TSParser accept part of data %u/%u\n", ret, bufferSize);
+		medwdbg("TSDemux accept part of data %u/%u\n", ret, bufferSize);
 	}
 
 	// pre parse to get PSI
-	if (!tsParser->PreParse()) {
-		meddbg("TSParser parse failed\n");
+	if (tsDemux->preParse() < 0) {
+		meddbg("TSDemux parse failed\n");
 		return false;
 	}
 
 	// get programs in ts, usually we select the 1th one as default.
 	std::vector<unsigned short> programs;
-	tsParser->getPrograms(programs);
+	tsDemux->getPrograms(programs);
 	medvdbg("There's %lu programs in the given transport stream\n", programs.size());
 	if (programs.empty()) {
-		meddbg("TSParser didn't find any program! Failed!\n");
+		meddbg("TSDemux didn't find any program! Failed!\n");
 		return false;
 	}
 
 	// get audio type (from PMT component stream type field)
-	*audioType = tsParser->getAudioType(programs[0]);
+	*audioType = tsDemux->getAudioType(programs[0]);
 
 	// get ES data (we expect the given ts data is enough to form a PES packet)
 	unsigned char audioES[64]; // 64 bytes should be enough for header parsing
-	size_t audioESLen = tsParser->pullData(audioES, sizeof(audioES), programs[0]);
+	ssize_t audioESLen = tsDemux->pullData(audioES, sizeof(audioES), programs[0]);
+	if (audioESLen < 0) {
+		meddbg("TSDemux get ES data failed!\n");
+		return false;
+	}
 
-	return header_parsing(audioES, audioESLen, *audioType, channel, sampleRate, pcmFormat);
-#else
-	meddbg("MPEG2-TS feature is not enabled!\n");
-	return false;
-#endif
+	return header_parsing(audioES, (unsigned int)audioESLen, *audioType, channel, sampleRate, pcmFormat);
 }
+#endif
 
 struct wav_header_s {
 	char headerRiff[4]; //"RIFF"

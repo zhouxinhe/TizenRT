@@ -16,97 +16,110 @@
  *
  ******************************************************************/
 
-
-#include <iostream>
-#include <iomanip>
-#include <stdio.h>
+#include <debug.h>
 #include <string.h>
-#include <assert.h>
+
 #include "PESPacket.h"
 #include "Mpeg2TsTypes.h"
-#include "../../utils/MediaUtils.h"
+//#include "../../utils/MediaUtils.h"
 
+#define PACKET_LENGTH(buffer)               ((buffer[4] << 8) | buffer[5])
+#define PES_PACKET_HEAD_BYTES               (6) // packet_start_code_prefix + stream_id + PES_packet_length
 
-PESPacket::PESPacket()
-	: m_pid(INVALID_PID)
-	, m_continuity_counter(0xFF)
-	, m_data(NULL)
-	, m_data_length(0)
-	, m_offset(0)
-	, m_packet_start_code_prefix(0)
-	, m_stream_id(0)
-	, m_packet_length(0)
+std::shared_ptr<PESPacket> PESPacket::create(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
 {
+	auto instance = std::make_shared<PESPacket>();
+	if (instance && instance->initialize(pid, continuityCounter, pData, size)) {
+		return instance;
+	}
+
+	meddbg("create PESPacket instance failed!\n");
+	return nullptr;
 }
 
-PESPacket::PESPacket(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size)
-	: m_pid(u16Pid)
-	, m_continuity_counter(continuityCounter)
+#if 0
+bool PESPacket::initialize(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
 {
-	assert(u16Size >= 6);
-	m_packet_start_code_prefix = (pu8Data[0] << 16) | (pu8Data[1] << 8) | pu8Data[2];
-	m_stream_id = pu8Data[3];
-	m_packet_length = (pu8Data[4] << 8) | pu8Data[5];
-	m_data_length = 6 + m_packet_length;
-	m_data = new uint8_t[m_data_length];
-
-	if (m_data_length <= u16Size) {
-		memcpy(m_data, pu8Data, m_data_length);
-		m_offset = m_data_length;
-	} else {
-		memcpy(m_data, pu8Data, u16Size);
-		m_offset = u16Size;
+	mPacketDataLen = PES_PACKET_HEAD_BYTES + PACKET_LENGTH(pData);
+	mPacketData = new uint8_t[mPacketDataLen];
+	if (!mPacketData) {
+		meddbg("Run out of memory! Allocating %d bytes failed!\n", mPacketDataLen);
+		return false;
 	}
+
+	if (mPacketDataLen < size) {
+		mPresentDataLen = mPacketDataLen;
+	} else {
+		mPresentDataLen = size;
+	}
+	memcpy(mPacketData, pData, mPresentDataLen);
+
+	mPid = pid;
+	mContinuityCounter = continuityCounter;
+	return true;
+}
+
+PESPacket::PESPacket()
+	: mPid(INVALID_PID)
+	, mContinuityCounter(0)
+	, mPacketData(nullptr)
+	, mPacketDataLen(0)
+	, mPresentDataLen(0)
+{
 }
 
 PESPacket::~PESPacket()
 {
-	if (m_data != NULL) {
-		delete[] m_data;
-		m_data = NULL;
+	if (mPacketData) {
+		delete[] mPacketData;
+		mPacketData = nullptr;
 	}
 }
+#endif
 
-bool PESPacket::AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size)
+uint16_t PESPacket::parseLengthField(uint8_t *pData, uint16_t size)
 {
-	if (m_pid != u16Pid) {
-		// pid not match
+	return (PES_PACKET_HEAD_BYTES + PACKET_LENGTH(pData));
+}
+
+#if 0
+bool PESPacket::appendData(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
+{
+	if (mPid != pid) {
+		meddbg("pid(0x%x) do not match, current 0x%x\n", pid, mPid);
 		return false;
 	}
 
-	if (continuityCounter != ((m_continuity_counter + 1) % CONTINUITY_COUNTER_MOD)) {
-		// continuity counter not match
+	if (continuityCounter != ((mContinuityCounter + 1) % CONTINUITY_COUNTER_MOD)) {
+		meddbg("continuity counter(0x%x) do not match, current 0x%x\n", continuityCounter, mContinuityCounter);
 		return false;
 	}
 
-	m_continuity_counter = continuityCounter;
+	mContinuityCounter = continuityCounter;
 
-	if (m_data_length - m_offset >= u16Size) {
-		memcpy(m_data + m_offset, pu8Data, u16Size);
-		m_offset += u16Size;
+	if (mPacketDataLen - mPresentDataLen >= size) {
+		memcpy(mPacketData + mPresentDataLen, pData, size);
+		mPresentDataLen += size;
 	} else {
-		memcpy(m_data + m_offset, pu8Data, m_data_length - m_offset);
-		m_offset = m_data_length;
+		memcpy(mPacketData + mPresentDataLen, pData, mPacketDataLen - mPresentDataLen);
+		mPresentDataLen = mPacketDataLen;
 	}
 
 	return true;
 }
 
-bool PESPacket::VerifyCrc32()
+bool PESPacket::verifyCrc32(void)
 {
-	if (media::utils::CRC32_MPEG2(m_data, m_offset) == 0) {
-		return true;
+	if (media::utils::CRC32_MPEG2(mPacketData, mPresentDataLen) != 0) {
+		meddbg("mpeg2 crc32 verification failed!\n");
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
-bool PESPacket::ValidPacket()
+bool PESPacket::isCompleted(void)
 {
-	return (m_packet_start_code_prefix == 0x000001);
+	return (mPacketDataLen == mPresentDataLen);
 }
-
-bool PESPacket::IsPESPacketCompleted()
-{
-	return (m_data_length == m_offset);
-}
+#endif

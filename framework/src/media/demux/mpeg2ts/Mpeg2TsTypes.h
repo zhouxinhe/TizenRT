@@ -16,24 +16,25 @@
  *
  ******************************************************************/
 
-#ifndef	__MPEG2_TS_TYPES_H__
-#define __MPEG2_TS_TYPES_H__
+#ifndef	__MPEG2_TS_TYPES_H
+#define __MPEG2_TS_TYPES_H
 
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>
 
 // Default initialize value
 #define INFINITY                (~0)
-// Invalid PID value
-#define INVALID_PID             (0x1FFF)
-// Continuity counter module value
+// Packet Identifier take 13 bits [0x0000, 0x1FFF]
+// 0x1FFF specify the empty packets, invalid PID value
+#define INVALID_PID             ((ts_pid_t)0x1FFF)
+// Continuity counter take 5 bits [0, 15], so it's module value is 16
 #define CONTINUITY_COUNTER_MOD  (16)
 
 // Types definition
-typedef int16_t  ts_pid_t;      // TS packet pid
+typedef uint16_t ts_pid_t;      // TS packet pid
 typedef uint8_t  table_id_t;    // table id
-typedef int32_t  stream_id_t;   // stream id
 typedef uint16_t prog_num_t;    // program number
 typedef uint32_t crc32_t;       // CRC32
 
-#endif /* __MPEG2_TS_TYPES_H__ */
+#endif /* __MPEG2_TS_TYPES_H */

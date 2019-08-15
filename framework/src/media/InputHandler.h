@@ -36,7 +36,7 @@ class MediaPlayerImpl;
 namespace stream {
 
 #ifdef CONFIG_MPEG2_TS
-class TSParser;
+class TSDemux;
 #endif
 
 typedef enum buffer_state_e : int {
@@ -92,7 +92,7 @@ private:
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
 #ifdef CONFIG_MPEG2_TS
-	std::shared_ptr<TSParser> mTSParser; // TODO: we need a demux base class as class Decoder
+	std::shared_ptr<TSDemux> mTSDemux; // TODO: we need a demux base class like class Decoder
 #endif
 	std::shared_ptr<StreamBuffer> mStreamBuffer;
 	std::shared_ptr<StreamBufferReader> mBufferReader;

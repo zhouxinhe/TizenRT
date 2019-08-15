@@ -16,8 +16,8 @@
  *
  ******************************************************************/
 
-#ifndef __SECTION_PARSER_H__
-#define __SECTION_PARSER_H__
+#ifndef __SECTION_PARSER_H
+#define __SECTION_PARSER_H
 
 #include <vector>
 
@@ -27,70 +27,72 @@ class SectionParser
 {
 public:
 	enum {
-		PAT_PID = 0x0000,
+		PAT_PID = 0x0000,            // PID of Program Association Table
 	};
 
 	enum {
-		SECTION_HEADER_LENGTH = 3,
-		LONG_FORM_HEADER_LENGTH = 5,
-		SECTION_MAX_LENGTH = 4096,
+		SECTION_HEADER_LENGTH = 3,   // 3 bytes: table_id + section_syntax_indicatior + section_length
+		LONG_FORM_HEADER_LENGTH = 5, // 5 bytes: long form header length if section_syntax_indicatior is 1
+		SECTION_MAX_LENGTH = 4096,   // max lenght of a section is 4K bytes
 	};
 
 public:
+	SectionParser() = delete;
+	// constructor with a table id
+	SectionParser(table_id_t tableId);
 	virtual ~SectionParser();
 	// Initialize parser
 	virtual void Initialize(void);
-	// Parse section data
-	virtual bool Parse(ts_pid_t PID, uint8_t *pData);
+	// parse section data
+	virtual bool parse(ts_pid_t pid, uint8_t *pData);
 	// getters
-	virtual bool IsRecv(void) { return t_bRecv; }
-	virtual ts_pid_t Pid(void) { return t_pid; }
-	virtual table_id_t TableId(void) { return t_tableId; }
-	virtual uint16_t TableIdExt(void) { return t_tableIdExtension; }
-	virtual uint8_t SectionSyntaxIndicator(void) { return t_sectionSyntaxIndicator; }
-	virtual uint8_t PrivateIndicator(void) { return t_privateIndicator; }
-	virtual uint16_t SectionLength(void) { return t_sectionLength; }
-	virtual int8_t VersionNumber(void) { return t_versionNumber; }
-	virtual int8_t CurrentNextIndicator(void) { return t_currentNextIndicator; }
-	virtual uint8_t SectionNumber(void) { return t_sectionNumber; }
-	virtual uint8_t LastSectionNumber(void) { return t_lastSectionNumber; }
-	virtual uint32_t SectionCRC(void) { return t_crc; }
+	virtual bool isRecv(void) { return mIsRecv; }
+	virtual ts_pid_t getPid(void) { return mPid; }
+	virtual table_id_t getTableId(void) { return mTableId; }
+	virtual uint16_t getTableIdExt(void) { return mTableIdExtension; }
+	virtual uint8_t getSectionSyntaxIndicator(void) { return mSectionSyntaxIndicator; }
+	virtual uint8_t getPrivateIndicator(void) { return mPrivateIndicator; }
+	virtual uint16_t getSectionLength(void) { return mSectionLength; }
+	virtual int8_t getVersionNumber(void) { return mVersionNumber; }
+	virtual int8_t getCurrentNextIndicator(void) { return mCurrentNextIndicator; }
+	virtual uint8_t getSectionNumber(void) { return mSectionNumber; }
+	virtual uint8_t getLastSectionNumber(void) { return mLastSectionNumber; }
+	virtual uint32_t getSectionCRC(void) { return mCrc32; }
 
 protected:
-	SectionParser(table_id_t tableId);
 	// section parsing method, derived class should implement it
 	virtual bool t_Parse(uint8_t *pData, uint32_t size) = 0;
 	// Initialize method, derived class should implement it
-	virtual void t_Initialize(void) = 0;
+	virtual void clearParser(void) = 0;
 
 protected:
-	bool t_bRecv;
-	uint8_t *t_pSectionData;
+	bool mIsRecv;
+	uint8_t *mSectionData;
 
 	// section_pid
-	ts_pid_t t_pid;
+	ts_pid_t mPid;
 	// table_id
-	table_id_t t_tableId;
+	table_id_t mTableId;
 	// section_syntax_indicatior
-	bool t_sectionSyntaxIndicator;
+	bool mSectionSyntaxIndicator;
 	// private_indicatior
-	bool t_privateIndicator;
+	bool mPrivateIndicator;
 	// section_length
-	uint16_t t_sectionLength;
+	uint16_t mSectionLength;
 	// table_id_extention
-	uint16_t  t_tableIdExtension;
+	uint16_t  mTableIdExtension;
 	// version_number
-	int8_t t_versionNumber;
+	int8_t mVersionNumber;
 	// current_next_indicator
-	bool t_currentNextIndicator;
+	bool mCurrentNextIndicator;
 	// section_number
-	uint8_t t_sectionNumber;
+	uint8_t mSectionNumber;
 	// last_section_number
-	uint8_t t_lastSectionNumber;
+	uint8_t mLastSectionNumber;
 	// protocal_version
-	uint8_t t_protocolVersion;
+	uint8_t mProtocolVersion;
 	// crc32
-	uint32_t t_crc;
+	uint32_t mCrc32;
 };
 
-#endif /* __SECTION_PARSER_H__ */
+#endif /* __SECTION_PARSER_H */

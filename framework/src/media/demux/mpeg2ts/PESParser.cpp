@@ -17,84 +17,108 @@
  ******************************************************************/
 
 #include <debug.h>
-#include <assert.h>
 #include "Mpeg2TsTypes.h"
 #include "PESParser.h"
+#include "PESPacket.h"
 
-
-#define PES_PACKET_START_CODE_PREFIX 0x000001
+#define PES_PACKET_HEAD_BYTES               (6) // packet_start_code_prefix + stream_id + packet length fields
+#define PES_STREAM_HEAD_BYTES               (3) // stream info + 7 flags + PES head data length fields
+#define PACKET_START_CODE_PREFIX(buffer)    ((buffer[0] << 16) | (buffer[1] << 8) | buffer[2])
+#define STREAM_ID(buffer)                   (buffer[3])
+#define PACKET_LENGTH(buffer)               ((buffer[4] << 8) | buffer[5])
 
 PESParser::PESParser()
+	: mPacketStartCodePrefix(0)
+	, mStreamId(0)
+	, mPacketLength(0)
 {
-	Init();
 }
 
 PESParser::~PESParser()
 {
 }
 
-bool PESParser::Parse(uint8_t *pData, size_t dataLength)
+bool PESParser::parse(std::shared_ptr<PESPacket> pPESPacket)
 {
-	assert(6 <= dataLength);
-	t_pPESData          = pData;
-	m_start_code_prefix = (pData[0] << 16) | (pData[1] << 8) | pData[2]; // TODO: use macro like SECTION_LENGTH
-	m_stream_id         = (pData[3]);
-	m_packet_length     = (pData[4] << 8) | pData[5];
+	if (!pPESPacket) {
+		meddbg("pPESPacket is null!\n");
+		reset();
+		return false;
+	}
 
-	assert(m_start_code_prefix == PES_PACKET_START_CODE_PREFIX);
-	assert((size_t)6 + m_packet_length <= dataLength);
+	mPESPacket = pPESPacket;
 
-	return t_Parse(&pData[6], m_packet_length);
+	uint8_t *pData = mPESPacket->getDataPtr();
+	mPacketStartCodePrefix = PACKET_START_CODE_PREFIX(pData);
+	mStreamId = STREAM_ID(pData);
+	mPacketLength = PACKET_LENGTH(pData);
+
+	if (mPacketStartCodePrefix != PES_PACKET_START_CODE_PREFIX){
+		meddbg("Invalid PES packet, not match PES_PACKET_START_CODE_PREFIX!\n");
+		reset();
+		return false;
+	}
+
+	if ((size_t)PES_PACKET_HEAD_BYTES + mPacketLength > mPESPacket->getDataLen()) {
+		meddbg("Packet length overflow!\n");
+		reset();
+		return false;
+	}
+
+	return parseStream(&pData[PES_PACKET_HEAD_BYTES], mPacketLength);
 }
 
-bool PESParser::t_Parse(uint8_t *pData, uint32_t size)
+bool PESParser::parseStream(uint8_t *pData, uint32_t size)
 {
-	if (m_stream_id >= 0xc0 && m_stream_id <= 0xdf) {
+	if (mStreamId >= 0xc0 && mStreamId <= 0xdf) {
 		// stream id = 110xxxxx means audio streams
-		m_fixed_01                 = (pData[0] >> 6) & 0x3;
-		m_pes_scrambling_control   = (pData[0] >> 4) & 0x3;
-		m_pes_priority             = (pData[0] >> 3) & 0x1;
-		m_data_alignment_indicator = (pData[0] >> 2) & 0x1;
-		m_copyright                = (pData[0] >> 1) & 0x1;
-		m_original_or_copy         = (pData[0]) & 0x1;
-
-		m_pts_dts_flags             = (pData[1] >> 6) & 0x3;
-		m_escr_flag                 = (pData[1] >> 5) & 0x1;
-		m_es_rate_flag              = (pData[1] >> 4) & 0x1;
-		m_dsm_trick_mode_flag       = (pData[1] >> 3) & 0x1;
-		m_additional_copy_info_flag = (pData[1] >> 2) & 0x1;
-		m_pes_crc_flag              = (pData[1] >> 1) & 0x1;
-		m_pes_extension_flag        = (pData[1]) & 0x1;
-
-		m_pes_header_data_length = pData[2];
-		assert(m_fixed_01 == 0x2);
+		mPESScramblingControl   = (pData[0] >> 4) & 0x3;
+		mPESPriority            = (pData[0] >> 3) & 0x1;
+		mDataAlignmentIndicator = (pData[0] >> 2) & 0x1;
+		mCopyright              = (pData[0] >> 1) & 0x1;
+		mOriginalOrCopy         = (pData[0]) & 0x1;
+		mPtsDtsFlags            = (pData[1] >> 6) & 0x3;
+		mESCRFlag               = (pData[1] >> 5) & 0x1;
+		mESRateFlag             = (pData[1] >> 4) & 0x1;
+		mDSMTrickModeFlag       = (pData[1] >> 3) & 0x1;
+		mAdditionalCopyInfoFlag = (pData[1] >> 2) & 0x1;
+		mPESCrcFlag             = (pData[1] >> 1) & 0x1;
+		mPESExtensionFlag       = (pData[1]) & 0x1;
+		mPESHeaderDataLength    = (pData[2]);
+		medvdbg("stream_id: 0x%x for audio!\n", mStreamId);
 		return true;
 	}
 
-	meddbg("stream_id: 0x%x is not supported!\n", m_stream_id);
+	meddbg("stream_id: 0x%x is not supported!\n", mStreamId);
+	reset();
 	return false;
 }
 
-uint8_t *PESParser::ESData(void)
+uint8_t *PESParser::getESData(void)
 {
-	return t_pPESData + 6 + 3 + m_pes_header_data_length;
+	if (!mPESPacket) {
+		// no PES packet, it's normal case.
+		return nullptr;
+	}
+
+	return mPESPacket->getDataPtr() + PES_PACKET_HEAD_BYTES + PES_STREAM_HEAD_BYTES + mPESHeaderDataLength;
 }
 
-size_t PESParser::ESDataLength(void)
+uint16_t PESParser::getESDataLen(void)
 {
-	return m_packet_length - 3 - m_pes_header_data_length;
+	if (!mPESPacket) {
+		meddbg("There's no valid PES packet!\n");
+		return 0;
+	}
+
+	return mPacketLength - PES_STREAM_HEAD_BYTES - mPESHeaderDataLength;
 }
 
-bool PESParser::IsValid(void)
+void PESParser::reset(void)
 {
-	return (m_start_code_prefix == PES_PACKET_START_CODE_PREFIX);
-}
-
-bool PESParser::Init(void)
-{
-	m_start_code_prefix = 0;
-	t_pPESData  = NULL;
-	m_packet_length = 0;
-	t_pid = -1;
-	return true;
+	medvdbg("reset PES packet!\n");
+	mPESPacket = nullptr;
+	mPacketStartCodePrefix = 0;
+	mStreamId = 0;
+	mPacketLength = 0;
 }

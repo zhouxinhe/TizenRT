@@ -16,32 +16,52 @@
  *
  ******************************************************************/
 
-#ifndef __SECTION_H__
-#define __SECTION_H__
-
-#include "Mpeg2TsTypes.h"
+#ifndef __SECTION_H
+#define __SECTION_H
 
 #include <memory>
-#include <stdint.h>
+#include "Mpeg2TsTypes.h"
 
 class Section
 {
 public:
-	Section(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size);
+	// should always use this static method to create a new section instance
+	static std::shared_ptr<Section> create(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// constructor and destructor
+	Section();
 	virtual ~Section();
+	// initialize section member and allocate data buffer
+	bool initialize(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// append new section data from ts packet payload
+	bool appendData(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// verify mpeg2 crc32
+	bool verifyCrc32(void);
+	// check if section is completed
+	bool isCompleted(void);
+	// get pointer of section data buffer
+	uint8_t *getDataPtr(void) { return mSectionData; }
+	// get length in bytes of section data
+	uint16_t getDataLen(void) { return mSectionDataLen; }
+	// get PID
+	ts_pid_t getPid(void) { return mPid; }
 
-	bool AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size);
-	bool VerifyCrc32(void);
-	bool IsSectionCompleted(void);
-	uint8_t *Data(void);
-	uint16_t Length(void);
+protected:
+	// parse length field from the given data
+	// return length value of the object, in this class it's section_length
+	// derived class can override this method to get it's own length field.
+	virtual uint16_t parseLengthField(uint8_t *pData, uint16_t size);
 
 private:
-	uint16_t m_section_length; // not section_length field data, but total length
-	uint16_t m_offset;
-	uint16_t m_pid;
-	uint8_t *m_data;
-	uint8_t m_continuity_counter;
+	// PID of transport stream this section from
+	ts_pid_t mPid;
+	// continuity counter of last ts packet accepted
+	uint8_t mContinuityCounter;
+	// section data buffer allocated
+	uint8_t *mSectionData;
+	// total data length in bytes of a completed section
+	uint16_t mSectionDataLen;
+	// present data length in section data buffer
+	uint16_t mPresentDataLen;
 };
 
-#endif /* __SECTION_H__ */
+#endif /* __SECTION_H */

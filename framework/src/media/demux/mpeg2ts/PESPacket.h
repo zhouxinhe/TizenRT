@@ -16,39 +16,48 @@
  *
  ******************************************************************/
 
-#ifndef __PES_PACKET_H__
-#define __PES_PACKET_H__
+#ifndef __PES_PACKET_H
+#define __PES_PACKET_H
 
+#include <memory>
 #include "Mpeg2TsTypes.h"
+#include "Section.h"
 
-class PESPacket
+class PESPacket : public Section
 {
 public:
-	PESPacket();
-	PESPacket(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size);
-	virtual ~PESPacket();
+	// should always use this static method to create a new PESPacket instance
+	static std::shared_ptr<PESPacket> create(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// constructor and destructor
+	PESPacket() {}
+	virtual ~PESPacket() {}
 
-	bool AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size);
-	bool VerifyCrc32();
-	bool IsPESPacketCompleted();
-	bool ValidPacket();
+protected:
+	// parse length field from the given data
+	// return length value of the PES packet.
+	virtual uint16_t parseLengthField(uint8_t *pData, uint16_t size) override;
+
+#if 0
+	// initialize packet member and allocate data buffer
+	bool initialize(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// append PES data from TS packet payload
+	bool appendData(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size);
+	// MPEG2 CRC verification
+	bool verifyCrc32(void);
+	// check if it's a complete PES packet
+	bool isCompleted(void);
 	// getters
-	uint16_t Pid(void) { return m_pid; }
-	uint8_t *Data(void) { return m_data; }
-	uint16_t DataLength(void) { return m_data_length; }
-	uint16_t PacketLength(void) { return m_packet_length; }
-	uint8_t  StreamId(void) { return m_stream_id; }
+	ts_pid_t getPid(void) { return mPid; }
+	uint8_t *getDataPtr(void) { return mPacketData; }
+	uint16_t getDataLen(void) { return mPacketDataLen; }
 
 private:
-	uint16_t m_pid;
-	uint8_t  m_continuity_counter;
-	uint8_t *m_data;
-	uint16_t m_data_length;
-	uint16_t m_offset;
-
-	uint32_t m_packet_start_code_prefix;
-	uint8_t  m_stream_id;
-	uint16_t m_packet_length;
+	ts_pid_t mPid;
+	uint8_t  mContinuityCounter;
+	uint8_t *mPacketData;
+	uint16_t mPacketDataLen;
+	uint16_t mPresentDataLen;
+#endif
 };
 
-#endif /* __PES_PACKET_H__ */
+#endif /* __PES_PACKET_H */

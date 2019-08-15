@@ -16,55 +16,63 @@
  *
  ******************************************************************/
 
-#ifndef __PES_PARSER_H__
-#define __PES_PARSER_H__
+#ifndef __PES_PARSER_H
+#define __PES_PARSER_H
 
+#include <memory>
 #include "Mpeg2TsTypes.h"
 
-
+class PESPacket;
 class PESParser
 {
 public:
+	enum {
+		PES_PACKET_START_CODE_PREFIX = 0x000001,
+	};
+
 	PESParser();
 	virtual ~PESParser();
+	// parse PES packet, and the parser will add reference to the packet.
+	bool parse(std::shared_ptr<PESPacket> pPESPacket);
+	// get ES data in PES
+	uint8_t *getESData(void);
+	// get ES data length
+	uint16_t getESDataLen(void);
+	// reset PES parser, to remove reference of the PES packet
+	void reset(void);
 
-	bool  Parse(uint8_t *pData, size_t dataLength);
-	ts_pid_t Pid(void)  { return t_pid; }
-	uint8_t *ESData(void);
-	size_t ESDataLength(void);
-	bool IsValid(void);
-	bool Init(void);
+protected:
+	// parse stream data in PES
+	bool parseStream(uint8_t *pData, uint32_t size);
 
-	//virtual PESParser& operator=(const PESParser& parser);
 private:
-	ts_pid_t t_pid;
-	uint8_t *t_pPESData;
-	uint32_t m_start_code_prefix;
-	uint8_t m_stream_id;
-	uint16_t m_packet_length;
+	// PES packet reference
+	std::shared_ptr<PESPacket> mPESPacket;
+	// packet start code prefix
+	uint32_t mPacketStartCodePrefix;
+	// stream id
+	uint8_t mStreamId;
+	// PES packet length
+	uint16_t mPacketLength;
 	/// for audio streams
 	//{ optional PES header
-	uint8_t m_fixed_01                 : 2;
-	uint8_t m_pes_scrambling_control   : 2;
-	uint8_t m_pes_priority             : 1;
-	uint8_t m_data_alignment_indicator : 1;
-	uint8_t m_copyright                : 1;
-	uint8_t m_original_or_copy         : 1;
+	uint8_t mPESScramblingControl : 2;
+	uint8_t mPESPriority : 1;
+	uint8_t mDataAlignmentIndicator : 1;
+	uint8_t mCopyright : 1;
+	uint8_t mOriginalOrCopy : 1;
 	// 7 flags
-	uint8_t m_pts_dts_flags             : 2;
-	uint8_t m_escr_flag                 : 1;
-	uint8_t m_es_rate_flag              : 1;
-	uint8_t m_dsm_trick_mode_flag       : 1;
-	uint8_t m_additional_copy_info_flag : 1;
-	uint8_t m_pes_crc_flag              : 1;
-	uint8_t m_pes_extension_flag        : 1;
+	uint8_t mPtsDtsFlags : 2;
+	uint8_t mESCRFlag : 1;
+	uint8_t mESRateFlag : 1;
+	uint8_t mDSMTrickModeFlag : 1;
+	uint8_t mAdditionalCopyInfoFlag : 1;
+	uint8_t mPESCrcFlag : 1;
+	uint8_t mPESExtensionFlag : 1;
 	// following header length
-	uint8_t m_pes_header_data_length;
+	uint8_t mPESHeaderDataLength;
 	//optional fields ...
 	//} optional PES header
-
-	// process the pes data.
-	bool t_Parse(uint8_t *pData, uint32_t size);
 };
 
-#endif /* __PES_PARSER_H__ */
+#endif /* __PES_PARSER_H */

@@ -16,88 +16,110 @@
  *
  ******************************************************************/
 
-#include <stdio.h>
+#include <debug.h>
 #include <string.h>
-#include "Section.h"
+
 #include "Mpeg2TsTypes.h"
-#include "../../utils/MediaUtils.h"
+#include "Section.h"
+#include "SectionParser.h"
+#include "../../utils/MediaUtils.h" // for mpeg2 crc32 calculation
 
+#define SECTION_LENGTH(buffer) ((uint16_t)((buffer[1] & 0x0F) << 8) + (uint16_t)buffer[2])
+#define SECTION_HEAD_BYTES     (3) // table_id + ... + section_length
 
-Section::Section(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size)
-	: m_section_length(0)
-	, m_offset(0)
-	, m_pid(u16Pid)
-	, m_data(NULL)
-	, m_continuity_counter(continuityCounter)
+std::shared_ptr<Section> Section::create(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
 {
-	m_section_length = ((uint16_t)(pu8Data[1] & 0x0F) << 8) + (uint16_t)pu8Data[2] + 3;
-	m_data = new uint8_t[m_section_length];
-
-	if (m_section_length <= u16Size) {
-		memcpy(m_data, pu8Data, m_section_length);
-		m_offset += m_section_length;
-	} else {
-		memcpy(m_data, pu8Data, u16Size);
-		m_offset += u16Size;
+	auto instance = std::make_shared<Section>();
+	if (instance && instance->initialize(pid, continuityCounter, pData, size)) {
+		return instance;
 	}
+
+	meddbg("create Section instance failed!\n");
+	return nullptr;
+}
+
+bool Section::initialize(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
+{
+	mSectionDataLen = parseLengthField(pData, size);
+	mSectionData = new uint8_t[mSectionDataLen];
+	if (!mSectionData) {
+		meddbg("Run out of memory! Allocating %d bytes failed!\n", mSectionDataLen);
+		return false;
+	}
+
+	if (mSectionDataLen < size) {
+		// abnormal case, anyway it would be abandoned if it's invalid section.
+		mPresentDataLen = mSectionDataLen;
+	} else {
+		mPresentDataLen = size;
+	}
+	memcpy(mSectionData, pData, mPresentDataLen);
+
+	mPid = pid;
+	mContinuityCounter = continuityCounter;
+	medvdbg("initialize new section/packet, pid:0x%x, continuity:%u, data %u/%u\n", mPid, mContinuityCounter, mPresentDataLen, mSectionDataLen);
+	return true;
+}
+
+Section::Section()
+	: mPid(INVALID_PID)
+	, mContinuityCounter(0)
+	, mSectionData(nullptr)
+	, mSectionDataLen(0)
+	, mPresentDataLen(0)
+{
 }
 
 Section::~Section()
 {
-	if (m_data != NULL) {
-		delete[] m_data;
-		m_data = NULL;
+	if (mSectionData) {
+		delete[] mSectionData;
+		mSectionData = nullptr;
 	}
 }
 
-bool Section::AppendData(uint16_t u16Pid, uint8_t continuityCounter, uint8_t *pu8Data, uint16_t u16Size)
+bool Section::appendData(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
 {
-	if (m_pid != u16Pid) {   // pid not match
+	if (mPid != pid) {
+		meddbg("pid(0x%x) do not match, current 0x%x\n", pid, mPid);
 		return false;
 	}
 
-	if (continuityCounter != ((m_continuity_counter + 1) % CONTINUITY_COUNTER_MOD)) {
-		// continuity counter not match
+	if (continuityCounter != ((mContinuityCounter + 1) % CONTINUITY_COUNTER_MOD)) {
+		meddbg("continuity counter(0x%x) do not match, current 0x%x\n", continuityCounter, mContinuityCounter);
 		return false;
 	}
 
-	m_continuity_counter = continuityCounter;
+	mContinuityCounter = continuityCounter;
 
-	if (m_section_length - m_offset >= u16Size) {
-		memcpy(m_data + m_offset, pu8Data, u16Size);
-		m_offset += u16Size;
+	if (mPresentDataLen + size <= mSectionDataLen) {
+		memcpy(mSectionData + mPresentDataLen, pData, size);
+		mPresentDataLen += size;
 	} else {
-		memcpy(m_data + m_offset, pu8Data, m_section_length - m_offset);
-		m_offset = m_section_length;
+		memcpy(mSectionData + mPresentDataLen, pData, mSectionDataLen - mPresentDataLen);
+		mPresentDataLen = mSectionDataLen;
+	}
+
+	medvdbg("append section/packet, pid:0x%x, continuity:%u, data %u(%u)/%u\n", mPid, mContinuityCounter, mPresentDataLen, size, mSectionDataLen);
+	return true;
+}
+
+bool Section::verifyCrc32(void)
+{
+	if (media::utils::CRC32_MPEG2(mSectionData, mPresentDataLen) != 0) {
+		meddbg("mpeg2 crc32 verification failed!\n");
+		return false;
 	}
 
 	return true;
 }
 
-bool Section::VerifyCrc32(void)
+bool Section::isCompleted(void)
 {
-	if (media::utils::CRC32_MPEG2(m_data, m_offset) == 0) {
-		return true;
-	}
-
-	return false;
+	return (mSectionDataLen == mPresentDataLen);
 }
 
-bool Section::IsSectionCompleted(void)
+uint16_t Section::parseLengthField(uint8_t *pData, uint16_t size)
 {
-	if (m_section_length == m_offset) {
-		return true;
-	}
-
-	return false;
-}
-
-uint8_t *Section::Data(void)
-{
-	return m_data;
-}
-
-uint16_t Section::Length(void)
-{
-	return m_section_length;
+	return (SECTION_HEAD_BYTES + SECTION_LENGTH(pData));
 }

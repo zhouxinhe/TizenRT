@@ -16,13 +16,12 @@
  *
  ******************************************************************/
 
-
-#ifndef __PARSE_MANAGER_H__
-#define __PARSE_MANAGER_H__
+#ifndef __PARSE_MANAGER_H
+#define __PARSE_MANAGER_H
 
 #include <map>
 #include <vector>
-
+#include <memory>
 #include "Mpeg2TsTypes.h"
 
 class Section;
@@ -32,25 +31,37 @@ class ParserManager
 public:
 	ParserManager();
 	virtual ~ParserManager();
-
-	bool processSection(ts_pid_t pid, Section *pSection);
-	bool IsPatReceived(void);
-	bool IsPmtReceived(prog_num_t progNum);
-	bool IsPmtReceived(void);
-	bool GetAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid);
-	bool GetPrograms(std::vector<prog_num_t> &programs);
-	bool GetPmtPidInfo(void);
-	bool IsPmtPid(ts_pid_t pid);
+	// parse section with the corresponding parser
+	bool processSection(std::shared_ptr<Section> pSection);
+	// check if PAT has been received
+	bool isPATReceived(void);
+	// check if the PMT of the given program number has been received
+	bool isPMTReceived(prog_num_t progNum);
+	// check if all PMTs have been received
+	bool isPMTReceived(void);
+	// get audio stream information of the given program number
+	bool getAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid);
+	// get all program numbers and save into vector
+	bool getPrograms(std::vector<prog_num_t> &programs);
+	// check if the given PID is a PMT PID
+	bool isPMTPid(ts_pid_t pid);
 
 protected:
-	bool t_AddParser(SectionParser *pParser);
-	bool t_RemoveParser(table_id_t tableId);
-	SectionParser *t_Parser(table_id_t tableId);
-	bool t_Parse(ts_pid_t pid, Section *pSection);
+	// add new section parser
+	bool addParser(SectionParser *pParser);
+	// remove section parser of the given table id
+	bool removeParser(table_id_t tableId);
+	// get section parser of the given table id
+	SectionParser *getParser(table_id_t tableId);
+	// sync program information from PAT parser when PAT received,
+	// then it's possible to filter and parse PMT sections for each program.
+	bool syncProgramInfoFromPAT(void);
 
 private:
+	// table parsers
 	std::map<table_id_t, SectionParser *> t_tableParserMap;
-	std::vector<ts_pid_t> m_PmtPids;
+	// Pids of PMT for section filtering
+	std::vector<ts_pid_t> mPMTPids;
 };
 
-#endif
+#endif /* __PARSE_MANAGER_H */

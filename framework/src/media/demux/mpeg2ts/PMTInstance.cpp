@@ -16,10 +16,11 @@
  *
  ******************************************************************/
 
+#include <debug.h>
+
 #include "Mpeg2TsTypes.h"
 #include "PMTElementary.h"
 #include "PMTInstance.h"
-#include "PMTParser.h"
 
 #define PMT_PROG_INFO_LENGTH(buffer)       (((buffer[0] & 0x0F) << 8) + buffer[1])
 #define LENGTH_FIELD_BYTES                 (2)
@@ -27,86 +28,81 @@
 #define PID_FIELD_BYTES                    (2)
 #define PMT_CRC_BYTES                      (4)
 
-bool PMTInstance::m_Parse(uint8_t *pData, uint32_t size)
-{
-	m_programInfoLength = PMT_PROG_INFO_LENGTH(pData);
-	pData += LENGTH_FIELD_BYTES;
-	size -= LENGTH_FIELD_BYTES;
-
-	if (m_programInfoLength + (uint32_t)PMT_CRC_BYTES <=  size) {
-		// Ignore program info descriptors
-		pData += m_programInfoLength;
-		int length = (int)(size - m_programInfoLength - PMT_CRC_BYTES);
-		int len = 0;
-		while (length > 0) {
-			PMTElementary *stream = new PMTElementary();
-			assert(stream != NULL);
-			len = stream->Parse(pData);
-			m_streamList.push_back(stream);
-
-			length -= len;
-			pData  += len;
-		}
-	} else {
-		meddbg("m_programInfoLength=%d invalid\n", m_programInfoLength);
-		return false;
-	}
-
-	return true;
-}
-
 PMTInstance::PMTInstance(ts_pid_t pid)
+	: mPid(pid)
+	, mProgramNumber((prog_num_t)INFINITY)
+	, mPcrPid((ts_pid_t)INFINITY)
+	, mProgramInfoLength(0)
 {
-	m_pid           = pid;
-	m_programNumber = (prog_num_t)INFINITY;
-	m_pcrPID        = (ts_pid_t)INFINITY;
-	m_programInfoLength = 0;
-
-	m_versionNumber = 0;
-	m_currentNextIndicator = false;
-	m_sectionNumber = 0;
-	m_lastSectionNumber = 0;
 }
 
 PMTInstance::~PMTInstance(void)
 {
 	DeleteAll();
-
-	m_streamList.clear();
 }
 
 void PMTInstance::DeleteAll(void)
 {
-	m_streamList.clear();
-	m_programInfoLength = 0;
+	mElementaryStreams.clear();
+	mProgramInfoLength = 0;
 }
 
-size_t PMTInstance::NumOfElementary(void)
+bool PMTInstance::mParse(uint8_t *pData, uint32_t size)
 {
-	return m_streamList.size();
+	mProgramInfoLength = PMT_PROG_INFO_LENGTH(pData);
+	pData += LENGTH_FIELD_BYTES;
+	size -= LENGTH_FIELD_BYTES;
+
+	if (mProgramInfoLength + (uint32_t)PMT_CRC_BYTES >  size) {
+		meddbg("mProgramInfoLength=%d invalid\n", mProgramInfoLength);
+		return false;
+	}
+
+	parseProgramInfo(pData, mProgramInfoLength);
+	pData += mProgramInfoLength;
+	size -= mProgramInfoLength;
+
+	int32_t length = (int32_t)(size - (uint32_t)PMT_CRC_BYTES);
+	while (length > 0) {
+		auto stream = std::make_shared<PMTElementary>();
+		if (stream == nullptr) {
+			meddbg("Run out of memory!\n");
+			return false;
+		}
+
+		int32_t len = stream->parseES(pData, (uint32_t)length);
+		mElementaryStreams.push_back(stream);
+		length -= len;
+		pData += len;
+	}
+
+	return true;
 }
 
-bool PMTInstance::Parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
+bool PMTInstance::parseProgramInfo(uint8_t *pData, uint32_t size)
+{
+	// Ignore program info descriptors...
+	// Add related descrioptor parer in future.
+	return true;
+}
+
+bool PMTInstance::parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 						int8_t versionNumber, uint8_t sectionNumber,
 						uint8_t lastSectionNumber, uint32_t crc32, bool currentNextIndicator)
 {
-	m_programNumber         = programNum;
-	m_versionNumber         = versionNumber;
-	m_currentNextIndicator  = currentNextIndicator;
-	m_sectionNumber         = sectionNumber;
-	m_lastSectionNumber     = lastSectionNumber;
-	m_pcrPID                = PMT_PCR_PID(pData);
+	mProgramNumber = programNum;
+	mPcrPid = PMT_PCR_PID(pData);
 	pData += PID_FIELD_BYTES;
 	size -= PID_FIELD_BYTES;
 
-	switch (t_CheckVersion(m_versionNumber, m_sectionNumber, m_lastSectionNumber, crc32)) {
-	case TABLE_CHANGE:
-	case TABLE_INITIAL:
-	case TABLE_APPEND:
-		m_Parse(pData, size);
-		return IsValid();
+	switch (checkSection(versionNumber, sectionNumber, lastSectionNumber, crc32)) {
+	case SECTION_CHANGE: // fall through
+	case SECTION_INITIAL: // fall through
+	case SECTION_APPEND:
+		mParse(pData, size);
+		return isCompleted();
 
-	case TABLE_IGNORE :
+	case SECTION_IGNORE :
 		medwdbg("PMT Section Ignored...\n");
 		break;
 
@@ -117,11 +113,16 @@ bool PMTInstance::Parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 	return false;
 }
 
-PMTElementary *PMTInstance::GetPMTElementary(uint32_t index)
+size_t PMTInstance::numOfElementary(void)
 {
-	if ((size_t)index >= m_streamList.size()) {
-		return NULL;
+	return mElementaryStreams.size();
+}
+
+std::shared_ptr<PMTElementary> PMTInstance::getPMTElementary(uint32_t index)
+{
+	if ((size_t)index >= mElementaryStreams.size()) {
+		return nullptr;
 	}
 
-	return m_streamList[index];
+	return mElementaryStreams[index];
 }

@@ -16,8 +16,8 @@
  *
  ******************************************************************/
 
-#ifndef __PMT_ELEMENTARY_H__
-#define __PMT_ELEMENTARY_H__
+#ifndef __PMT_ELEMENTARY_H
+#define __PMT_ELEMENTARY_H
 
 #include "Mpeg2TsTypes.h"
 
@@ -33,20 +33,24 @@ public:
 	};
 
 	PMTElementary();
-	~PMTElementary();
+	virtual ~PMTElementary();
 
-	uint8_t StreamType(void);
-	ts_pid_t ElementaryPID(void);
-	int16_t ESInfoLength(void);
-	int32_t Parse(uint8_t *pData);
+	//
+	int32_t parseES(uint8_t *pData, uint32_t size);
+	// get stream type of the elementary stream
+	uint8_t getStreamType(void) { return mStreamType; }
+	// get PID of the elementary stream
+	ts_pid_t getElementaryPID(void) { return mElementaryPID; }
+	// get length of ES info (descriptors)
+	int16_t getESInfoLength(void) { return mESInfoLength; }
 
 private:
 	// stream type
-	uint8_t m_streamType;
-	// elementary PID
-	ts_pid_t m_elementary_PID;
+	uint8_t mStreamType;
+	// elementary stream PID
+	ts_pid_t mElementaryPID;
 	// ES info length
-	int16_t m_esInfoLength;
+	int16_t mESInfoLength;
 };
 
-#endif /* __PMT_ELEMENTARY_H__ */
+#endif /* __PMT_ELEMENTARY_H */

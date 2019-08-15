@@ -18,7 +18,7 @@
 
 #include "Mpeg2TsTypes.h"
 #include "Section.h"
-#include "BaseSection.h"
+#include "TableBase.h"
 #include "SectionParser.h"
 
 // Section Info macros
@@ -26,37 +26,37 @@
 #define SECTION_SYNTAX_INDICATOR(buffer)    ((buffer[1] >> 7) & 1)
 #define PRIVATE_INDICATOR(buffer)           ((buffer[1] >> 6) & 1)
 #define SECTION_LENGTH(buffer)              (((buffer[1] & 0x0F) << 8) + buffer[2])
-#define SI_TSID(buffer)                     ((buffer[3] << 8) + buffer[4])
-#define SI_VN(buffer)                       ((buffer[5] >> 1) & 0x1F)
-#define SI_CNI(buffer)                      (buffer[5] & 0x01)
-#define SI_SN(buffer)                       (buffer[6])
-#define SI_LSN(buffer)                      (buffer[7])
+#define SI_TABLE_ID_EXT(buffer)             ((buffer[3] << 8) + buffer[4])
+#define SI_VERSION_NUMBER(buffer)           ((buffer[5] >> 1) & 0x1F)
+#define SI_CURRENT_NEXT_INDICATOR(buffer)   (buffer[5] & 0x01)
+#define SI_SECTION_NUMBER(buffer)           (buffer[6])
+#define SI_LAST_SECTION_NUMBER(buffer)      (buffer[7])
 #define SI_CRC(buffer,len)                  ((buffer[(len) - 4] << 24) + \
 											(buffer[(len) - 3] << 16) + \
 											(buffer[(len) - 2] << 8) + \
 											(buffer[(len) - 1]))
-#define PSI_DATA(buffer)                    (&(buffer[8])) // 8 = SECTION_HEADER_LENGTH + LONG_FORM_HEADER_LENGTH
+#define PSI_DATA(buffer)                    (&(buffer[8]))
 #define SHORT_FORM(buffer)                  (&(buffer[3]))
 
 
 SectionParser::SectionParser(table_id_t tableId)
 {
-	t_bRecv = false;
-	t_pSectionData = nullptr;
+	mIsRecv = false;
+	mSectionData = nullptr;
 
-	t_pid = INVALID_PID;
-	t_tableId = tableId;
-	t_sectionSyntaxIndicator = false;
-	t_privateIndicator = false;
-	t_sectionLength = 0;
+	mPid = INVALID_PID;
+	mTableId = tableId;
+	mSectionSyntaxIndicator = false;
+	mPrivateIndicator = false;
+	mSectionLength = 0;
 
-	t_tableIdExtension = 0;
-	t_versionNumber = 0;
-	t_currentNextIndicator = 0;
-	t_sectionNumber = 0;
-	t_lastSectionNumber = 0;
-	t_protocolVersion = 0;
-	t_crc = 0;
+	mTableIdExtension = 0;
+	mVersionNumber = 0;
+	mCurrentNextIndicator = 0;
+	mSectionNumber = 0;
+	mLastSectionNumber = 0;
+	mProtocolVersion = 0;
+	mCrc32 = 0;
 }
 
 SectionParser::~SectionParser()
@@ -65,34 +65,32 @@ SectionParser::~SectionParser()
 
 void SectionParser::Initialize(void)
 {
-	t_Initialize();
+	clearParser();
 
-	t_bRecv = false;
-	t_pSectionData = nullptr;
-	t_sectionLength = 0;
+	mIsRecv = false;
+	mSectionData = nullptr;
+	mSectionLength = 0;
 }
 
-bool SectionParser::Parse(ts_pid_t pid, uint8_t *pData)
+bool SectionParser::parse(ts_pid_t pid, uint8_t *pData)
 {
-	t_bRecv                  = true;
-	t_pid                    = pid;
-	t_pSectionData           = pData;
-	t_tableId                = TABILE_ID(pData);
-	t_sectionSyntaxIndicator = SECTION_SYNTAX_INDICATOR(pData);
-	t_privateIndicator       = PRIVATE_INDICATOR(pData);
-	t_sectionLength          = SECTION_LENGTH(pData);
+	mIsRecv                 = true;
+	mPid                    = pid;
+	mSectionData            = pData;
+	mTableId                = TABILE_ID(pData);
+	mSectionSyntaxIndicator = SECTION_SYNTAX_INDICATOR(pData);
+	mPrivateIndicator       = PRIVATE_INDICATOR(pData);
+	mSectionLength          = SECTION_LENGTH(pData);
 
-	if (t_sectionSyntaxIndicator) {
-		//Long form
-		t_tableIdExtension     = SI_TSID(pData);
-		t_versionNumber        = SI_VN(pData);
-		t_currentNextIndicator = SI_CNI(pData);
-		t_sectionNumber        = SI_SN(pData);
-		t_lastSectionNumber    = SI_LSN(pData);
-		t_crc                  = SI_CRC(pData,t_sectionLength + SECTION_HEADER_LENGTH);
-		return t_Parse(PSI_DATA(pData), t_sectionLength - SectionParser::LONG_FORM_HEADER_LENGTH);
+	if (mSectionSyntaxIndicator) {
+		mTableIdExtension     = SI_TABLE_ID_EXT(pData);
+		mVersionNumber        = SI_VERSION_NUMBER(pData);
+		mCurrentNextIndicator = SI_CURRENT_NEXT_INDICATOR(pData);
+		mSectionNumber        = SI_SECTION_NUMBER(pData);
+		mLastSectionNumber    = SI_LAST_SECTION_NUMBER(pData);
+		mCrc32                = SI_CRC(pData,mSectionLength + SECTION_HEADER_LENGTH);
+		return t_Parse(PSI_DATA(pData), mSectionLength - SectionParser::LONG_FORM_HEADER_LENGTH);
 	} else {
-		//short form
-		return t_Parse(SHORT_FORM(pData), t_sectionLength);
+		return t_Parse(SHORT_FORM(pData), mSectionLength);
 	}
 }

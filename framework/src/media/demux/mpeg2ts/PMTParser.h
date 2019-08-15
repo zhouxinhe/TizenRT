@@ -16,8 +16,8 @@
  *
  ******************************************************************/
 
-#ifndef __PMT_PARSER_H__
-#define __PMT_PARSER_H__
+#ifndef __PMT_PARSER_H
+#define __PMT_PARSER_H
 
 #include <map>
 #include "Mpeg2TsTypes.h"
@@ -29,37 +29,31 @@ class PMTParser : public SectionParser
 {
 public:
 	enum {
-		TABLE_ID = 0x02,
+		TABLE_ID = 0x02, // table id (0x02) of PMT
 	};
 
 	PMTParser();
 	virtual ~PMTParser();
 
-	size_t NumOfPMTInstance(void);
-
-	prog_num_t ProgramNumber(void);
-
-	PMTInstance *GetPMTInstance(prog_num_t programNumber);
-
-	PMTInstance *PMTInstanceOfIndex(uint32_t index);
-
-	void UpdatePMTElements(std::map<int, ts_pid_t> &pmtMap);
-
-	void ClearPMTElements(void);
-
+	// number of PMT instances
+	size_t numOfPMTInstance(void);
+	// get PMT instance by program number
+	std::shared_ptr<PMTInstance> getPMTInstance(prog_num_t programNumber);
+	// update PMT elememts
+	void updatePMTElements(std::map<int, ts_pid_t> &pmtMap);
+	// make key with PMT pid and program number
 	static int makeKey(ts_pid_t pid, prog_num_t progNum);
 
 protected:
-	virtual void t_Initialize(void);
+	virtual void clearParser(void) override;
 
 	virtual bool t_Parse(uint8_t *pData, uint32_t size);
 
 private:
-	prog_num_t m_programNumber;
-
-	std::map<int, ts_pid_t> m_PMTElements;  // <key = (pid<<16 | prog_num), data = pid>
-
-	std::map<prog_num_t, PMTInstance *> m_PmtInstances;
+	// PMT elements
+	std::map<int, ts_pid_t> mPMTElements;  // <key = (pid<<16 | prog_num), data = pid>
+	// PMT instances with program number in map
+	std::map<prog_num_t, std::shared_ptr<PMTInstance>> mPMTInstances;
 };
 
-#endif /* __PMT_PARSER_H__ */
+#endif /* __PMT_PARSER_H */

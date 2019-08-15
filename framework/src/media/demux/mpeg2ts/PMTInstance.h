@@ -16,49 +16,56 @@
  *
  ******************************************************************/
 
-#ifndef __PMT_INSTANCE_H__
-#define __PMT_INSTANCE_H__
+#ifndef __PMT_INSTANCE_H
+#define __PMT_INSTANCE_H
 
 #include <vector>
-#include "Mpeg2TsTypes.h"
-#include "BaseSection.h"
+#include <memory>
 
+#include "Mpeg2TsTypes.h"
+#include "TableBase.h"
 
 class PMTElementary;
-
-class PMTInstance : public BaseSection
+class PMTInstance : public TableBase
 {
-private:
-	ts_pid_t m_pid;
-	prog_num_t m_programNumber;
-	int8_t m_versionNumber;
-	bool m_currentNextIndicator;
-	uint8_t m_sectionNumber;
-	uint8_t m_lastSectionNumber;
-	ts_pid_t m_pcrPID;
-	uint16_t m_programInfoLength;
-	std::vector<PMTElementary *> m_streamList;
-
-	bool m_Parse(uint8_t *pData, uint32_t size);
-
 public:
+	PMTInstance() = delete;
+	// constructor with a PMT PID
 	PMTInstance(ts_pid_t pid);
 	virtual ~PMTInstance();
 
-	bool Parse(uint8_t *pData, uint32_t size, prog_num_t programNum, int8_t  versionNumber, uint8_t sectionNumber, uint8_t lastSectionNumber, uint32_t crc32, bool currentNextIndicator);
+	bool parse(uint8_t *pData, uint32_t size, prog_num_t programNum, int8_t  versionNumber, uint8_t sectionNumber, uint8_t lastSectionNumber, uint32_t crc32, bool currentNextIndicator);
 	void DeleteAll(void);
+	// number of elementary streams
+	size_t numOfElementary(void);
+	// get elementary stream by index
+	std::shared_ptr<PMTElementary> getPMTElementary(uint32_t index);
+	// get PID of this PMT table
+	ts_pid_t getPid(void) { return mPid; }
+	// get program number
+	prog_num_t getProgramNumber(void) { return mProgramNumber; }
+	// get PCR PID of this program
+	ts_pid_t getPcrPid(void) { return mPcrPid; }
+	// get program info length field value
+	uint16_t getProgramInfoLength(void) { return mProgramInfoLength; }
 
-	size_t NumOfElementary(void);
-	PMTElementary *GetPMTElementary(uint32_t index);
-	// getters
-	ts_pid_t PCR_PID(void) { return m_pcrPID; }
-	ts_pid_t PID(void) { return m_pid; }
-	prog_num_t ProgramNumber(void) { return m_programNumber; }
-	int8_t VersionNumber(void) { return m_versionNumber; }
-	bool CurrentNextIndicator(void) { return m_currentNextIndicator; }
-	uint8_t SectionNumber(void) { return m_sectionNumber; }
-	uint8_t LastSectionNumber(void) { return m_lastSectionNumber; }
-	uint16_t ProgramInfoLength(void) { return m_programInfoLength; }
+protected:
+	//
+	bool mParse(uint8_t *pData, uint32_t size);
+	// parse program info descriptors
+	bool parseProgramInfo(uint8_t *pData, uint32_t size);
+
+private:
+	// PID of this PMT table
+	ts_pid_t mPid;
+	// program number associated
+	prog_num_t mProgramNumber;
+	// PID of PCR (program clock reference)
+	ts_pid_t mPcrPid;
+	// program info length
+	uint16_t mProgramInfoLength;
+	// Elementary streams
+	std::vector<std::shared_ptr<PMTElementary>> mElementaryStreams;
 };
 
-#endif /* __PMT_INSTANCE_H__ */
+#endif /* __PMT_INSTANCE_H */

@@ -77,10 +77,11 @@ bool FileInputDataSource::open()
 			case AUDIO_CONTAINER_MPEG2TS: {
 				#define PREPARE_BUFFER_BASE_SIZE 4096
 				#define PREPARE_BUFFER_MORE_SIZE 2048
+				#define PREPARE_BUFFER_MORE_COUNT 2
 				int i;
 				size_t bufferSize;
 				unsigned char *buffer = NULL;
-				for (i = 0; i < 3; i++) {
+				for (i = 0; i < 1 + PREPARE_BUFFER_MORE_COUNT; i++) {
 					bufferSize = PREPARE_BUFFER_BASE_SIZE + (i * PREPARE_BUFFER_MORE_SIZE);
 					buffer = new unsigned char[bufferSize];
 					if (!buffer) {
@@ -88,14 +89,13 @@ bool FileInputDataSource::open()
 						return false;
 					}
 					// read file
-					fseek(mFp, 0, SEEK_SET);
 					bufferSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
 					fseek(mFp, 0, SEEK_SET);
 					// parse ts
 					bool ret = utils::ts_parsing(buffer, bufferSize, &audioType, &channel, &sampleRate, &pcmFormat);
 					delete[] buffer;
 					if (ret) {
-						meddbg("ts_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat); ///////// verbos
+						medvdbg("ts_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
 						break;
 					}
 				}

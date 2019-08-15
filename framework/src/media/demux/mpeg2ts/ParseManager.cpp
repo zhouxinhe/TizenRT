@@ -16,9 +16,7 @@
  *
  ******************************************************************/
 
-#include <assert.h>
 #include <debug.h>
-
 #include "Mpeg2TsTypes.h"
 #include "Section.h"
 #include "SectionParser.h"
@@ -26,7 +24,6 @@
 #include "PMTParser.h"
 #include "PMTInstance.h"
 #include "PMTElementary.h"
-#include "TSParser.h"
 #include "ParseManager.h"
 
 #define TABILE_ID(buffer)   ((buffer)[0])
@@ -34,9 +31,9 @@
 ParserManager::ParserManager()
 {
 	// Add PAT parser
-	t_AddParser(new PATParser());
+	addParser(new PATParser());
 	// Add PMT parser
-	t_AddParser(new PMTParser());
+	addParser(new PMTParser());
 }
 
 ParserManager::~ParserManager()
@@ -45,43 +42,43 @@ ParserManager::~ParserManager()
 	t_tableParserMap.clear();
 }
 
-bool ParserManager::IsPatReceived(void)
+bool ParserManager::isPATReceived(void)
 {
-	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
-	if (pTableParser == NULL) {
+	SectionParser *pTableParser = getParser(PATParser::TABLE_ID);
+	if (pTableParser == nullptr) {
 		meddbg("no PAT parser\n");
 		return false;
 	}
 
 	PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
-	return pPATParser->IsRecv();
+	return pPATParser->isRecv();
 }
 
-bool ParserManager::IsPmtReceived(prog_num_t progNum)
+bool ParserManager::isPMTReceived(prog_num_t progNum)
 {
-	SectionParser *pTableParser = t_Parser(PMTParser::TABLE_ID);
-	if (pTableParser == NULL) {
+	SectionParser *pTableParser = getParser(PMTParser::TABLE_ID);
+	if (pTableParser == nullptr) {
 		return false;
 	}
 
 	PMTParser *pPMTParser = static_cast<PMTParser*>(pTableParser);
-	PMTInstance *pPMTInstance = pPMTParser->GetPMTInstance(progNum);
-	if (pPMTInstance == NULL) {
+	auto pPMTInstance = pPMTParser->getPMTInstance(progNum);
+	if (pPMTInstance == nullptr) {
 		return false;
 	}
 
-	return pPMTInstance->IsValid();
+	return pPMTInstance->isCompleted();
 }
 
-bool ParserManager::IsPmtReceived(void)
+bool ParserManager::isPMTReceived(void)
 {
-	PATParser *pPATParser = static_cast<PATParser*>(t_Parser(PATParser::TABLE_ID));
+	PATParser *pPATParser = static_cast<PATParser*>(getParser(PATParser::TABLE_ID));
 
-	if (pPATParser && pPATParser->IsRecv()) {
+	if (pPATParser && pPATParser->isRecv()) {
 		size_t i;
-		size_t progs = pPATParser->NumOfProgramList();
+		size_t progs = pPATParser->sizeOfProgram();
 		for (i = 0; i < progs; i++) {
-			if (!IsPmtReceived(pPATParser->ProgramNumber(i))) {
+			if (!isPMTReceived(pPATParser->getProgramNumber(i))) {
 				return false;
 			}
 		}
@@ -92,103 +89,113 @@ bool ParserManager::IsPmtReceived(void)
 	return false;
 }
 
-bool ParserManager::GetAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid)
+bool ParserManager::getAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid)
 {
-	PMTParser *pPMTParser = static_cast<PMTParser*>(t_Parser(PMTParser::TABLE_ID));
-	PMTInstance *pPMTInstance = pPMTParser->GetPMTInstance(progNum);
+	PMTParser *pPMTParser = static_cast<PMTParser*>(getParser(PMTParser::TABLE_ID));
+	auto pPMTInstance = pPMTParser->getPMTInstance(progNum);
 
-	if (pPMTInstance && pPMTInstance->IsValid()) {
+	if (pPMTInstance && pPMTInstance->isCompleted()) {
 		size_t i;
-		size_t num = pPMTInstance->NumOfElementary();
+		size_t num = pPMTInstance->numOfElementary();
 		for (i = 0; i < num; i++) {
-			PMTElementary *pStream = pPMTInstance->GetPMTElementary(i);
-			assert(pStream);
-			switch (pStream->StreamType()) {
-				case PMTElementary::STREAM_TYPE_AUDIO_AAC:
-				case PMTElementary::STREAM_TYPE_AUDIO_MPEG2:
-				case PMTElementary::STREAM_TYPE_AUDIO_AC3:
-				case PMTElementary::STREAM_TYPE_AUDIO_MPEG1:
+			auto pStream = pPMTInstance->getPMTElementary(i);
+			if (!pStream) {
+				meddbg("Run out of memory!\n");
+				return false;
+			}
+
+			switch (pStream->getStreamType()) {
+				case PMTElementary::STREAM_TYPE_AUDIO_AAC:   // fall through
+				case PMTElementary::STREAM_TYPE_AUDIO_MPEG2: // fall through
+				case PMTElementary::STREAM_TYPE_AUDIO_AC3:   // fall through
+				case PMTElementary::STREAM_TYPE_AUDIO_MPEG1: // fall through
 				case PMTElementary::STREAM_TYPE_AUDIO_HE_AAC:
-					streamType = pStream->StreamType();
-					pid = pStream->ElementaryPID();
+					streamType = pStream->getStreamType();
+					pid = pStream->getElementaryPID();
 					medvdbg("stream type 0x%02x, pid 0x%x\n", streamType, pid);
 					return true;
+				default:
+					break;
 			}
 		}
 	}
 
+	meddbg("PMT of program number %d has not be received!\n", progNum);
 	return false;
 }
 
-bool ParserManager::GetPrograms(std::vector<prog_num_t> &programs)
+bool ParserManager::getPrograms(std::vector<prog_num_t> &programs)
 {
 	size_t i, num;
 
-	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
-	if (!pTableParser) {
+	PATParser *pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
+	if (!pPATParser) {
+		meddbg("PAT parser is not found!\n");
 		return false;
 	}
 
-	PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
-	if (!pPATParser->IsRecv()) {
-		meddbg("Pat IsRecv return false!!!\n");
+	if (!pPATParser->isRecv()) {
+		meddbg("PAT has not been received yet!\n");
 		return false;
 	}
 
-	programs.clear();
-
-	num = pPATParser->NumOfProgramList();
+	num = pPATParser->sizeOfProgram();
 	for (i = 0; i < num; i++) {
-		programs.push_back(pPATParser->ProgramNumber(i));
+		programs.push_back(pPATParser->getProgramNumber(i));
 	}
 
 	return true;
 }
 
-bool ParserManager::GetPmtPidInfo(void)
+bool ParserManager::syncProgramInfoFromPAT(void)
 {
 	size_t i, num;
 	ts_pid_t pid;
 	prog_num_t progNum;
 	std::map<int, ts_pid_t> pmt_elements;
 
-	SectionParser *pTableParser = t_Parser(PATParser::TABLE_ID);
-	if (pTableParser == NULL) {
+	PATParser *pPATParser = static_cast<PATParser*>(getParser(PATParser::TABLE_ID));
+	if (!pPATParser) {
+		meddbg("PAT parser is not found!\n");
 		return false;
 	}
 
-	PATParser *pPATParser = static_cast<PATParser*>(t_Parser(PATParser::TABLE_ID));
-	assert(pPATParser);
-	if (!pPATParser->IsRecv()) {
-		meddbg("Pat IsRecv return false!!!\n");
+	if (!pPATParser->isRecv()) {
+		meddbg("PAT has not been received yet!\n");
 		return false;
 	}
 
-	m_PmtPids.clear();
+	// Clear current PMT Pids
+	mPMTPids.clear();
 
-	num = pPATParser->NumOfProgramList();
+	// Update new informations from PAT
+	num = pPATParser->sizeOfProgram();
 	for (i = 0; i < num; ++i) {
-		progNum = pPATParser->ProgramNumber(i);
-		pid = pPATParser->ProgramPID(progNum);
-		if ((pid != (ts_pid_t)INVALID_PID) && (progNum != (prog_num_t)PATParser::NETWORK_PID)) {
+		progNum = pPATParser->getProgramNumber(i);
+		pid = pPATParser->getProgramMapPID(progNum);
+		if ((pid != (ts_pid_t)INVALID_PID) && (progNum != (prog_num_t)PATParser::NETWORK_PID_PN)) {
 			int key = PMTParser::makeKey(pid, progNum);
 			pmt_elements[key] = pid;
-			m_PmtPids.push_back(pid);
+			mPMTPids.push_back(pid);
 			medvdbg("index %d, pmt pid 0x%02x\n", i, pid);
 		}
 	}
 
-	PMTParser *pPMTParser = static_cast<PMTParser *>(t_Parser(PMTParser::TABLE_ID));
-	assert(pPMTParser);
+	PMTParser *pPMTParser = static_cast<PMTParser *>(getParser(PMTParser::TABLE_ID));
+	if (!pPMTParser) {
+		meddbg("PMT parser is not found!\n");
+		return false;
+	}
+	// Reinitialize PMT parser and update new PMT elements to PMT parser
 	pPMTParser->Initialize();
-	pPMTParser->UpdatePMTElements(pmt_elements);
+	pPMTParser->updatePMTElements(pmt_elements);
 	return true;
 }
 
-bool ParserManager::IsPmtPid(ts_pid_t pid)
+bool ParserManager::isPMTPid(ts_pid_t pid)
 {
-	auto iter = m_PmtPids.begin();;
-	while (iter != m_PmtPids.end()) {
+	auto iter = mPMTPids.begin();;
+	while (iter != mPMTPids.end()) {
 		if (*iter++ == pid) {
 			return true;
 		}
@@ -197,29 +204,57 @@ bool ParserManager::IsPmtPid(ts_pid_t pid)
 	return false;
 }
 
-bool ParserManager::processSection(ts_pid_t pid, Section *pSection)
+bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 {
-	if (!pSection->VerifyCrc32()) {
-		meddbg("section crc32 verify failed!\n");
+	if (pSection == nullptr) {
+		meddbg("section is nullptr!\n");
 		return false;
 	}
 
-	return t_Parse(pid, pSection);
+	if (!pSection->verifyCrc32()) {
+		meddbg("section invalid!\n");
+		return false;
+	}
+
+	uint8_t *pData = pSection->getDataPtr();
+	table_id_t tableId = TABILE_ID(pData);
+	auto pTableParser = getParser(tableId);
+	if (pTableParser == nullptr) {
+		meddbg("table parser is nullptr!\n");
+		return false;
+	}
+
+	bool result = pTableParser->parse(pSection->getPid(), pData);
+	if (result) {
+		switch (tableId) {
+		case PATParser::TABLE_ID: // PAT received
+			if (!syncProgramInfoFromPAT()) {
+				meddbg("Sync program info failed when PAT received!\n");
+				//
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	return result;
+
 }
 
-bool ParserManager::t_AddParser(SectionParser *pParser)
+bool ParserManager::addParser(SectionParser *pParser)
 {
-	auto it = t_tableParserMap.find(pParser->TableId());
+	auto it = t_tableParserMap.find(pParser->getTableId());
 	if (it != t_tableParserMap.end()) {
 		// parser exist
 		return false;
 	}
 
-	t_tableParserMap[pParser->TableId()] = pParser;
+	t_tableParserMap[pParser->getTableId()] = pParser;
 	return true;
 }
 
-bool ParserManager::t_RemoveParser(table_id_t tableId)
+bool ParserManager::removeParser(table_id_t tableId)
 {
 	auto it = t_tableParserMap.find(tableId);
 	if (it == t_tableParserMap.end()) {
@@ -231,7 +266,7 @@ bool ParserManager::t_RemoveParser(table_id_t tableId)
 	return true;
 }
 
-SectionParser *ParserManager::t_Parser(table_id_t tableId)
+SectionParser *ParserManager::getParser(table_id_t tableId)
 {
 	auto it = t_tableParserMap.find(tableId);
 	if (it == t_tableParserMap.end()) {
@@ -240,29 +275,4 @@ SectionParser *ParserManager::t_Parser(table_id_t tableId)
 	}
 
 	return (SectionParser *)(it->second);
-}
-
-bool ParserManager::t_Parse(ts_pid_t pid, Section *pSection)
-{
-	bool result = false;
-	uint8_t *pData = pSection->Data();
-	table_id_t tableId = TABILE_ID(pData);
-	SectionParser *pTableParser = t_Parser(tableId);
-	if (!pTableParser) {
-		meddbg("table parser is null!\n");
-		return false;
-	}
-
-	result = pTableParser->Parse(pid, pData);
-	if (result) {
-		switch (tableId) {
-		case PATParser::TABLE_ID: // PAT received
-			GetPmtPidInfo();
-			break;
-		default:
-			break;
-		}
-	}
-
-	return result;
 }

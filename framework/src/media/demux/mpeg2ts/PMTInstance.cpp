@@ -38,16 +38,16 @@ PMTInstance::PMTInstance(ts_pid_t pid)
 
 PMTInstance::~PMTInstance(void)
 {
-	DeleteAll();
+	deleteInfo();
 }
 
-void PMTInstance::DeleteAll(void)
+void PMTInstance::deleteInfo(void)
 {
 	mElementaryStreams.clear();
 	mProgramInfoLength = 0;
 }
 
-bool PMTInstance::mParse(uint8_t *pData, uint32_t size)
+bool PMTInstance::parseInfo(uint8_t *pData, uint32_t size)
 {
 	mProgramInfoLength = PMT_PROG_INFO_LENGTH(pData);
 	pData += LENGTH_FIELD_BYTES;
@@ -99,7 +99,7 @@ bool PMTInstance::parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 	case SECTION_CHANGE: // fall through
 	case SECTION_INITIAL: // fall through
 	case SECTION_APPEND:
-		mParse(pData, size);
+		parseInfo(pData, size);
 		return isCompleted();
 
 	case SECTION_IGNORE :

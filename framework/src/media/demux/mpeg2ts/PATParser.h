@@ -20,7 +20,6 @@
 #define __PAT_PARSER_H
 
 #include <map>
-
 #include "Mpeg2TsTypes.h"
 #include "SectionParser.h"
 #include "TableBase.h"
@@ -36,7 +35,6 @@ public:
 	PATParser();
 	virtual ~PATParser();
 
-	virtual void DeleteAll(void) override;
 	// get nubmer of programs in PAT table
 	size_t sizeOfProgram(void);
 	// get program number by index
@@ -47,13 +45,16 @@ public:
 	uint16_t getTansportStreamId(void);
 	// get NIT table PID
 	ts_pid_t getNetworkPID(void);
-
+	// check if PAT is received
 	bool isRecv(void);
 
 protected:
-	virtual void clearParser(void);
-	// parse PAT section body to get program number and map information
-	virtual bool t_Parse(uint8_t *pData, uint32_t size);
+	// parse specific information (program number and PMT Pid) in PAT
+	virtual bool parseInfo(uint8_t *pData, uint32_t size) override;
+	// delete specific information parsed by parseInfo()
+	virtual void deleteInfo(void) override;
+	// clear up parser, release all resources
+	virtual void clearParser(void) override;
 	// add new program information
 	void addProgram(prog_num_t programNumber, ts_pid_t programPID);
 

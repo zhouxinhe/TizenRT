@@ -43,17 +43,17 @@ PATParser::~PATParser()
 void PATParser::clearParser(void)
 {
 	TableBase::resetTable();
-	DeleteAll();
+	deleteInfo();
 }
 
-void PATParser::DeleteAll(void)
+void PATParser::deleteInfo(void)
 {
 	mTransportStreamId = 0;
 	mNetworkPID = INVALID_PID;
 	mProgramMap.clear();
 }
 
-bool PATParser::t_Parse(uint8_t *pData, uint32_t size)
+bool PATParser::parseInfo(uint8_t *pData, uint32_t size)
 {
 	switch (checkSection(mVersionNumber, mSectionNumber, mLastSectionNumber, mCrc32)) {
 	case SECTION_INITIAL:

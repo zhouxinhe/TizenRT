@@ -16,6 +16,7 @@
  *
  ******************************************************************/
 
+#include <debug.h>
 #include "Mpeg2TsTypes.h"
 #include "Section.h"
 #include "TableBase.h"
@@ -72,25 +73,26 @@ void SectionParser::Initialize(void)
 	mSectionLength = 0;
 }
 
-bool SectionParser::parse(ts_pid_t pid, uint8_t *pData)
+bool SectionParser::parseSection(ts_pid_t pid, uint8_t *pData)
 {
-	mIsRecv                 = true;
-	mPid                    = pid;
-	mSectionData            = pData;
-	mTableId                = TABILE_ID(pData);
+	mIsRecv = true;
+	mPid = pid;
+	mSectionData = pData;
+	mTableId = TABILE_ID(pData);
 	mSectionSyntaxIndicator = SECTION_SYNTAX_INDICATOR(pData);
-	mPrivateIndicator       = PRIVATE_INDICATOR(pData);
-	mSectionLength          = SECTION_LENGTH(pData);
+	mPrivateIndicator = PRIVATE_INDICATOR(pData);
+	mSectionLength = SECTION_LENGTH(pData);
 
 	if (mSectionSyntaxIndicator) {
-		mTableIdExtension     = SI_TABLE_ID_EXT(pData);
-		mVersionNumber        = SI_VERSION_NUMBER(pData);
+		mTableIdExtension = SI_TABLE_ID_EXT(pData);
+		mVersionNumber = SI_VERSION_NUMBER(pData);
 		mCurrentNextIndicator = SI_CURRENT_NEXT_INDICATOR(pData);
-		mSectionNumber        = SI_SECTION_NUMBER(pData);
-		mLastSectionNumber    = SI_LAST_SECTION_NUMBER(pData);
-		mCrc32                = SI_CRC(pData,mSectionLength + SECTION_HEADER_LENGTH);
-		return t_Parse(PSI_DATA(pData), mSectionLength - SectionParser::LONG_FORM_HEADER_LENGTH);
+		mSectionNumber = SI_SECTION_NUMBER(pData);
+		mLastSectionNumber = SI_LAST_SECTION_NUMBER(pData);
+		mCrc32 = SI_CRC(pData,mSectionLength + SECTION_HEADER_LENGTH);
+		return parseInfo(PSI_DATA(pData), mSectionLength - SectionParser::LONG_FORM_HEADER_LENGTH);
 	} else {
-		return t_Parse(SHORT_FORM(pData), mSectionLength);
+		meddbg("Short form syntax is not supported now!\n");
+		return false;
 	}
 }

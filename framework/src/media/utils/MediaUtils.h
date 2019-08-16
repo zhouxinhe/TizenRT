@@ -146,7 +146,6 @@ unsigned int splitChannel(unsigned int layout, const signed short *stream, unsig
  * @since TizenRT v2.1
  */
 unsigned int CRC32_MPEG2(unsigned char *data, unsigned int length);
-
 } // namespace utils
 } // namespace media
 

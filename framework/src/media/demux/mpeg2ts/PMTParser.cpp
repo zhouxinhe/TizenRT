@@ -38,7 +38,7 @@ void PMTParser::clearParser(void)
 	mPMTElements.clear();
 }
 
-bool PMTParser::t_Parse(uint8_t *pData, uint32_t size)
+bool PMTParser::parseInfo(uint8_t *pData, uint32_t size)
 {
 	// table id extension filed is the program nubmer in PMT
 	prog_num_t programNumber = (prog_num_t)mTableIdExtension;

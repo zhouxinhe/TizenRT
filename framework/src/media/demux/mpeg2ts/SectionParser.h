@@ -44,7 +44,7 @@ public:
 	// Initialize parser
 	virtual void Initialize(void);
 	// parse section data
-	virtual bool parse(ts_pid_t pid, uint8_t *pData);
+	virtual bool parseSection(ts_pid_t pid, uint8_t *pData);
 	// getters
 	virtual bool isRecv(void) { return mIsRecv; }
 	virtual ts_pid_t getPid(void) { return mPid; }
@@ -60,9 +60,9 @@ public:
 	virtual uint32_t getSectionCRC(void) { return mCrc32; }
 
 protected:
-	// section parsing method, derived class should implement it
-	virtual bool t_Parse(uint8_t *pData, uint32_t size) = 0;
-	// Initialize method, derived class should implement it
+	// Specific information parsing method, derived class should implement it
+	virtual bool parseInfo(uint8_t *pData, uint32_t size) = 0;
+	// Parser cleaning method, derived class should implement it
 	virtual void clearParser(void) = 0;
 
 protected:

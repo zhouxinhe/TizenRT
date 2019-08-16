@@ -41,26 +41,6 @@ static const std::string MPEG_MIME_TYPE = "audio/mpeg";
 static const std::string MP4_MIME_TYPE = "audio/mp4";
 static const std::string OPUS_MIME_TYPE = "audio/opus";
 
-unsigned int CRC32_MPEG2(unsigned char *data, unsigned int length)
-{
-	unsigned char i;
-	unsigned int j = 0;
-	unsigned int crc = 0xffffffff;
-
-	while ((length--) != 0) {
-		crc ^= (unsigned int)data[j] << 24;
-		j++;
-		for (i = 0; i < 8; ++i) {
-			if ((crc & 0x80000000) != 0) {
-				crc = (crc << 1) ^ 0x04C11DB7;
-			} else {
-				crc <<= 1;
-			}
-		}
-	}
-	return crc;
-}
-
 void toLowerString(std::string &str)
 {
 	for (char& c : str) {
@@ -101,13 +81,8 @@ audio_container_t getAudioContainerFromPath(std::string datapath)
 	} else if (extension.compare("ts") == 0) {
 		return AUDIO_CONTAINER_MPEG2TS;
 	} else {
-		auto audioType = getAudioTypeFromPath(datapath);
-		if (audioType != AUDIO_TYPE_INVALID) {
-			return AUDIO_CONTAINER_NONE;
-		}
-
-		medvdbg("unknown (not supported) container\n");
-		return AUDIO_CONTAINER_UNKNOWN;
+		medwdbg("unknown (not supported) container\n");
+		return AUDIO_CONTAINER_NONE;
 	}
 }
 

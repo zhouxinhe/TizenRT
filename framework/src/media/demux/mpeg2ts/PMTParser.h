@@ -23,7 +23,6 @@
 #include "Mpeg2TsTypes.h"
 #include "SectionParser.h"
 
-class Section;
 class PMTInstance;
 class PMTParser : public SectionParser
 {
@@ -45,9 +44,10 @@ public:
 	static int makeKey(ts_pid_t pid, prog_num_t progNum);
 
 protected:
+	// clear up parser, release all resources
 	virtual void clearParser(void) override;
-
-	virtual bool t_Parse(uint8_t *pData, uint32_t size);
+	// parse specific information (program info and elementary streams) in PMT
+	virtual bool parseInfo(uint8_t *pData, uint32_t size) override;
 
 private:
 	// PMT elements

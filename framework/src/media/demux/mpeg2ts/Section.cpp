@@ -18,11 +18,10 @@
 
 #include <debug.h>
 #include <string.h>
-
+//#include <crc32.h> // use internal crc32() method
 #include "Mpeg2TsTypes.h"
 #include "Section.h"
 #include "SectionParser.h"
-#include "../../utils/MediaUtils.h" // for mpeg2 crc32 calculation
 
 #define SECTION_LENGTH(buffer) ((uint16_t)((buffer[1] & 0x0F) << 8) + (uint16_t)buffer[2])
 #define SECTION_HEAD_BYTES     (3) // table_id + ... + section_length
@@ -106,8 +105,8 @@ bool Section::appendData(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData
 
 bool Section::verifyCrc32(void)
 {
-	if (media::utils::CRC32_MPEG2(mSectionData, mPresentDataLen) != 0) {
-		meddbg("mpeg2 crc32 verification failed!\n");
+	if (crc32(mSectionData, mPresentDataLen) != 0) {
+		meddbg("crc32 verification failed!\n");
 		return false;
 	}
 
@@ -122,4 +121,24 @@ bool Section::isCompleted(void)
 uint16_t Section::parseLengthField(uint8_t *pData, uint16_t size)
 {
 	return (SECTION_HEAD_BYTES + SECTION_LENGTH(pData));
+}
+
+uint32_t Section::crc32(uint8_t *data, uint32_t length)
+{
+	uint8_t i;
+	uint32_t j = 0;
+	uint32_t crc = 0xffffffff;
+
+	while ((length--) != 0) {
+		crc ^= (uint32_t)data[j] << 24;
+		j++;
+		for (i = 0; i < 8; ++i) {
+			if ((crc & 0x80000000) != 0) {
+				crc = (crc << 1) ^ 0x04C11DB7;
+			} else {
+				crc <<= 1;
+			}
+		}
+	}
+	return crc;
 }

@@ -52,14 +52,14 @@ protected :
 	bool initTable(uint8_t version, uint8_t sectionNumber, uint8_t lastSectionNumber = 0, uint32_t crc32 = (uint32_t)INFINITY);
 	// Check if table has been updated.
 	bool isTableChanged(uint8_t version, uint8_t sectionNum, uint8_t lastSectionNum, uint32_t crc32);
+	// Delete specific information (parsed from PAT/PMT tables), derived class should implement it
+	virtual void deleteInfo(void) = 0;
 
 public:
 	// If all sections of the table have been received or not
 	bool isCompleted(void);
 	// Reset table to release all resources
 	void resetTable(void);
-	// Deletes all of the dynamic memory
-	virtual void DeleteAll(void) = 0;
 };
 
 #endif /* __TABLE_BASE_H */

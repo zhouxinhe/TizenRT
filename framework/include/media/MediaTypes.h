@@ -88,9 +88,7 @@ typedef enum audio_sample_rate_e {
  * @since TizenRT v2.1
  */
 typedef enum audio_container_e {
-	/* Unknown container format */
-	AUDIO_CONTAINER_UNKNOWN = -1,
-	/* No container, raw audio stream */
+	/* No or unknown container */
 	AUDIO_CONTAINER_NONE = 0,
 	/* MPEG-2 transport stream */
 	AUDIO_CONTAINER_MPEG2TS = 1,

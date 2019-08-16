@@ -52,7 +52,7 @@ int TableBase::checkSection(uint8_t version, uint8_t sectionNum, uint8_t lastSec
 
 	// Check if table version changed
 	if (isTableChanged(version, sectionNum, lastSectionNum, crc32)) {
-		DeleteAll();
+		deleteInfo();
 		if (!initTable(version, sectionNum, lastSectionNum, crc32)) {
 			meddbg("init section failed!\n");
 			return SECTION_IGNORE;

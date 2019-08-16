@@ -34,8 +34,8 @@ public:
 	PMTInstance(ts_pid_t pid);
 	virtual ~PMTInstance();
 
+	// parse PMT section
 	bool parse(uint8_t *pData, uint32_t size, prog_num_t programNum, int8_t  versionNumber, uint8_t sectionNumber, uint8_t lastSectionNumber, uint32_t crc32, bool currentNextIndicator);
-	void DeleteAll(void);
 	// number of elementary streams
 	size_t numOfElementary(void);
 	// get elementary stream by index
@@ -50,10 +50,12 @@ public:
 	uint16_t getProgramInfoLength(void) { return mProgramInfoLength; }
 
 protected:
-	//
-	bool mParse(uint8_t *pData, uint32_t size);
+	// parse specific information in PMT
+	bool parseInfo(uint8_t *pData, uint32_t size); // not override
 	// parse program info descriptors
 	bool parseProgramInfo(uint8_t *pData, uint32_t size);
+	// delete specific information (program info and elementary streams info)
+	void deleteInfo(void) override;
 
 private:
 	// PID of this PMT table

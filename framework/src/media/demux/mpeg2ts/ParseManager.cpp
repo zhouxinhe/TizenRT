@@ -38,7 +38,6 @@ ParserManager::ParserManager()
 
 ParserManager::~ParserManager()
 {
-	// TODO: delete items in map
 	t_tableParserMap.clear();
 }
 
@@ -224,7 +223,7 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 		return false;
 	}
 
-	bool result = pTableParser->parse(pSection->getPid(), pData);
+	bool result = pTableParser->parseSection(pSection->getPid(), pData);
 	if (result) {
 		switch (tableId) {
 		case PATParser::TABLE_ID: // PAT received

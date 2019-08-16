@@ -23,6 +23,9 @@
 #include <media/FileInputDataSource.h>
 #include "utils/MediaUtils.h"
 
+// TODO：add in Kconfig
+#define CONFIG_PREPARSE_BUFFER_SIZE 4096
+
 namespace media {
 namespace stream {
 
@@ -69,42 +72,37 @@ bool FileInputDataSource::open()
 		}
 
 		audioContainer = utils::getAudioContainerFromPath(mDataPath);
-		if (audioContainer == AUDIO_CONTAINER_NONE || audioContainer == AUDIO_CONTAINER_UNKNOWN) {
-			audioType = utils::getAudioTypeFromPath(mDataPath);
-		} else {
-			// get audio type with container parsing methods
-			switch (audioContainer) {
-			case AUDIO_CONTAINER_MPEG2TS: {
-				#define PREPARE_BUFFER_BASE_SIZE 4096
-				#define PREPARE_BUFFER_MORE_SIZE 2048
-				#define PREPARE_BUFFER_MORE_COUNT 2
-				int i;
-				size_t bufferSize;
-				unsigned char *buffer = NULL;
-				for (i = 0; i < 1 + PREPARE_BUFFER_MORE_COUNT; i++) {
-					bufferSize = PREPARE_BUFFER_BASE_SIZE + (i * PREPARE_BUFFER_MORE_SIZE);
-					buffer = new unsigned char[bufferSize];
-					if (!buffer) {
-						meddbg("run out of memory! size %u\n", bufferSize);
-						return false;
-					}
-					// read file
-					bufferSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
-					fseek(mFp, 0, SEEK_SET);
-					// parse ts
-					bool ret = utils::ts_parsing(buffer, bufferSize, &audioType, &channel, &sampleRate, &pcmFormat);
-					delete[] buffer;
-					if (ret) {
-						medvdbg("ts_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
-						break;
-					}
-				}
-			} break;
 
-			default:
+		switch (audioContainer) {
+		case AUDIO_CONTAINER_NONE: {
+			audioType = utils::getAudioTypeFromPath(mDataPath);
+		} break;
+		// get audio type with container parsing methods
+		case AUDIO_CONTAINER_MPEG2TS: {
+			int i;
+			size_t bufferSize = CONFIG_PREPARSE_BUFFER_SIZE;
+			unsigned char *buffer = new unsigned char[bufferSize];
+			if (!buffer) {
+				meddbg("run out of memory! size %u\n", bufferSize);
+				return false;
+			}
+			// read file
+			bufferSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
+			fseek(mFp, 0, SEEK_SET);
+			// parse ts
+			bool ret = utils::ts_parsing(buffer, bufferSize, &audioType, &channel, &sampleRate, &pcmFormat);
+			delete[] buffer;
+			if (!ret) {
+				meddbg("ts_parsing failed, can not get audio stream codec type!\n");
 				break;
 			}
+			medvdbg("ts_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
+		} break;
+
+		default:
+			break;
 		}
+
 
 		setAudioType(audioType);
 		switch (audioType) {

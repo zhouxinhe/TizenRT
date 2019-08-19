@@ -30,14 +30,11 @@
 #include "StreamBufferReader.h"
 #include "StreamBufferWriter.h"
 #include "Decoder.h"
+#include "Demuxer.h"
 
 namespace media {
 class MediaPlayerImpl;
 namespace stream {
-
-#ifdef CONFIG_MPEG2_TS
-class TSDemux;
-#endif
 
 typedef enum buffer_state_e : int {
 	BUFFER_STATE_EMPTY,
@@ -91,9 +88,7 @@ public:
 private:
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
-#ifdef CONFIG_MPEG2_TS
-	std::shared_ptr<TSDemux> mTSDemux; // TODO: we need a demux base class like class Decoder
-#endif
+	std::shared_ptr<Demuxer> mDemuxer;
 	std::shared_ptr<StreamBuffer> mStreamBuffer;
 	std::shared_ptr<StreamBufferReader> mBufferReader;
 	std::shared_ptr<StreamBufferWriter> mBufferWriter;

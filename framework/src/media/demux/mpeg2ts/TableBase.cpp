@@ -23,7 +23,7 @@
 #include "TableBase.h"
 
 TableBase::TableBase()
-	: mVersion((uint8_t)INFINITY)
+	: mVersion(INVALID_VN)
 	, mLastSectionNum(0)
 	, mMultiSectionCRC(nullptr)
 	, mMultiSectionFlag(nullptr)
@@ -42,7 +42,7 @@ int TableBase::checkSection(uint8_t version, uint8_t sectionNum, uint8_t lastSec
 		return SECTION_IGNORE;
 	}
 
-	if (mVersion == (uint8_t)INFINITY) {
+	if (mVersion == INVALID_VN) {
 		if (!initTable(version, sectionNum, lastSectionNum, crc32)) {
 			meddbg("init section failed!\n");
 			return SECTION_IGNORE;
@@ -94,7 +94,7 @@ bool TableBase::initTable(uint8_t version, uint8_t sectionNumber, uint8_t lastSe
 
 	for (i = 0; i <= lastSectionNumber; i++) {
 		mMultiSectionFlag[i] = false;
-		mMultiSectionCRC[i] = (uint32_t)INFINITY;
+		mMultiSectionCRC[i] = 0;
 	}
 
 	mVersion = version;
@@ -121,7 +121,7 @@ bool TableBase::isCompleted(void)
 {
 	uint8_t i;
 
-	if (mMultiSectionFlag == nullptr) {
+	if (!mMultiSectionFlag) {
 		meddbg("mMultiSectionFlag is nullptr");
 		return false;
 	}
@@ -147,6 +147,6 @@ void TableBase::resetTable(void)
 		mMultiSectionCRC= nullptr;
 	}
 
-	mVersion = (uint8_t)INFINITY;
+	mVersion = INVALID_VN;
 	mLastSectionNum = 0;
 }

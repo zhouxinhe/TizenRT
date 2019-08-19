@@ -28,7 +28,7 @@
 #include "PMTElementary.h"
 #include "PESPacket.h"
 #include "PESParser.h"
-#include "TSDemux.h"
+#include "TSDemuxer.h"
 
 #include "../../StreamBuffer.h"
 #include "../../StreamBufferReader.h"
@@ -45,32 +45,32 @@
 #define TS_DEMUX_BUFFER_THRESHOLD   (TS_DEMUX_BUFFER_SIZE / 2)
 
 namespace media {
-namespace stream {
 
-TSDemux::TSDemux()
-	: mPESPid(INVALID_PID)
+TSDemuxer::TSDemuxer()
+	: Demuxer(AUDIO_CONTAINER_MPEG2TS)
+	, mPESPid(INVALID_PID)
 	, mPESDataUsed(0)
 {
 }
 
-TSDemux::~TSDemux()
+TSDemuxer::~TSDemuxer()
 {
 }
 
-std::shared_ptr<TSDemux> TSDemux::create(void)
+std::shared_ptr<TSDemuxer> TSDemuxer::create(void)
 {
-	auto instance = std::make_shared<TSDemux>();
+	auto instance = std::make_shared<TSDemuxer>();
 	if (instance && instance->initialize()) {
 		return instance;
 	}
 
-	meddbg("create TSDemux instance failed!\n");
+	meddbg("create TSDemuxer instance failed!\n");
 	return nullptr;
 }
 
-bool TSDemux::initialize(void)
+bool TSDemuxer::initialize(void)
 {
-	auto streamBuffer = StreamBuffer::Builder()
+	auto streamBuffer = stream::StreamBuffer::Builder()
 							.setBufferSize(TS_DEMUX_BUFFER_SIZE)
 							.setThreshold(TS_DEMUX_BUFFER_THRESHOLD)
 							.build();
@@ -80,8 +80,8 @@ bool TSDemux::initialize(void)
 	}
 
 	mStreamBuffer = streamBuffer;
-	mBufferReader = std::make_shared<StreamBufferReader>(mStreamBuffer);
-	mBufferWriter = std::make_shared<StreamBufferWriter>(mStreamBuffer);
+	mBufferReader = std::make_shared<stream::StreamBufferReader>(mStreamBuffer);
+	mBufferWriter = std::make_shared<stream::StreamBufferWriter>(mStreamBuffer);
 
 	if (!mBufferReader || !mBufferWriter) {
 		meddbg("mBufferReader/Writer is nullptr!\n");
@@ -109,12 +109,12 @@ bool TSDemux::initialize(void)
 	return true;
 }
 
-size_t TSDemux::sizeOfSpace(void)
+size_t TSDemuxer::sizeOfSpace(void)
 {
 	return mBufferWriter->sizeOfSpace();
 }
 
-ssize_t TSDemux::pushData(uint8_t *buf, size_t size)
+ssize_t TSDemuxer::pushData(uint8_t *buf, size_t size)
 {
 	size_t written = 0;
 	if (mBufferWriter) {
@@ -123,11 +123,14 @@ ssize_t TSDemux::pushData(uint8_t *buf, size_t size)
 	return (ssize_t)written;
 }
 
-ssize_t TSDemux::pullData(uint8_t *buf, size_t size, prog_num_t progNum)
+ssize_t TSDemuxer::pullData(uint8_t *buf, size_t size, void *param)
 {
 	if (mPESPid == INVALID_PID) {
 		// setup PES pid
-		if (progNum == 0) {
+		prog_num_t progNum;
+		if (param) {
+			progNum = *((prog_num_t *)param);
+		} else {
 			// use default 1st program
 			std::vector<prog_num_t> programs;
 			mParserManager->getPrograms(programs);
@@ -136,12 +139,12 @@ ssize_t TSDemux::pullData(uint8_t *buf, size_t size, prog_num_t progNum)
 		uint8_t streamType;
 		if (!mParserManager->getAudioStreamInfo(progNum, streamType, mPESPid)) {
 			meddbg("get audio PES PID failed\n");
-			return DEMUX_ERROR_NOT_READY;
+			return DEMUXER_ERROR_NOT_READY;
 		}
 		medvdbg("setup audio PES PID: 0x%x\n", mPESPid);
 	}
 
-	int ret = DEMUX_ERROR_NONE;
+	int ret = DEMUXER_ERROR_NONE;
 	size_t fill = 0;
 	size_t need;
 	while (fill < size) {
@@ -171,12 +174,12 @@ ssize_t TSDemux::pullData(uint8_t *buf, size_t size, prog_num_t progNum)
 		// get new PES packet
 		std::shared_ptr<PESPacket> pPESPacket = nullptr;
 		ret = getPESPacket(pPESPacket);
-		if (ret == DEMUX_ERROR_WANT_DATA) {
+		if (ret == DEMUXER_ERROR_WANT_DATA) {
 			medvdbg("Push more data to get PES packet\n");
 			break;
 		}
 
-		if (ret != DEMUX_ERROR_NONE) {
+		if (ret != DEMUXER_ERROR_NONE) {
 			meddbg("Get PES packet failed! error: %d\n", ret);
 			break;
 		}
@@ -198,15 +201,17 @@ ssize_t TSDemux::pullData(uint8_t *buf, size_t size, prog_num_t progNum)
 	return (ssize_t)fill;
 }
 
-bool TSDemux::getPrograms(std::vector<prog_num_t> &progs)
+bool TSDemuxer::getPrograms(std::vector<prog_num_t> &progs)
 {
 	return mParserManager->getPrograms(progs);
 }
 
-audio_type_t TSDemux::getAudioType(prog_num_t progNum)
+audio_type_t TSDemuxer::getAudioType(void *param)
 {
 	uint8_t streamType;
 	ts_pid_t streamPid;
+	prog_num_t progNum = *((prog_num_t *)param);
+
 	if (mParserManager->getAudioStreamInfo(progNum, streamType, streamPid)) {
 		switch (streamType) {
 		case PMTElementary::STREAM_TYPE_AUDIO_AAC:
@@ -227,8 +232,8 @@ audio_type_t TSDemux::getAudioType(prog_num_t progNum)
 
 // return value
 // on success, [0, TSPacket::PACKET_SIZE)
-// on failure, tsdemux_error_e
-int TSDemux::resync(uint8_t *pPacketData, size_t readOffset)
+// on failure, demuxer_error_e
+int TSDemuxer::resync(uint8_t *pPacketData, size_t readOffset)
 {
 	uint8_t buffer[TSPacket::PACKET_SIZE];
 	size_t szRead;
@@ -245,7 +250,7 @@ int TSDemux::resync(uint8_t *pPacketData, size_t readOffset)
 			szRead = mBufferReader->copy(buffer, TSPacket::PACKET_SIZE, readOffset + syncOffset + count * TSPacket::PACKET_SIZE);
 			if (szRead != TSPacket::PACKET_SIZE) {
 				// data in buffer is not enough for sync verification
-				return DEMUX_ERROR_WANT_DATA;
+				return DEMUXER_ERROR_WANT_DATA;
 			}
 
 			if (buffer[0] != TSPacket::SYNC_BYTE) {
@@ -262,10 +267,10 @@ int TSDemux::resync(uint8_t *pPacketData, size_t readOffset)
 
 	// Do not find sync byte in one ts packet (188 bytes),
 	// maybe it's not a transport stream.
-	return DEMUX_ERROR_SYNC_FAILED;
+	return DEMUXER_ERROR_SYNC_FAILED;
 }
 
-std::shared_ptr<Section> TSDemux::PSIUnpack(std::shared_ptr<TSPacket> pTSPacket)
+std::shared_ptr<Section> TSDemuxer::PSIUnpack(std::shared_ptr<TSPacket> pTSPacket)
 {
 	std::shared_ptr<Section> pSection = nullptr;
 	uint8_t  lenPayload = 0;
@@ -324,7 +329,7 @@ std::shared_ptr<Section> TSDemux::PSIUnpack(std::shared_ptr<TSPacket> pTSPacket)
 	return pSection;
 }
 
-std::shared_ptr<PESPacket> TSDemux::PESUnpack(std::shared_ptr<TSPacket> pTSPacket)
+std::shared_ptr<PESPacket> TSDemuxer::PESUnpack(std::shared_ptr<TSPacket> pTSPacket)
 {
 	std::shared_ptr<PESPacket> pPESPacket = nullptr;
 	uint8_t  lenPayload = 0;
@@ -367,7 +372,7 @@ std::shared_ptr<PESPacket> TSDemux::PESUnpack(std::shared_ptr<TSPacket> pTSPacke
 	return pPESPacket;
 }
 
-bool TSDemux::isPsiPid(int16_t pid)
+bool TSDemuxer::isPsiPid(uint16_t pid)
 {
 	switch (pid) {
 	case PATParser::PAT_PID:
@@ -377,12 +382,12 @@ bool TSDemux::isPsiPid(int16_t pid)
 	}
 }
 
-bool TSDemux::isPESPid(int16_t pid)
+bool TSDemuxer::isPESPid(uint16_t pid)
 {
 	return (pid == mPESPid);
 }
 
-int TSDemux::loadTSPacket(std::shared_ptr<TSPacket> pTSPacket, bool sync, size_t *offset)
+int TSDemuxer::loadTSPacket(std::shared_ptr<TSPacket> pTSPacket, bool sync, size_t *offset)
 {
 	int syncOffset = 0;
 	uint8_t buffLen; // TSPacket::PACKET_SIZE
@@ -393,7 +398,7 @@ int TSDemux::loadTSPacket(std::shared_ptr<TSPacket> pTSPacket, bool sync, size_t
 	size_t size = mBufferReader->copy(pBuffer, buffLen, readOffset);
 	if (size != buffLen) {
 		// data in buffer is not enough!
-		return DEMUX_ERROR_WANT_DATA;
+		return DEMUXER_ERROR_WANT_DATA;
 	}
 
 	// check if resync is required
@@ -419,20 +424,20 @@ int TSDemux::loadTSPacket(std::shared_ptr<TSPacket> pTSPacket, bool sync, size_t
 		*offset = readOffset;
 	}
 
-	return DEMUX_ERROR_NONE;
+	return DEMUXER_ERROR_NONE;
 }
 
-// return tsdemux_error_e
-int TSDemux::getPESPacket(std::shared_ptr<PESPacket> &pPESPacket)
+// return demuxer_error_e
+int TSDemuxer::getPESPacket(std::shared_ptr<PESPacket> &pPESPacket)
 {
 	int ret;
 
-	while ((ret = loadTSPacket(mTSPacket)) == DEMUX_ERROR_NONE) {
+	while ((ret = loadTSPacket(mTSPacket)) == DEMUXER_ERROR_NONE) {
 		if (isPESPid(mTSPacket->getPid())) {
 			pPESPacket = PESUnpack(mTSPacket);
 			if (pPESPacket) {
 				medvdbg("got new PES packet\n");
-				return DEMUX_ERROR_NONE;
+				return DEMUXER_ERROR_NONE;
 			}
 		}
 	}
@@ -440,14 +445,14 @@ int TSDemux::getPESPacket(std::shared_ptr<PESPacket> &pPESPacket)
 	return ret;
 }
 
-bool TSDemux::isReady(void)
+bool TSDemuxer::isReady(void)
 {
 	return (mParserManager->isPATReceived() && mParserManager->isPMTReceived());
 }
 
 // preparse ts stream buffer, get PAT and PMT info.
-// return tsdemux_error_t
-int TSDemux::preParse(void)
+// return demuxer_error_t
+int TSDemuxer::prepare(void)
 {
 	ssize_t ret;
 	size_t readOffset = 0;
@@ -456,12 +461,12 @@ int TSDemux::preParse(void)
 
 	if (isReady()) {
 		// parser is ready, do not need to reparse
-		return DEMUX_ERROR_NONE;
+		return DEMUXER_ERROR_NONE;
 	}
 
 	// Load 1st ts packet with force sync
 	ret = loadTSPacket(mTSPacket, true, &readOffset);
-	while (ret == DEMUX_ERROR_NONE) {
+	while (ret == DEMUXER_ERROR_NONE) {
 		if (isPsiPid(mTSPacket->getPid())) {
 			// packet of PSI table section
 			auto pSection = PSIUnpack(mTSPacket);
@@ -471,7 +476,7 @@ int TSDemux::preParse(void)
 					if (isReady()) {
 						// pre parse succeed
 						medvdbg("preparse succeed!\n");
-						return DEMUX_ERROR_NONE;
+						return DEMUXER_ERROR_NONE;
 					}
 				}
 			}
@@ -484,7 +489,7 @@ int TSDemux::preParse(void)
 	return ret;
 }
 
-bool TSDemux::isMpeg2Ts(const uint8_t *buffer, size_t size)
+bool TSDemuxer::isMpeg2Ts(const uint8_t *buffer, size_t size)
 {
 	if (!buffer || size < TSPacket::PACKET_SIZE) {
 		meddbg("invalid params\n");
@@ -521,5 +526,4 @@ bool TSDemux::isMpeg2Ts(const uint8_t *buffer, size_t size)
 	return false;
 }
 
-} // namespace stream
 } // namespace media

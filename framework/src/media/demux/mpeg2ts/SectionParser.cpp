@@ -52,8 +52,8 @@ SectionParser::SectionParser(table_id_t tableId)
 	mSectionLength = 0;
 
 	mTableIdExtension = 0;
-	mVersionNumber = 0;
-	mCurrentNextIndicator = 0;
+	mVersionNumber = INVALID_VN;
+	mCurrentNextIndicator = false;
 	mSectionNumber = 0;
 	mLastSectionNumber = 0;
 	mProtocolVersion = 0;

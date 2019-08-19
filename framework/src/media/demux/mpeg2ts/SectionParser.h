@@ -53,8 +53,8 @@ public:
 	virtual uint8_t getSectionSyntaxIndicator(void) { return mSectionSyntaxIndicator; }
 	virtual uint8_t getPrivateIndicator(void) { return mPrivateIndicator; }
 	virtual uint16_t getSectionLength(void) { return mSectionLength; }
-	virtual int8_t getVersionNumber(void) { return mVersionNumber; }
-	virtual int8_t getCurrentNextIndicator(void) { return mCurrentNextIndicator; }
+	virtual uint8_t getVersionNumber(void) { return mVersionNumber; }
+	virtual bool getCurrentNextIndicator(void) { return mCurrentNextIndicator; }
 	virtual uint8_t getSectionNumber(void) { return mSectionNumber; }
 	virtual uint8_t getLastSectionNumber(void) { return mLastSectionNumber; }
 	virtual uint32_t getSectionCRC(void) { return mCrc32; }
@@ -82,7 +82,7 @@ protected:
 	// table_id_extention
 	uint16_t  mTableIdExtension;
 	// version_number
-	int8_t mVersionNumber;
+	uint8_t mVersionNumber;
 	// current_next_indicator
 	bool mCurrentNextIndicator;
 	// section_number

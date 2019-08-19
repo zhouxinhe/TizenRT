@@ -26,7 +26,7 @@
 #include "PMTElementary.h"
 #include "ParseManager.h"
 
-#define TABILE_ID(buffer)   ((buffer)[0])
+#define TABILE_ID(buffer)   (buffer[0])
 
 ParserManager::ParserManager()
 {
@@ -38,31 +38,31 @@ ParserManager::ParserManager()
 
 ParserManager::~ParserManager()
 {
-	t_tableParserMap.clear();
+	mTableParsers.clear();
 }
 
 bool ParserManager::isPATReceived(void)
 {
-	SectionParser *pTableParser = getParser(PATParser::TABLE_ID);
-	if (pTableParser == nullptr) {
-		meddbg("no PAT parser\n");
+	auto pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
+	if (!pPATParser) {
+		meddbg("PAT parser is not found!\n");
 		return false;
 	}
 
-	PATParser *pPATParser = static_cast<PATParser*>(pTableParser);
 	return pPATParser->isRecv();
 }
 
 bool ParserManager::isPMTReceived(prog_num_t progNum)
 {
-	SectionParser *pTableParser = getParser(PMTParser::TABLE_ID);
-	if (pTableParser == nullptr) {
+	auto pPMTParser = static_cast<PMTParser *>(getParser(PMTParser::TABLE_ID));
+	if (!pPMTParser) {
+		meddbg("PMT parser is not found!\n");
 		return false;
 	}
 
-	PMTParser *pPMTParser = static_cast<PMTParser*>(pTableParser);
 	auto pPMTInstance = pPMTParser->getPMTInstance(progNum);
-	if (pPMTInstance == nullptr) {
+	if (!pPMTInstance) {
+		medwdbg("PMT of program %d is not found!\n", progNum);
 		return false;
 	}
 
@@ -71,9 +71,13 @@ bool ParserManager::isPMTReceived(prog_num_t progNum)
 
 bool ParserManager::isPMTReceived(void)
 {
-	PATParser *pPATParser = static_cast<PATParser*>(getParser(PATParser::TABLE_ID));
+	auto pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
+	if (!pPATParser) {
+		meddbg("PAT parser is not found!\n");
+		return false;
+	}
 
-	if (pPATParser && pPATParser->isRecv()) {
+	if (pPATParser->isRecv()) {
 		size_t i;
 		size_t progs = pPATParser->sizeOfProgram();
 		for (i = 0; i < progs; i++) {
@@ -81,7 +85,6 @@ bool ParserManager::isPMTReceived(void)
 				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -90,7 +93,7 @@ bool ParserManager::isPMTReceived(void)
 
 bool ParserManager::getAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, ts_pid_t &pid)
 {
-	PMTParser *pPMTParser = static_cast<PMTParser*>(getParser(PMTParser::TABLE_ID));
+	auto pPMTParser = static_cast<PMTParser *>(getParser(PMTParser::TABLE_ID));
 	auto pPMTInstance = pPMTParser->getPMTInstance(progNum);
 
 	if (pPMTInstance && pPMTInstance->isCompleted()) {
@@ -127,7 +130,7 @@ bool ParserManager::getPrograms(std::vector<prog_num_t> &programs)
 {
 	size_t i, num;
 
-	PATParser *pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
+	auto pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
 	if (!pPATParser) {
 		meddbg("PAT parser is not found!\n");
 		return false;
@@ -153,7 +156,7 @@ bool ParserManager::syncProgramInfoFromPAT(void)
 	prog_num_t progNum;
 	std::map<int, ts_pid_t> pmt_elements;
 
-	PATParser *pPATParser = static_cast<PATParser*>(getParser(PATParser::TABLE_ID));
+	auto pPATParser = static_cast<PATParser *>(getParser(PATParser::TABLE_ID));
 	if (!pPATParser) {
 		meddbg("PAT parser is not found!\n");
 		return false;
@@ -180,7 +183,7 @@ bool ParserManager::syncProgramInfoFromPAT(void)
 		}
 	}
 
-	PMTParser *pPMTParser = static_cast<PMTParser *>(getParser(PMTParser::TABLE_ID));
+	auto pPMTParser = static_cast<PMTParser *>(getParser(PMTParser::TABLE_ID));
 	if (!pPMTParser) {
 		meddbg("PMT parser is not found!\n");
 		return false;
@@ -205,7 +208,7 @@ bool ParserManager::isPMTPid(ts_pid_t pid)
 
 bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 {
-	if (pSection == nullptr) {
+	if (!pSection) {
 		meddbg("section is nullptr!\n");
 		return false;
 	}
@@ -218,8 +221,8 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 	uint8_t *pData = pSection->getDataPtr();
 	table_id_t tableId = TABILE_ID(pData);
 	auto pTableParser = getParser(tableId);
-	if (pTableParser == nullptr) {
-		meddbg("table parser is nullptr!\n");
+	if (!pTableParser) {
+		meddbg("table (0x%02x) parser is not found!\n", tableId);
 		return false;
 	}
 
@@ -228,8 +231,8 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 		switch (tableId) {
 		case PATParser::TABLE_ID: // PAT received
 			if (!syncProgramInfoFromPAT()) {
-				meddbg("Sync program info failed when PAT received!\n");
-				//
+				meddbg("Sync program information failed when PAT received!\n");
+				// just print error log
 			}
 			break;
 		default:
@@ -243,32 +246,38 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 
 bool ParserManager::addParser(SectionParser *pParser)
 {
-	auto it = t_tableParserMap.find(pParser->getTableId());
-	if (it != t_tableParserMap.end()) {
-		// parser exist
+	if (!pParser) {
+		meddbg("pParser is nullptr!\n");
 		return false;
 	}
 
-	t_tableParserMap[pParser->getTableId()] = pParser;
+	auto it = mTableParsers.find(pParser->getTableId());
+	if (it != mTableParsers.end()) {
+		meddbg("table (0x%02x) parser exists!\n", pParser->getTableId());
+		return false;
+	}
+
+	mTableParsers[pParser->getTableId()] = pParser;
 	return true;
 }
 
 bool ParserManager::removeParser(table_id_t tableId)
 {
-	auto it = t_tableParserMap.find(tableId);
-	if (it == t_tableParserMap.end()) {
+	auto it = mTableParsers.find(tableId);
+	if (it == mTableParsers.end()) {
+		meddbg("table (0x%02x) parser does not exist!\n", tableId);
 		return false;
 	}
 
 	delete it->second;
-	t_tableParserMap.erase(it);
+	mTableParsers.erase(it);
 	return true;
 }
 
 SectionParser *ParserManager::getParser(table_id_t tableId)
 {
-	auto it = t_tableParserMap.find(tableId);
-	if (it == t_tableParserMap.end()) {
+	auto it = mTableParsers.find(tableId);
+	if (it == mTableParsers.end()) {
 		meddbg("No parser for taibleid: 0x%02x\n", tableId);
 		return nullptr;
 	}

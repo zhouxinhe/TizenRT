@@ -93,11 +93,11 @@ typedef enum audio_container_e {
 	/* MPEG-2 transport stream */
 	AUDIO_CONTAINER_MPEG2TS = 1,
 	/* MP4, for the MPEG-4 multimedia portfolio */
-	AUDIO_CONTAINER_MP4 = 3,
+	AUDIO_CONTAINER_MP4 = 2,
 	/* Ogg, for Xiph.org audio formats Vorbis and Opus */
-	AUDIO_CONTAINER_OGG = 4,
+	AUDIO_CONTAINER_OGG = 3,
 	/* WAV, RIFF file format */
-	AUDIO_CONTAINER_WAV = 5,
+	AUDIO_CONTAINER_WAV = 4,
 } audio_container_t;
 
 /**

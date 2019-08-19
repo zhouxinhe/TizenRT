@@ -50,7 +50,7 @@ protected:
 	// return length value of the object, in this class it's section_length
 	// derived class can override this method to get it's own length field.
 	virtual uint16_t parseLengthField(uint8_t *pData, uint16_t size);
-	// calculate mpeg2 crc32
+	// calculates the MPEG2 32 bit CRC
 	uint32_t crc32(uint8_t *data, uint32_t length);
 
 private:

@@ -16,19 +16,18 @@
  *
  ******************************************************************/
 
-#ifndef _TS_PARSER_H_
-#define _TS_PARSER_H_
+#ifndef __TS_DEMUX_H
+#define __TS_DEMUX_H
 
 #include <stdio.h>
 #include <stdint.h>
-
 #include <string>
 #include <vector>
 #include <map>
 #include <list>
 #include <memory>
-
 #include <media/MediaTypes.h>
+#include "../../Demuxer.h"
 
 class ParserManager;
 class Section;
@@ -38,72 +37,58 @@ class PESPacket;
 
 namespace media {
 namespace stream {
-
-// TSDemux Error Codes
-enum tsdemux_error_e : int {
-	DEMUX_ERROR_UNKNOWN = -1,
-	DEMUX_ERROR_WANT_DATA = -2,
-	DEMUX_ERROR_SYNC_FAILED = -3,
-	DEMUX_ERROR_OUT_OF_MEMORY = -4,
-	DEMUX_ERROR_NOT_READY = -5,
-	DEMUX_ERROR_NONE = 0 // No Error
-};
-
-typedef enum tsdemux_error_e tsdemux_error_t;
-
 class StreamBuffer;
 class StreamBufferReader;
 class StreamBufferWriter;
-class TSDemux
+} // namespace stream
+
+class TSDemuxer : public Demuxer
 {
 public:
 	// check if the given data stream is MPEG2-TS format stream
 	static bool isMpeg2Ts(const uint8_t *buffer, size_t size);
-	// create new TSDemux object
-	static std::shared_ptr<TSDemux> create(void);
-	// constructor & destructor
-	TSDemux();
-	virtual ~TSDemux();
+	// create new TSDemuxer object
+	static std::shared_ptr<TSDemuxer> create(void);
 
-	// initialize TSDemux, malloc buffer and initialize table parser modules
-	bool initialize(void);
+	// constructor & destructor
+	TSDemuxer();
+	virtual ~TSDemuxer();
+
+	// initialize TSDemuxer, malloc buffer and initialize table parser modules
+	virtual bool initialize(void) override;
 	// space size available for push
-	size_t sizeOfSpace(void);
+	virtual size_t sizeOfSpace(void) override;
 	// push TS data into demux buffer
-	// on success, return number of bytes of data accepted by demux
-	//    it may be less than input size when demux buffer is full.
-	// on failure, return negative value (see tsdemux_error_e)
-	ssize_t pushData(uint8_t *buf, size_t size);
+	virtual ssize_t pushData(uint8_t *buf, size_t size) override;
 	// pull audio elementary stream data of the given program number
-	// on success, return number of bytes of data stored in buffer
-	// on failure, return negative value (see tsdemux_error_e)
-	ssize_t pullData(uint8_t *buf, size_t size, uint16_t progNum = 0);
+	// param, pointer to program nubmer of uint16, nullptr means first program as default
+	virtual ssize_t pullData(uint8_t *buf, size_t size, void *param = nullptr) override;
+	// prepare TSDemuxer, preparse TS data in stream buffer to get program information ahead
+	virtual int prepare(void) override;
+	// check if TSDemuxer is ready (prepare succeed)
+	virtual bool isReady(void) override;
+	// get audio type of elementary stream of the given program number
+	// param, pointer of program number of uint16
+	virtual audio_type_t getAudioType(void *param) override;
+
 	// get programs list after pre parsing
 	bool getPrograms(std::vector<uint16_t> &progs);
-	// get audio type of elementary stream of the given program number
-	audio_type_t getAudioType(uint16_t progNum);
-	// check if TSDemux is ready (pre parsing succeed)
-	bool isReady(void);
-	// pre parse TS data in input stream buffer to get program information ahead
-	// on success, return 0
-	// on failure, return negative value (see tsdemux_error_e)
-	int preParse(void);
-	// check if the given PID is PSI table's PID in TS
-	bool isPsiPid(int16_t pid);
-	// check if the given PID is PES packet's PID we need
-	bool isPESPid(int16_t pid);
 
 private:
+	// check if the given PID is PSI table's PID in TS
+	bool isPsiPid(uint16_t pid);
+	// check if the given PID is PES packet's PID we need
+	bool isPESPid(uint16_t pid);
 	// extract a PES packet from the input transport stream
 	// on success, return 0
-	// on failure, return negative value (see tsdemux_error_e)
+	// on failure, return negative value (see demuxer_error_e)
 	int getPESPacket(std::shared_ptr<PESPacket> &pPESPacket);
 	// load a valid TS packet from the input data stream
-	// [in] sync, request to do force resync
-	// [in] offset, if not null, just copy data from stream buffer
+	// sync, request to do force resync
+	// offset, if not null, just copy data from stream buffer
 	// return value:
 	// on success, return 0
-	// on failure, return negative value (see tsdemux_error_e)
+	// on failure, return negative value (see demuxer_error_e)
 	int loadTSPacket(std::shared_ptr<TSPacket> pTSPacket, bool sync = false, size_t *offset = nullptr);
 	// Unpack a TS packet and return a section if get a completed one
 	std::shared_ptr<Section> PSIUnpack(std::shared_ptr<TSPacket> pTSPacket);
@@ -120,11 +105,11 @@ private:
 	// PSI table pasers manager
 	std::shared_ptr<ParserManager> mParserManager;
 	// stream buffer to held inputing TS stream data
-	std::shared_ptr<StreamBuffer> mStreamBuffer;
+	std::shared_ptr<stream::StreamBuffer> mStreamBuffer;
 	// reader handler of the stream buffer
-	std::shared_ptr<StreamBufferReader> mBufferReader;
+	std::shared_ptr<stream::StreamBufferReader> mBufferReader;
 	// writer handler of the stream buffer
-	std::shared_ptr<StreamBufferWriter> mBufferWriter;
+	std::shared_ptr<stream::StreamBufferWriter> mBufferWriter;
 	// PES parser
 	std::shared_ptr<PESParser> mPESParser;
 	// TS packet
@@ -133,7 +118,6 @@ private:
 	size_t mPESDataUsed;
 };
 
-} // namespace stream
 } // namespace media
 
-#endif
+#endif /* __TS_DEMUX_H */

@@ -30,8 +30,8 @@
 
 PMTInstance::PMTInstance(ts_pid_t pid)
 	: mPid(pid)
-	, mProgramNumber((prog_num_t)INFINITY)
-	, mPcrPid((ts_pid_t)INFINITY)
+	, mProgramNumber(INVALID_PN)
+	, mPcrPid(INVALID_PID)
 	, mProgramInfoLength(0)
 {
 }
@@ -65,7 +65,7 @@ bool PMTInstance::parseInfo(uint8_t *pData, uint32_t size)
 	int32_t length = (int32_t)(size - (uint32_t)PMT_CRC_BYTES);
 	while (length > 0) {
 		auto stream = std::make_shared<PMTElementary>();
-		if (stream == nullptr) {
+		if (!stream) {
 			meddbg("Run out of memory!\n");
 			return false;
 		}

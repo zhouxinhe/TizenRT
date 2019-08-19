@@ -23,8 +23,8 @@
 
 #define PAT_UNTIL_LAST_SECTION_NUMBER_LEN       (9)
 #define PAT_PROG_NUM_PID_LEN                    (4)
-#define PAT_PROGRAM_NUMBER(buffer,idx)          ((buffer[4*(idx)]<<8)+(buffer[4*(idx)+1]))
-#define PAT_PROGRAM_NUMBER_PID(buffer,idx)      ((((buffer[4*(idx)+2])&0x1F)<<8)+(buffer[4*(idx)+3]))
+#define PAT_PROGRAM_NUMBER(buffer,idx)          ((buffer[4 * (idx)] << 8) + buffer[4 * (idx) + 1])
+#define PAT_PROGRAM_NUMBER_PID(buffer,idx)      (((buffer[4 * (idx) + 2] << 8) + buffer[4 * (idx) + 3]) & 0x1FFF)
 
 
 
@@ -84,7 +84,7 @@ size_t PATParser::sizeOfProgram(void)
 prog_num_t PATParser::getProgramNumber(uint32_t index)
 {
 	if (index >= mProgramMap.size()) {
-		return (prog_num_t)INFINITY;
+		return INVALID_PN;
 	}
 
 	uint32_t curr = 0;
@@ -96,7 +96,7 @@ prog_num_t PATParser::getProgramNumber(uint32_t index)
 		it++;
 	}
 
-	return (prog_num_t)INFINITY;
+	return INVALID_PN;
 }
 
 ts_pid_t PATParser::getProgramMapPID(prog_num_t programNumber)

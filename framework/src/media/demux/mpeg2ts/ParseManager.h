@@ -59,7 +59,7 @@ protected:
 
 private:
 	// table parsers
-	std::map<table_id_t, SectionParser *> t_tableParserMap;
+	std::map<table_id_t, SectionParser *> mTableParsers;
 	// Pids of PMT for section filtering
 	std::vector<ts_pid_t> mPMTPids;
 };

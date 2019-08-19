@@ -21,20 +21,22 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <limits.h>
 
-// Default initialize value
-#define INFINITY                (~0)
-// Packet Identifier take 13 bits [0x0000, 0x1FFF]
-// 0x1FFF specify the empty packets, invalid PID value
-#define INVALID_PID             ((ts_pid_t)0x1FFF)
-// Continuity counter take 5 bits [0, 15], so it's module value is 16
-#define CONTINUITY_COUNTER_MOD  (16)
+
+// Section version number take 5 bits [0, 0x1F],
+// We can regard 0xFF as invalid version number.
+#define INVALID_VN      ((uint8_t)0xFF)
+// Program number value 0 in PAT is used to specify NIT PID,
+// We can regard 0 as invalid program number.
+#define INVALID_PN      ((prog_num_t)0)
+// Packet Identifier take 13 bits [0x0000, 0x1FFF],
+// 0x1FFF is used to specify the empty packets,
+// We can regard 0x1FFF as invalid PID.
+#define INVALID_PID     ((ts_pid_t)0x1FFF)
 
 // Types definition
-typedef uint16_t ts_pid_t;      // TS packet pid
-typedef uint8_t  table_id_t;    // table id
-typedef uint16_t prog_num_t;    // program number
-typedef uint32_t crc32_t;       // CRC32
+typedef uint16_t        ts_pid_t;      // packet identifier
+typedef uint8_t         table_id_t;    // table id
+typedef uint16_t        prog_num_t;    // program number
 
 #endif /* __MPEG2_TS_TYPES_H */

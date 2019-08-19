@@ -102,13 +102,13 @@ bool header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, uns
  */
 bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 /**
- * @brief Parsing the mpeg2 transport stream data in buffer, to get audio stream codec type and other informations
+ * @brief Parsing audio stream data in buffer, to get audio codec type and other informations
  * @details @b #include <media/MediaUtils.h>
- * @param[in] buffer, buffer size, and audio type, channel, sample rate, pcm format adderss to receive.
+ * @param[in] buffer, buffer size, container type, and audio type, channel, sample rate, pcm format adderss to receive.
  * @return ture - parsing success. false - parsing fail.
  * @since TizenRT v2.1
  */
-bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_container_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 /**
  * @brief Create a wav header in file.
  * @details @b #include <media/MediaUtils.h>
@@ -137,15 +137,6 @@ bool writeWavHeader(FILE *fp, unsigned int channel, unsigned int sampleRate, aud
  * @since TizenRT v2.1 PRE
  */
 unsigned int splitChannel(unsigned int layout, const signed short *stream, unsigned int frames, unsigned int channels, ...);
-/**
- * @brief Calculates the MPEG2 32 bit CRC
- * @details @b #include <media/MediaUtils.h>
- * @param[in] data, pointer to the data to be calculated
- * @param[in] length, length in bytes of the data should be calculated
- * @return CRC value
- * @since TizenRT v2.1
- */
-unsigned int CRC32_MPEG2(unsigned char *data, unsigned int length);
 } // namespace utils
 } // namespace media
 

@@ -47,9 +47,9 @@ protected :
 	TableBase();
 	virtual ~TableBase();
 	// Check the given section info and make the decision how to deal with it
-	int checkSection(uint8_t version, uint8_t sectionNum, uint8_t lastSectionNum, uint32_t crc32 = (uint32_t)INFINITY);
+	int checkSection(uint8_t version, uint8_t sectionNum, uint8_t lastSectionNum, uint32_t crc32 = 0);
 	// Init the table with the first receieved section
-	bool initTable(uint8_t version, uint8_t sectionNumber, uint8_t lastSectionNumber = 0, uint32_t crc32 = (uint32_t)INFINITY);
+	bool initTable(uint8_t version, uint8_t sectionNumber, uint8_t lastSectionNumber = 0, uint32_t crc32 = 0);
 	// Check if table has been updated.
 	bool isTableChanged(uint8_t version, uint8_t sectionNum, uint8_t lastSectionNum, uint32_t crc32);
 	// Delete specific information (parsed from PAT/PMT tables), derived class should implement it

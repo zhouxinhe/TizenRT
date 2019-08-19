@@ -18,13 +18,15 @@
 
 #include <debug.h>
 #include <string.h>
-//#include <crc32.h> // use internal crc32() method
 #include "Mpeg2TsTypes.h"
 #include "Section.h"
 #include "SectionParser.h"
 
-#define SECTION_LENGTH(buffer) ((uint16_t)((buffer[1] & 0x0F) << 8) + (uint16_t)buffer[2])
-#define SECTION_HEAD_BYTES     (3) // table_id + ... + section_length
+
+#define SECTION_LENGTH(buffer)  ((uint16_t)((buffer[1] & 0x0F) << 8) + (uint16_t)buffer[2])
+#define SECTION_HEAD_BYTES      (3)  // table_id + ... + section_length
+#define CONTINUITY_COUNTER_MOD  (16) // Continuity counter's module value
+
 
 std::shared_ptr<Section> Section::create(ts_pid_t pid, uint8_t continuityCounter, uint8_t *pData, uint16_t size)
 {

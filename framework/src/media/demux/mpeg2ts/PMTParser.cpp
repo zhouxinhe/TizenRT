@@ -42,6 +42,7 @@ bool PMTParser::parseInfo(uint8_t *pData, uint32_t size)
 {
 	// table id extension filed is the program nubmer in PMT
 	prog_num_t programNumber = (prog_num_t)mTableIdExtension;
+	medvdbg("Parsing PMT of programnumber %d, pid 0x%x\n", programNumber, mPid);
 
 	if (!mPMTElements.empty()) {
 		auto it = mPMTElements.find(makeKey(mPid, programNumber));
@@ -60,7 +61,7 @@ bool PMTParser::parseInfo(uint8_t *pData, uint32_t size)
 		}
 		// add PMT instance
 		mPMTInstances[programNumber] = pInstance;
-		medvdbg("add pmt instance: programnumber %d, pid 0x%x\n", programNumber, mPid);
+		medvdbg("Add PMT instance: programnumber %d, pid 0x%x\n", programNumber, mPid);
 	}
 
 	return pInstance->parse(pData, size, mTableIdExtension, mVersionNumber,

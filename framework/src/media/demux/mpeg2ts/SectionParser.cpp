@@ -41,23 +41,21 @@
 
 
 SectionParser::SectionParser(table_id_t tableId)
+	: mIsRecv(false)
+	, mSectionData(nullptr)
+	, mPid(INVALID_PID)
+	, mTableId(tableId)
+	, mSectionSyntaxIndicator(false)
+	, mPrivateIndicator(false)
+	, mSectionLength(0)
+	, mTableIdExtension(0)
+	, mVersionNumber(INVALID_VN)
+	, mCurrentNextIndicator(false)
+	, mSectionNumber(0)
+	, mLastSectionNumber(0)
+	, mProtocolVersion(0)
+	, mCrc32(0)
 {
-	mIsRecv = false;
-	mSectionData = nullptr;
-
-	mPid = INVALID_PID;
-	mTableId = tableId;
-	mSectionSyntaxIndicator = false;
-	mPrivateIndicator = false;
-	mSectionLength = 0;
-
-	mTableIdExtension = 0;
-	mVersionNumber = INVALID_VN;
-	mCurrentNextIndicator = false;
-	mSectionNumber = 0;
-	mLastSectionNumber = 0;
-	mProtocolVersion = 0;
-	mCrc32 = 0;
 }
 
 SectionParser::~SectionParser()

@@ -30,14 +30,14 @@
 
 PATParser::PATParser()
 	: SectionParser(TABLE_ID)
+	, mTransportStreamId(0)
+	, mNetworkPID(INVALID_PID)
 {
-	mTransportStreamId = 0;
-	mNetworkPID = INVALID_PID;
 }
 
 PATParser::~PATParser()
 {
-	Initialize();
+	clearParser();
 }
 
 void PATParser::clearParser(void)
@@ -56,8 +56,8 @@ void PATParser::deleteInfo(void)
 bool PATParser::parseInfo(uint8_t *pData, uint32_t size)
 {
 	switch (checkSection(mVersionNumber, mSectionNumber, mLastSectionNumber, mCrc32)) {
-	case SECTION_INITIAL:
-	case SECTION_CHANGE:
+	case SECTION_INITIAL: // fall through
+	case SECTION_CHANGE:  // fall through
 	case SECTION_APPEND: {
 		mTransportStreamId = mTableIdExtension;
 		int i;
@@ -66,10 +66,12 @@ bool PATParser::parseInfo(uint8_t *pData, uint32_t size)
 		}
 		return isCompleted();
 	}
-	case SECTION_IGNORE :
+	case SECTION_IGNORE:
 		medvdbg("PAT Section Ignored...\n");
 		break;
+	case SECTION_PRESENT: // fall through
 	default:
+		// do nothing
 		break;
 	}
 

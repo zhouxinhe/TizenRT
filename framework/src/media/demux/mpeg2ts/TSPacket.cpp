@@ -70,8 +70,9 @@ adaptation_field() {
 */
 
 
-#define BITS_MASK(bits) ((1 << (bits)) - 1)
-#define PID_MASK        BITS_MASK(13)
+#define BITS_MASK(bits)     ((1 << (bits)) - 1)
+#define PID_MASK            BITS_MASK(13)
+#define LENGTH_BYTES        (1) // adatation-field-length takes 1 byte
 
 TSPacket::AdaptationField::AdaptationField()
 	: mAdaptationFieldLength(0)
@@ -176,7 +177,7 @@ uint8_t *TSPacket::getPayloadData(uint8_t *payloadDataLen)
 
 	if (adaptationFieldControl() == CONTROL_ADAPTATION_PLAYLOAD) {
 		// 0~182 bytes adaption field + playload
-		lenPayload = PACKET_SIZE - HEAD_BYTES - (1 + adaptationField().adaptationFieldLength());
+		lenPayload = PACKET_SIZE - HEAD_BYTES - (LENGTH_BYTES + adaptationField().adaptationFieldLength());
 		ptrPayload = mData + (PACKET_SIZE - lenPayload);
 	}
 

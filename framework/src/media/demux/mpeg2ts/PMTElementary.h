@@ -35,7 +35,7 @@ public:
 	PMTElementary();
 	virtual ~PMTElementary();
 
-	//
+	// parse elementary stream
 	int32_t parseES(uint8_t *pData, uint32_t size);
 	// get stream type of the elementary stream
 	uint8_t getStreamType(void) { return mStreamType; }

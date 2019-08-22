@@ -68,4 +68,3 @@ private:
 };
 
 #endif /* __PAT_PARSER_H */
-

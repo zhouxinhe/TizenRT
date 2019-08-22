@@ -33,7 +33,7 @@ public:
 	enum {
 		SECTION_HEADER_LENGTH = 3,   // 3 bytes: table_id + section_syntax_indicatior + section_length
 		LONG_FORM_HEADER_LENGTH = 5, // 5 bytes: long form header length if section_syntax_indicatior is 1
-		SECTION_MAX_LENGTH = 4096,   // max lenght of a section is 4K bytes
+		SECTION_MAX_LENGTH = 4096,   // max length of a section is 4K bytes
 	};
 
 public:

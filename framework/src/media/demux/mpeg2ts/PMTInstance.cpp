@@ -53,7 +53,7 @@ bool PMTInstance::parseInfo(uint8_t *pData, uint32_t size)
 	pData += LENGTH_FIELD_BYTES;
 	size -= LENGTH_FIELD_BYTES;
 
-	if (mProgramInfoLength + (uint32_t)PMT_CRC_BYTES >  size) {
+	if (mProgramInfoLength + (uint32_t)PMT_CRC_BYTES > size) {
 		meddbg("mProgramInfoLength=%d invalid\n", mProgramInfoLength);
 		return false;
 	}
@@ -96,17 +96,20 @@ bool PMTInstance::parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 	size -= PID_FIELD_BYTES;
 
 	switch (checkSection(versionNumber, sectionNumber, lastSectionNumber, crc32)) {
-	case SECTION_CHANGE: // fall through
 	case SECTION_INITIAL: // fall through
+	case SECTION_CHANGE:  // fall through
 	case SECTION_APPEND:
-		parseInfo(pData, size);
-		return isCompleted();
-
-	case SECTION_IGNORE :
-		medwdbg("PMT Section Ignored...\n");
+		if (parseInfo(pData, size)) {
+			return isCompleted();
+		}
+		meddbg("parse program info failed!\n");
 		break;
-
+	case SECTION_IGNORE:
+		medvdbg("PMT Section Ignored...\n");
+		break;
+	case SECTION_PRESENT: // fall through
 	default:
+		// do nothing
 		break;
 	}
 

@@ -120,6 +120,8 @@ bool ParserManager::getAudioStreamInfo(prog_num_t progNum, uint8_t &streamType, 
 					break;
 			}
 		}
+		meddbg("Can not find audio stream in PMT of program number %d\n", progNum);
+		return false;
 	}
 
 	meddbg("PMT of program number %d has not be received!\n", progNum);
@@ -232,7 +234,7 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 		case PATParser::TABLE_ID: // PAT received
 			if (!syncProgramInfoFromPAT()) {
 				meddbg("Sync program information failed when PAT received!\n");
-				// just print error log
+				return false;
 			}
 			break;
 		default:

@@ -44,7 +44,7 @@ public:
 	/**
 	 * @brief Create an instance of a derived demuxer class
 	 * @param[in] containerType: container type to specify corresponding demuxer
-	 * @return shared pointer of the demuxer,
+	 * @return shared pointer of the demuxer instance,
 	 *         nullptr means create failed.
 	 * Note: This create() method should be the only way to create a new demuxer!
 	 */
@@ -54,7 +54,7 @@ public:
 	 */
 	Demuxer() = delete;
 	/**
-	 * @brief constructor & destructor
+	 * @brief Constructor & Destructor
 	 */
 	Demuxer(audio_container_t containerType);
 	virtual ~Demuxer();

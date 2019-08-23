@@ -23,8 +23,9 @@
 #include <media/FileInputDataSource.h>
 #include "utils/MediaUtils.h"
 
-// TODO：add in Kconfig
-#define CONFIG_PREPARSE_BUFFER_SIZE 4096
+#ifndef CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE
+#define CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE 4096
+#endif
 
 namespace media {
 namespace stream {
@@ -59,11 +60,11 @@ FileInputDataSource &FileInputDataSource::operator=(const FileInputDataSource &s
 bool FileInputDataSource::open()
 {
 	if (!mFp) {
-		unsigned int channel = 0;
+		unsigned int channel;
 		unsigned int sampleRate;
-		audio_format_type_t pcmFormat;
+		audio_format_type_t pcmFormat = getPcmFormat();
 		audio_container_t audioContainer;
-		audio_type_t audioType = AUDIO_TYPE_INVALID;
+		audio_type_t audioType;
 
 		mFp = fopen(mDataPath.c_str(), "rb");
 		if (!mFp) {
@@ -72,44 +73,50 @@ bool FileInputDataSource::open()
 		}
 
 		audioContainer = utils::getAudioContainerFromPath(mDataPath);
-		if (audioContainer == AUDIO_CONTAINER_NONE) {
-			// get audio type from path
-			audioType = utils::getAudioTypeFromPath(mDataPath);
-		} else {
+		if (audioContainer != AUDIO_CONTAINER_NONE) {
 			// has container, demux and parse stream data to get audio type
-			size_t bufferSize = CONFIG_PREPARSE_BUFFER_SIZE;
+			size_t bufferSize = CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE;
 			unsigned char *buffer = new unsigned char[bufferSize];
 			if (!buffer) {
 				meddbg("run out of memory! size %u\n", bufferSize);
 				return false;
 			}
-			bufferSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
+
+			size_t readSize = fread(buffer, sizeof(unsigned char), bufferSize, mFp);
 			fseek(mFp, 0, SEEK_SET);
-			bool ret = utils::stream_parsing(buffer, bufferSize, audioContainer, &audioType, &channel, &sampleRate, &pcmFormat);
+			if (readSize != bufferSize) {
+				delete[] buffer;
+				meddbg("can not read enough data for preparsing! read:%u\n", readSize);
+				return false;
+			}
+
+			bool ret = utils::stream_parsing(buffer, readSize, audioContainer, &audioType, &channel, &sampleRate, &pcmFormat);
 			delete[] buffer;
 			if (!ret) {
 				meddbg("stream_parsing failed, can not get audio codec type!\n");
 				return false;
 			}
-			medvdbg("stream_parsing audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
+			medvdbg("audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
+			setAudioType(audioType);
+			setSampleRate(sampleRate);
+			setChannels(channel);
+			setPcmFormat(pcmFormat);
+			return true;
 		}
 
+		// get audio type directly from path
+		audioType = utils::getAudioTypeFromPath(mDataPath);
 		setAudioType(audioType);
+
 		switch (audioType) {
 		case AUDIO_TYPE_MP3:
 		case AUDIO_TYPE_AAC:
-			if (channel == 0 && !utils::header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
-				meddbg("header parsing failed\n");
-				return false;
-			}
-			setSampleRate(sampleRate);
-			setChannels(channel);
-			break;
 		case AUDIO_TYPE_WAVE:
-			if (channel == 0 && !utils::header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
+			if (!utils::header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
 				meddbg("header parsing failed\n");
 				return false;
 			}
+			medvdbg("audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
 			setSampleRate(sampleRate);
 			setChannels(channel);
 			setPcmFormat(pcmFormat);

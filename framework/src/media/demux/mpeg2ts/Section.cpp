@@ -125,6 +125,14 @@ uint16_t Section::parseLengthField(uint8_t *pData, uint16_t size)
 	return (SECTION_HEAD_BYTES + SECTION_LENGTH(pData));
 }
 
+/*
+ * Name:   CRC-32/MPEG-2 x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1
+ * Poly:   0x4C11DB7
+ * Init:   0xFFFFFFF
+ * Refin:  False
+ * Refout: False
+ * Xorout: 0x0000000
+ */
 uint32_t Section::crc32(uint8_t *data, uint32_t length)
 {
 	uint8_t i;
@@ -132,8 +140,7 @@ uint32_t Section::crc32(uint8_t *data, uint32_t length)
 	uint32_t crc = 0xffffffff;
 
 	while ((length--) != 0) {
-		crc ^= (uint32_t)data[j] << 24;
-		j++;
+		crc ^= (uint32_t)data[j++] << 24;
 		for (i = 0; i < 8; ++i) {
 			if ((crc & 0x80000000) != 0) {
 				crc = (crc << 1) ^ 0x04C11DB7;

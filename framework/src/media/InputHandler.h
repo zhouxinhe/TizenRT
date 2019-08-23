@@ -75,7 +75,7 @@ public:
 	size_t sizeOfSpace();
 	ssize_t writeToStreamBuffer(unsigned char *buf, size_t size);
 
-	audio_container_t getContainerFormat();
+	bool getContainerFormat(audio_container_t *audioContainer);
 
 	bool registerDemux(audio_container_t audioContainer);
 	void unregisterDemux();

@@ -36,6 +36,10 @@
 #define CONFIG_HANDLER_STREAM_BUFFER_THRESHOLD 2048
 #endif
 
+#ifndef CONFIG_HANDLER_PRELOAD_BUFFER_SIZE
+#define CONFIG_HANDLER_PRELOAD_BUFFER_SIZE 1024
+#endif
+
 namespace media {
 namespace stream {
 
@@ -97,7 +101,26 @@ bool InputHandler::open()
 	}
 
 	if (mInputDataSource->open()) {
-		registerDemux(getContainerFormat());
+		/* Preload data from source and parse it to get container format.
+		 * Actually, we have obtained the container format when DataSource opening,
+		 * but we can not get the format information via any DataSoruce interface.
+		 * (Maybe there should be such DataSoruce interface provided in future.)
+		 */
+		audio_container_t audioContainer;
+		if (!getContainerFormat(&audioContainer)) {
+			meddbg("get container format failed!\n");
+			return false;
+		}
+
+		/* If the datasoruce stream is in any container format,
+		 * then a demuxer is necessary.
+		 */
+		if (audioContainer != AUDIO_CONTAINER_NONE) {
+			if (!registerDemux(audioContainer)) {
+				meddbg("register demuxer failed!\n");
+				return false;
+			}
+		}
 
 		/* Media f/w playback supports only mono and stereo.
 		 * In case of multiple channel audio, we ask decoder always outputting stereo PCM data.
@@ -121,6 +144,10 @@ bool InputHandler::close()
 	stop();
 	unregisterDecoder();
 	unregisterDemux();
+	if (mPreloadData) {
+		delete[] mPreloadData;
+		mPreloadData = nullptr;
+	}
 	return mInputDataSource->close();
 }
 
@@ -214,7 +241,7 @@ void *InputHandler::workerMain(void *arg)
 			if (stream->mPreloadData) {
 				size = stream->mPreloadLength;
 				buf = stream->mPreloadData;
-				stream->mPreloadData = NULL;
+				stream->mPreloadData = nullptr;
 			} else {
 				buf = new unsigned char[size];
 				if ((size = worker->read(buf, size)) <= 0) {
@@ -394,39 +421,30 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	return (ssize_t)written;
 }
 
-audio_container_t InputHandler::getContainerFormat()
+bool InputHandler::getContainerFormat(audio_container_t *audioContainer)
 {
-	mPreloadLength = 1024; // fixme
-
+	mPreloadLength = CONFIG_HANDLER_PRELOAD_BUFFER_SIZE;
 	mPreloadData = new unsigned char[mPreloadLength];
 	if (!mPreloadData) {
 		meddbg("memory allocation failed!\n");
-		return AUDIO_CONTAINER_NONE;
+		return false;
 	}
 
 	// preload data from source
-	size_t size = 0;
-	ssize_t ret;
-	while (size < mPreloadLength) {
-		ret = mInputDataSource->read(mPreloadData + size, mPreloadLength - size);
-		if (ret <= 0) {
-			meddbg("Can not preload enough data required!\n");
-			mPreloadLength = size;
-			return AUDIO_CONTAINER_NONE;
-		}
-		size += ret;
+	auto readLen = mInputDataSource->read(mPreloadData, mPreloadLength);
+	if ((size_t)readLen != mPreloadLength) {
+		meddbg("Can not preload enough data required! read:%ld\n", readLen);
+		delete[] mPreloadData;
+		mPreloadData = nullptr;
+		return false;
 	}
 
-	return media::utils::getAudioContainerFromStream(mPreloadData, mPreloadLength);
+	*audioContainer = media::utils::getAudioContainerFromStream(mPreloadData, mPreloadLength);
+	return true;
 }
 
 bool InputHandler::registerDemux(audio_container_t audioContainer)
 {
-	if (audioContainer == AUDIO_CONTAINER_NONE) {
-		// No container, do not need any demuxer.
-		return true;
-	}
-
 	mDemuxer = Demuxer::create(audioContainer);
 	if (!mDemuxer) {
 		meddbg("Create demuxer of audioContainer %d failed!\n", audioContainer);

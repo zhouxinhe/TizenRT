@@ -24,12 +24,20 @@
 #include "InputHandler.h"
 #include "MediaPlayerImpl.h"
 #include "Decoder.h"
+#include "Demuxer.h"
+
+
+#ifndef CONFIG_HANDLER_PRELOAD_BUFFER_SIZE
+#define CONFIG_HANDLER_PRELOAD_BUFFER_SIZE 1024
+#endif
 
 namespace media {
 namespace stream {
 
 InputHandler::InputHandler() :
 	mDecoder(nullptr),
+	mPreloadData(nullptr),
+	mPreloadLength(0),
 	mState(BUFFER_STATE_EMPTY),
 	mTotalBytes(0)
 {
@@ -50,8 +58,8 @@ bool InputHandler::doStandBy()
 {
 	auto mp = getPlayer();
 	if (!mp) {
-	    meddbg("get player handle failed!\n");
-	    return false;
+		meddbg("get player handle failed!\n");
+		return false;
 	}
 
 	std::thread wk = std::thread([=]() {
@@ -195,9 +203,43 @@ void InputHandler::onBufferUpdated(ssize_t change, size_t current)
 	}
 }
 
+size_t InputHandler::sizeOfSpace()
+{
+	// if has demuxer
+	if (mDemuxer) {
+		return mDemuxer->sizeOfSpace();
+	}
+
+	// if has decoder
+	// return space size of decoder buffer
+	// TODO:
+
+	// return PCM buffer space size
+	return mBufferWriter->sizeOfSpace();
+}
+
 ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 {
 	assert(buf != nullptr);
+
+	if (mDemuxer) {
+		mDemuxer->pushData(buf, size);
+
+		if (!mDemuxer->isReady()) {
+			if (mDemuxer->prepare() < 0) {
+				medwdbg("Prepare demuxer failed!\n");
+				return size;
+			}
+		}
+
+		auto lenES  = mDemuxer->pullData(buf, size);
+		if (lenES < 0) {
+			medwdbg("Can not pull any ES data currently! ret: %d\n", lenES);
+			return size;
+		}
+		// update `size` to real ES data length
+		size = (size_t)lenES;
+	}
 
 	size_t written = 0;
 
@@ -227,6 +269,43 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	}
 
 	return (ssize_t)written;
+}
+
+bool InputHandler::getContainerFormat(audio_container_t *audioContainer)
+{
+	mPreloadLength = CONFIG_HANDLER_PRELOAD_BUFFER_SIZE;
+	mPreloadData = new unsigned char[mPreloadLength];
+	if (!mPreloadData) {
+		meddbg("memory allocation failed!\n");
+		return false;
+	}
+
+	// preload data from source
+	auto readLen = mInputDataSource->read(mPreloadData, mPreloadLength);
+	if ((size_t)readLen != mPreloadLength) {
+		meddbg("Can not preload enough data required! read:%ld\n", readLen);
+		delete[] mPreloadData;
+		mPreloadData = nullptr;
+		return false;
+	}
+
+	*audioContainer = media::utils::getAudioContainerFromStream(mPreloadData, mPreloadLength);
+	return true;
+}
+
+bool InputHandler::registerDemux(audio_container_t audioContainer)
+{
+	mDemuxer = Demuxer::create(audioContainer);
+	if (!mDemuxer) {
+		meddbg("Create demuxer of audioContainer %d failed!\n", audioContainer);
+		return false;
+	}
+	return true;
+}
+
+void InputHandler::unregisterDemux()
+{
+	mDemuxer = nullptr;
 }
 
 bool InputHandler::registerCodec(audio_type_t audioType, unsigned int channels, unsigned int sampleRate)

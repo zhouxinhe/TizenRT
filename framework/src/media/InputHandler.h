@@ -26,6 +26,7 @@
 #include "StreamHandler.h"
 
 #include "Decoder.h"
+#include "Demuxer.h"
 
 namespace media {
 class MediaPlayerImpl;
@@ -56,9 +57,14 @@ public:
 	void setPlayer(std::shared_ptr<MediaPlayerImpl> mp) { mPlayer = mp; }
 	std::shared_ptr<MediaPlayerImpl> getPlayer() { return mPlayer.lock(); }
 
+	size_t sizeOfSpace();
 	ssize_t writeToStreamBuffer(unsigned char *buf, size_t size);
 
+	bool getContainerFormat(audio_container_t *audioContainer);
+
 private:
+	bool registerDemux(audio_container_t audioContainer);
+	void unregisterDemux();
 	bool registerCodec(audio_type_t audioType, unsigned int channels, unsigned int sampleRate) override;
 	void unregisterCodec() override;
 	size_t getDecodeFrames(unsigned char *buf, size_t *size);
@@ -70,7 +76,12 @@ private:
 
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
+	std::shared_ptr<Demuxer> mDemuxer;
 	std::weak_ptr<MediaPlayerImpl> mPlayer;
+
+	// preload data for container recognition
+	unsigned char *mPreloadData;
+	size_t mPreloadLength;
 
 	buffer_state_t mState;
 	size_t mTotalBytes;

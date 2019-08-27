@@ -49,6 +49,26 @@ void toLowerString(std::string& str);
  * @since TizenRT v2.0
  */
 void toUpperString(std::string& str);
+
+/**
+ * @brief Gets the audio container format from path
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] path The path of audio data
+ * @return The audio container format
+ * @since TizenRT v2.1
+ */
+audio_container_t getAudioContainerFromPath(std::string datapath);
+
+/**
+ * @brief Gets the audio container format stream data
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] stream Pointer to audio stream data
+ * @param[in] length Length in bytes of the audio stream data
+ * @return The audio container format
+ * @since TizenRT v2.1
+ */
+audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length);
+
 /**
  * @brief Gets the audio type in path.
  * @details @b #include <media/MediaUtils.h>
@@ -81,6 +101,14 @@ bool header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, uns
  * @since TizenRT v2.0
  */
 bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+/**
+ * @brief Parsing audio stream data in buffer, to get audio codec type and other informations
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] buffer, buffer size, container type, and audio type, channel, sample rate, pcm format adderss to receive.
+ * @return ture - parsing success. false - parsing fail.
+ * @since TizenRT v2.1
+ */
+bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_container_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 /**
  * @brief Create a wav header in file.
  * @details @b #include <media/MediaUtils.h>

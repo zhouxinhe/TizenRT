@@ -19,6 +19,11 @@
 #include "MediaUtils.h"
 #include <debug.h>
 #include <errno.h>
+#include <tinyara/config.h>
+
+#ifdef CONFIG_CONTAINER_MPEG2TS
+#include "../demux/mpeg2ts/TSDemuxer.h"
+#endif
 
 namespace media {
 namespace utils {
@@ -53,6 +58,48 @@ void toUpperString(std::string &str)
 		}
 	}
 }
+
+audio_container_t getAudioContainerFromPath(std::string datapath)
+{
+	std::string basename = datapath.substr(datapath.find_last_of("/") + 1);
+	std::string extension;
+
+	if (basename.find(".") == std::string::npos) {
+		extension = "";
+	} else {
+		extension = basename.substr(basename.find_last_of(".") + 1);
+	}
+
+	toLowerString(extension);
+
+	if (extension.compare("wav") == 0) {
+		return AUDIO_CONTAINER_WAV;
+	} else if ((extension.compare("ogg") == 0) || (extension.compare("oga") == 0)) {
+		return AUDIO_CONTAINER_OGG;
+	} else if ((extension.compare("mp4") == 0) || (extension.compare("m4a") == 0)) {
+		return AUDIO_CONTAINER_MP4;
+	} else if (extension.compare("ts") == 0) {
+		return AUDIO_CONTAINER_MPEG2TS;
+	} else {
+		medwdbg("unknown (not supported) container\n");
+		return AUDIO_CONTAINER_NONE;
+	}
+}
+
+audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length)
+{
+#ifdef CONFIG_CONTAINER_MPEG2TS
+	if (media::TSDemuxer::isMpeg2Ts(stream, length)) {
+		return AUDIO_CONTAINER_MPEG2TS;
+	}
+#endif
+
+	// else try others
+	// TODO: mp4/ogg...
+
+	return AUDIO_CONTAINER_NONE;
+}
+
 
 audio_type_t getAudioTypeFromPath(std::string datapath)
 {
@@ -509,6 +556,71 @@ bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t
 		free(header);
 	}
 	return true;
+}
+
+#ifdef CONFIG_CONTAINER_MPEG2TS
+bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+{
+	// create temporary ts parser
+	auto tsDemuxer = media::TSDemuxer::create();
+	if (!tsDemuxer) {
+		meddbg("TSDemuxer::create failed\n");
+		return false;
+	}
+
+	// push the given (ts) data into demux buffer
+	size_t ret = tsDemuxer->pushData(buffer, bufferSize);
+	if (ret < bufferSize) {
+		medwdbg("TSDemuxer accept part of data %u/%u\n", ret, bufferSize);
+	}
+
+	// pre parse to get PSI
+	if (tsDemuxer->prepare() < 0) {
+		meddbg("TSDemuxer parse failed\n");
+		return false;
+	}
+
+	// get programs in ts, usually we select the 1th one as default.
+	std::vector<unsigned short> programs;
+	tsDemuxer->getPrograms(programs);
+	medvdbg("There's %lu programs in the given transport stream\n", programs.size());
+	if (programs.empty()) {
+		meddbg("TSDemuxer didn't find any program! Failed!\n");
+		return false;
+	}
+
+	// get audio type (from PMT component stream type field)
+	*audioType = tsDemuxer->getAudioType((void *)&programs[0]);
+
+	// get ES data (we expect the given ts data is enough to form a PES packet)
+	unsigned char audioES[64]; // 64 bytes should be enough for header parsing
+	ssize_t audioESLen = tsDemuxer->pullData(audioES, sizeof(audioES), (void *)&programs[0]);
+	if (audioESLen < 0) {
+		meddbg("TSDemuxer get ES data failed!\n");
+		return false;
+	}
+
+	return header_parsing(audioES, (unsigned int)audioESLen, *audioType, channel, sampleRate, pcmFormat);
+}
+#endif
+
+bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_container_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+{
+	if (!buffer) {
+		meddbg("buffer is null!\n");
+		return false;
+	}
+
+	switch (containerType) {
+#ifdef CONFIG_CONTAINER_MPEG2TS
+	case AUDIO_CONTAINER_MPEG2TS:
+		return ts_parsing(buffer, bufferSize, audioType, channel, sampleRate, pcmFormat);
+#endif
+	// add other container cases
+	default:
+		meddbg("container type %d is not supported!\n", containerType);
+		return false;
+	}
 }
 
 struct wav_header_s {

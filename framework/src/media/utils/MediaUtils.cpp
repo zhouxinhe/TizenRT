@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <tinyara/config.h>
 
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 #include "../demux/mpeg2ts/TSDemuxer.h"
 #endif
 
@@ -88,14 +88,14 @@ audio_container_t getAudioContainerFromPath(std::string datapath)
 
 audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length)
 {
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 	if (media::TSDemuxer::isMpeg2Ts(stream, length)) {
 		return AUDIO_CONTAINER_MPEG2TS;
 	}
 #endif
 
 	// else try others
-	// mp4/ogg...
+	// TODO: mp4/ogg...
 
 	return AUDIO_CONTAINER_NONE;
 }
@@ -558,7 +558,7 @@ bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t
 	return true;
 }
 
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
 {
 	// create temporary ts parser
@@ -612,7 +612,7 @@ bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_contai
 	}
 
 	switch (containerType) {
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 	case AUDIO_CONTAINER_MPEG2TS:
 		return ts_parsing(buffer, bufferSize, audioType, channel, sampleRate, pcmFormat);
 #endif

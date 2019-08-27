@@ -48,18 +48,18 @@ public:
 
 protected:
 	// add new section parser
-	bool addParser(SectionParser *pParser);
+	bool addParser(std::shared_ptr<SectionParser> pParser);
 	// remove section parser of the given table id
-	bool removeParser(table_id_t tableId);
+	void removeParser(table_id_t tableId);
 	// get section parser of the given table id
-	SectionParser *getParser(table_id_t tableId);
+	std::shared_ptr<SectionParser> getParser(table_id_t tableId);
 	// sync program information from PAT parser when PAT received,
 	// then it's possible to filter and parse PMT sections for each program.
 	bool syncProgramInfoFromPAT(void);
 
 private:
 	// table parsers
-	std::map<table_id_t, SectionParser *> mTableParsers;
+	std::map<table_id_t, std::shared_ptr<SectionParser>> mTableParsers;
 	// Pids of PMT for section filtering
 	std::vector<ts_pid_t> mPMTPids;
 };

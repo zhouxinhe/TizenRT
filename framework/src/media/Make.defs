@@ -57,7 +57,7 @@ CXXSRCS += InputDataSource.cpp FileInputDataSource.cpp
 CXXSRCS += HttpInputDataSource.cpp
 
 CXXSRCS += Demuxer.cpp
-ifeq ($(CONFIG_MPEG2_TS), y)
+ifeq ($(CONFIG_CONTAINER_MPEG2TS), y)
 CXXSRCS += Section.cpp TableBase.cpp SectionParser.cpp
 CXXSRCS += PMTElementary.cpp PMTInstance.cpp PMTParser.cpp PATParser.cpp
 CXXSRCS += PESPacket.cpp PESParser.cpp TSPacket.cpp

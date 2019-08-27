@@ -19,7 +19,7 @@
 #include <tinyara/config.h>
 #include <debug.h>
 #include "Demuxer.h"
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 #include "demux/mpeg2ts/TSDemuxer.h"
 #endif
 
@@ -30,7 +30,7 @@ std::shared_ptr<Demuxer> Demuxer::create(audio_container_t containerType)
 	std::shared_ptr<Demuxer> demuxer;
 
 	switch (containerType) {
-#ifdef CONFIG_MPEG2_TS
+#ifdef CONFIG_CONTAINER_MPEG2TS
 	case AUDIO_CONTAINER_MPEG2TS:
 		demuxer = std::make_shared<TSDemuxer>();
 		if (demuxer && demuxer->initialize()) {

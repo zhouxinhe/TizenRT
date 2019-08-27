@@ -117,7 +117,7 @@ config DATASOURCE_PREPARSE_BUFFER_SIZE
 	---help---
 
 menuconfig CONTAINER_FORMAT
-	bool "Ditital Container Formats Support"
+	bool "Digital Container Formats Support"
 	default y
 	---help---
 		Enable multimedia container formats

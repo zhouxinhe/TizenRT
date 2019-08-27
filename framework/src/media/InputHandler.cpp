@@ -131,8 +131,7 @@ bool InputHandler::open()
 		}
 
 		if (registerDecoder(mInputDataSource->getAudioType(), mInputDataSource->getChannels(), mInputDataSource->getSampleRate())) {
-			start();
-			return true;
+			return start();
 		}
 	}
 

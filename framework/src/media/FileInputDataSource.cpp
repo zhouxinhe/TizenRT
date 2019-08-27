@@ -107,7 +107,6 @@ bool FileInputDataSource::open()
 		// get audio type directly from path
 		audioType = utils::getAudioTypeFromPath(mDataPath);
 		setAudioType(audioType);
-
 		switch (audioType) {
 		case AUDIO_TYPE_MP3:
 		case AUDIO_TYPE_AAC:

@@ -154,12 +154,27 @@ public:
 	 * @since TizenRT v2.0
 	 */
 	audio_type_t getAudioType();
+	/**
+	 * @brief Sets the container type of the stream data.
+	 * @details @b #include <media/DataSource.h>
+	 * @param[in] containerType The audioType that the container type of stream data
+	 * @since TizenRT v2.1
+	 */
+	void setContainerType(audio_container_t containerType);
+	/**
+	 * @brief Gets the container type of the stream data.
+	 * @details @b #include <media/DataSource.h>
+	 * @return The container type of the stream data.
+	 * @since TizenRT v2.1
+	 */
+	audio_container_t getContainerType();
 
 private:
 	unsigned char mChannels;
 	unsigned int mSampleRate;
 	audio_format_type_t mPcmFormat;
 	audio_type_t mAudioType;
+	audio_container_t mContainerType;
 };
 } // namespace media
 

@@ -97,7 +97,7 @@ typedef enum audio_container_e {
 	/* Ogg, for Xiph.org audio formats Vorbis and Opus */
 	AUDIO_CONTAINER_OGG = 3,
 	/* WAV, RIFF file format */
-	AUDIO_CONTAINER_WAV = 4,
+	AUDIO_CONTAINER_WAV = 4
 } audio_container_t;
 
 /**

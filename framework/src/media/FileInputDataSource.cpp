@@ -96,7 +96,8 @@ bool FileInputDataSource::open()
 				meddbg("stream_parsing failed, can not get audio codec type!\n");
 				return false;
 			}
-			medvdbg("audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
+			medvdbg("audioContainer %d, audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioContainer, audioType, channel, sampleRate, pcmFormat);
+			setContainerType(audioContainer);
 			setAudioType(audioType);
 			setSampleRate(sampleRate);
 			setChannels(channel);

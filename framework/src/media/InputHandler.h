@@ -21,14 +21,10 @@
 #include <memory>
 
 #include <sys/types.h>
-#include <tinyara/config.h>
 
 #include <media/InputDataSource.h>
-#include <media/BufferObserverInterface.h>
+#include "StreamHandler.h"
 
-#include "StreamBuffer.h"
-#include "StreamBufferReader.h"
-#include "StreamBufferWriter.h"
 #include "Decoder.h"
 #include "Demuxer.h"
 
@@ -43,26 +39,15 @@ typedef enum buffer_state_e : int {
 	BUFFER_STATE_FULL,
 } buffer_state_t;
 
-class InputHandler : public BufferObserverInterface
+class InputHandler : public StreamHandler
 {
 public:
 	InputHandler();
-	virtual ~InputHandler() = default;
 	void setInputDataSource(std::shared_ptr<InputDataSource> source);
 	bool doStandBy();
-	bool open();
-	bool close();
-	ssize_t read(unsigned char *buf, size_t size);
-	bool start();
-	bool stop();
-	void createWorker();
-	void destroyWorker();
-	static void *workerMain(void *arg);
-	void sleepWorker();
-	void wakenWorker();
 
-	std::shared_ptr<StreamBuffer> getStreamBuffer() { return mStreamBuffer; }
-	void setStreamBuffer(std::shared_ptr<StreamBuffer> streamBuffer);
+	ssize_t read(unsigned char *buf, size_t size);
+
 	void setBufferState(buffer_state_t state);
 
 	virtual void onBufferOverrun() override;
@@ -75,36 +60,25 @@ public:
 	size_t sizeOfSpace();
 	ssize_t writeToStreamBuffer(unsigned char *buf, size_t size);
 
-	bool getContainerFormat(audio_container_t *audioContainer);
-
-	bool registerDemux(audio_container_t audioContainer);
-	void unregisterDemux();
-	bool registerDecoder(audio_type_t audioType, unsigned int channels, unsigned int sampleRate);
-	void unregisterDecoder();
+private:
+	bool registerContainer(audio_container_t audioContainer) override;
+	void unregisterContainer() override;
+	bool registerCodec(audio_type_t audioType, unsigned int channels, unsigned int sampleRate) override;
+	void unregisterCodec() override;
 	size_t getDecodeFrames(unsigned char *buf, size_t *size);
 
-	std::shared_ptr<InputDataSource> getInputDataSource() { return mInputDataSource; }
+	void resetWorker() override;
+	void sleepWorker() override;
+	bool processWorker() override;
+	const char *getWorkerName(void) const override { return "InputHandler"; };
 
-private:
 	std::shared_ptr<InputDataSource> mInputDataSource;
 	std::shared_ptr<Decoder> mDecoder;
 	std::shared_ptr<Demuxer> mDemuxer;
-	std::shared_ptr<StreamBuffer> mStreamBuffer;
-	std::shared_ptr<StreamBufferReader> mBufferReader;
-	std::shared_ptr<StreamBufferWriter> mBufferWriter;
-	pthread_t mWorker;
-	bool mIsWorkerAlive;
 	std::weak_ptr<MediaPlayerImpl> mPlayer;
-
-	// preload data for container recognition
-	unsigned char *mPreloadData;
-	size_t mPreloadLength;
 
 	buffer_state_t mState;
 	size_t mTotalBytes;
-
-	std::mutex mMutex;
-	std::condition_variable mCondv;
 };
 } // namespace stream
 } // namespace media

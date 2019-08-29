@@ -16,7 +16,7 @@
  *
  ******************************************************************/
 
-#include "MediaUtils.h"
+#include <media/MediaUtils.h>
 #include <debug.h>
 #include <errno.h>
 #include <tinyara/config.h>
@@ -59,7 +59,7 @@ void toUpperString(std::string &str)
 	}
 }
 
-audio_container_t getAudioContainerFromPath(std::string datapath)
+container_type_t getContainerTypeFromPath(std::string datapath)
 {
 	std::string basename = datapath.substr(datapath.find_last_of("/") + 1);
 	std::string extension;
@@ -73,31 +73,31 @@ audio_container_t getAudioContainerFromPath(std::string datapath)
 	toLowerString(extension);
 
 	if (extension.compare("wav") == 0) {
-		return AUDIO_CONTAINER_WAV;
+		return CONTAINER_TYPE_WAV;
 	} else if ((extension.compare("ogg") == 0) || (extension.compare("oga") == 0)) {
-		return AUDIO_CONTAINER_OGG;
+		return CONTAINER_TYPE_OGG;
 	} else if ((extension.compare("mp4") == 0) || (extension.compare("m4a") == 0)) {
-		return AUDIO_CONTAINER_MP4;
+		return CONTAINER_TYPE_MP4;
 	} else if (extension.compare("ts") == 0) {
-		return AUDIO_CONTAINER_MPEG2TS;
+		return CONTAINER_TYPE_MPEG2TS;
 	} else {
 		medwdbg("unknown (not supported) container\n");
-		return AUDIO_CONTAINER_NONE;
+		return CONTAINER_TYPE_NONE;
 	}
 }
 
-audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length)
+container_type_t getContainerTypeFromStream(const unsigned char *stream, size_t length)
 {
 #ifdef CONFIG_CONTAINER_MPEG2TS
 	if (media::TSDemuxer::isMpeg2Ts(stream, length)) {
-		return AUDIO_CONTAINER_MPEG2TS;
+		return CONTAINER_TYPE_MPEG2TS;
 	}
 #endif
 
 	// else try others
 	// TODO: mp4/ogg...
 
-	return AUDIO_CONTAINER_NONE;
+	return CONTAINER_TYPE_NONE;
 }
 
 
@@ -349,7 +349,7 @@ bool wave_header_parsing(unsigned char *header, unsigned int *channel, unsigned 
 	return true;
 }
 
-bool header_parsing(FILE *fp, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+bool file_header_parsing(FILE *fp, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
 {
 	unsigned char *header;
 	unsigned char tag[2];
@@ -463,7 +463,7 @@ bool header_parsing(FILE *fp, audio_type_t audioType, unsigned int *channel, uns
 	return true;
 }
 
-bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+bool buffer_header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
 {
 	unsigned int headPoint;
 	unsigned char *header;
@@ -600,11 +600,11 @@ bool ts_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t *au
 		return false;
 	}
 
-	return header_parsing(audioES, (unsigned int)audioESLen, *audioType, channel, sampleRate, pcmFormat);
+	return buffer_header_parsing(audioES, (unsigned int)audioESLen, *audioType, channel, sampleRate, pcmFormat);
 }
 #endif
 
-bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_container_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
+bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, container_type_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat)
 {
 	if (!buffer) {
 		meddbg("buffer is null!\n");
@@ -613,7 +613,7 @@ bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_contai
 
 	switch (containerType) {
 #ifdef CONFIG_CONTAINER_MPEG2TS
-	case AUDIO_CONTAINER_MPEG2TS:
+	case CONTAINER_TYPE_MPEG2TS:
 		return ts_parsing(buffer, bufferSize, audioType, channel, sampleRate, pcmFormat);
 #endif
 	// add other container cases

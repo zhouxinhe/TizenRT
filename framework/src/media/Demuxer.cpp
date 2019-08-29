@@ -25,13 +25,13 @@
 
 namespace media {
 
-std::shared_ptr<Demuxer> Demuxer::create(audio_container_t containerType)
+std::shared_ptr<Demuxer> Demuxer::create(container_type_t containerType)
 {
 	std::shared_ptr<Demuxer> demuxer;
 
 	switch (containerType) {
 #ifdef CONFIG_CONTAINER_MPEG2TS
-	case AUDIO_CONTAINER_MPEG2TS:
+	case CONTAINER_TYPE_MPEG2TS:
 		demuxer = std::make_shared<TSDemuxer>();
 		if (demuxer && demuxer->initialize()) {
 			return demuxer;
@@ -47,7 +47,7 @@ std::shared_ptr<Demuxer> Demuxer::create(audio_container_t containerType)
 	return nullptr;
 }
 
-Demuxer::Demuxer(audio_container_t containerType)
+Demuxer::Demuxer(container_type_t containerType)
 	: mContainerType(containerType)
 	, mParam(nullptr)
 {

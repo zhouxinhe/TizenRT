@@ -49,26 +49,23 @@ void toLowerString(std::string& str);
  * @since TizenRT v2.0
  */
 void toUpperString(std::string& str);
-
 /**
- * @brief Gets the audio container format from path
+ * @brief Gets the container format from path
  * @details @b #include <media/MediaUtils.h>
  * @param[in] path The path of audio data
- * @return The audio container format
+ * @return The container format
  * @since TizenRT v2.1
  */
-audio_container_t getAudioContainerFromPath(std::string datapath);
-
+container_type_t getContainerTypeFromPath(std::string datapath);
 /**
- * @brief Gets the audio container format stream data
+ * @brief Gets the container format from stream data
  * @details @b #include <media/MediaUtils.h>
- * @param[in] stream Pointer to audio stream data
- * @param[in] length Length in bytes of the audio stream data
- * @return The audio container format
+ * @param[in] stream Pointer to stream data
+ * @param[in] length Length in bytes of the stream data
+ * @return The container format
  * @since TizenRT v2.1
  */
-audio_container_t getAudioContainerFromStream(const unsigned char *stream, size_t length);
-
+container_type_t getContainerTypeFromStream(const unsigned char *stream, size_t length);
 /**
  * @brief Gets the audio type in path.
  * @details @b #include <media/MediaUtils.h>
@@ -88,19 +85,19 @@ audio_type_t getAudioTypeFromMimeType(std::string &mimeType);
 /**
  * @brief Parsing the audio type in file.
  * @details @b #include <media/MediaUtils.h>
- * @param[in] audio file point, Audio type and channel, sample rate, pcm format adderss to receive.
+ * @param[in] audio file point, Audio type and channel, sample rate, pcm format address to receive.
  * @return ture - parsing success. false - parsing fail.
  * @since TizenRT v2.0
  */
-bool header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, unsigned int *sample_rate, audio_format_type_t *pcmFormat);
+bool file_header_parsing(FILE *fp, audio_type_t AudioType, unsigned int *channel, unsigned int *sample_rate, audio_format_type_t *pcmFormat);
 /**
  * @brief Parsing the audio type in buffer.
  * @details @b #include <media/MediaUtils.h>
- * @param[in] audio file buffer, buffer size, Audio type and channel, sample rate, pcm format adderss to receive.
+ * @param[in] audio file buffer, buffer size, Audio type and channel, sample rate, pcm format address to receive.
  * @return ture - parsing success. false - parsing fail.
  * @since TizenRT v2.0
  */
-bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+bool buffer_header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 /**
  * @brief Parsing audio stream data in buffer, to get audio codec type and other informations
  * @details @b #include <media/MediaUtils.h>
@@ -108,7 +105,7 @@ bool header_parsing(unsigned char *buffer, unsigned int bufferSize, audio_type_t
  * @return ture - parsing success. false - parsing fail.
  * @since TizenRT v2.1
  */
-bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, audio_container_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
+bool stream_parsing(unsigned char *buffer, unsigned int bufferSize, container_type_t containerType, audio_type_t *audioType, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 /**
  * @brief Create a wav header in file.
  * @details @b #include <media/MediaUtils.h>
@@ -137,6 +134,30 @@ bool writeWavHeader(FILE *fp, unsigned int channel, unsigned int sampleRate, aud
  * @since TizenRT v2.1 PRE
  */
 unsigned int splitChannel(unsigned int layout, const signed short *stream, unsigned int frames, unsigned int channels, ...);
+/**
+ * @brief Parsing the audio information from mp3 header buffer.
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] header buffer pointer and channel, sample rate address to receive.
+ * @return ture - parsing success. false - parsing fail.
+ * @since TizenRT v2.1
+ */
+bool mp3_header_parsing(unsigned char *header, unsigned int *channel, unsigned int *sampleRate);
+/**
+ * @brief Parsing the audio information from aac header buffer.
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] header buffer pointer and channel, sample rate address to receive.
+ * @return ture - parsing success. false - parsing fail.
+ * @since TizenRT v2.1
+ */
+bool aac_header_parsing(unsigned char *header, unsigned int *channel, unsigned int *sampleRate);
+/**
+ * @brief Parsing the audio information from wave header buffer.
+ * @details @b #include <media/MediaUtils.h>
+ * @param[in] header buffer pointer and channel, sample rate, pcm format address to receive.
+ * @return ture - parsing success. false - parsing fail.
+ * @since TizenRT v2.1
+ */
+bool wave_header_parsing(unsigned char *header, unsigned int *channel, unsigned int *sampleRate, audio_format_type_t *pcmFormat);
 } // namespace utils
 } // namespace media
 

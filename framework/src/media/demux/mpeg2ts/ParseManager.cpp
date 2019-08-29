@@ -198,9 +198,8 @@ bool ParserManager::syncProgramInfoFromPAT(void)
 
 bool ParserManager::isPMTPid(ts_pid_t pid)
 {
-	auto iter = mPMTPids.begin();;
-	while (iter != mPMTPids.end()) {
-		if (*iter++ == pid) {
+	for (auto iter : mPMTPids) {
+		if (iter == pid) {
 			return true;
 		}
 	}
@@ -243,7 +242,6 @@ bool ParserManager::processSection(std::shared_ptr<Section> pSection)
 	}
 
 	return result;
-
 }
 
 bool ParserManager::addParser(std::shared_ptr<SectionParser> pParser)

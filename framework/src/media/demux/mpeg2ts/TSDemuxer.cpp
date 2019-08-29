@@ -16,6 +16,7 @@
  *
  ******************************************************************/
 
+#include <tinyara/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <debug.h>
@@ -36,18 +37,13 @@
 
 // times to match sync byte for resync
 #define TS_SYNC_COUNT               (3)
-// there's a stream buffer for TS data input
-// user write TS data into buffer,
-// demuxer read data from buffer and then demux it.
-// the buffer size isn't related to actual audio stream.
-#define TS_DEMUX_BUFFER_SIZE        (4096)
 // threshold is not used, we don't have any buffer observer now.
-#define TS_DEMUX_BUFFER_THRESHOLD   (TS_DEMUX_BUFFER_SIZE / 2)
+#define TS_DEMUX_BUFFER_THRESHOLD   (CONFIG_DEMUX_BUFFER_SIZE / 2)
 
 namespace media {
 
 TSDemuxer::TSDemuxer()
-	: Demuxer(AUDIO_CONTAINER_MPEG2TS)
+	: Demuxer(CONTAINER_TYPE_MPEG2TS)
 	, mPESPid(INVALID_PID)
 	, mPESDataUsed(0)
 {
@@ -71,7 +67,7 @@ std::shared_ptr<TSDemuxer> TSDemuxer::create(void)
 bool TSDemuxer::initialize(void)
 {
 	auto streamBuffer = stream::StreamBuffer::Builder()
-							.setBufferSize(TS_DEMUX_BUFFER_SIZE)
+							.setBufferSize(CONFIG_DEMUX_BUFFER_SIZE)
 							.setThreshold(TS_DEMUX_BUFFER_THRESHOLD)
 							.build();
 	if (!streamBuffer) {
@@ -109,7 +105,7 @@ bool TSDemuxer::initialize(void)
 	return true;
 }
 
-size_t TSDemuxer::sizeOfSpace(void)
+size_t TSDemuxer::getAvailSpace(void)
 {
 	return mBufferWriter->sizeOfSpace();
 }

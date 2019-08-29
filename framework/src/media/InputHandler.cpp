@@ -26,7 +26,6 @@
 #include "Decoder.h"
 #include "Demuxer.h"
 
-
 namespace media {
 namespace stream {
 
@@ -93,7 +92,7 @@ void InputHandler::resetWorker()
 
 bool InputHandler::processWorker()
 {
-	auto size = sizeOfSpace();
+	auto size = getAvailSpace();
 	if (size > 0) {
 		auto buf = new unsigned char[size];
 		ssize_t readLen = mInputDataSource->read(buf, size);
@@ -180,10 +179,10 @@ void InputHandler::onBufferUpdated(ssize_t change, size_t current)
 	}
 }
 
-size_t InputHandler::sizeOfSpace()
+size_t InputHandler::getAvailSpace()
 {
 	if (mDemuxer) {
-		return mDemuxer->sizeOfSpace();
+		return mDemuxer->getAvailSpace();
 	}
 
 	if (mDecoder) {
@@ -247,11 +246,11 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	return (ssize_t)written;
 }
 
-bool InputHandler::registerContainer(audio_container_t audioContainer)
+bool InputHandler::registerContainer(container_type_t containerType)
 {
-	mDemuxer = Demuxer::create(audioContainer);
+	mDemuxer = Demuxer::create(containerType);
 	if (!mDemuxer) {
-		meddbg("Create demuxer of audioContainer %d failed!\n", audioContainer);
+		meddbg("Create demuxer of containerType %d failed!\n", containerType);
 		return false;
 	}
 	return true;

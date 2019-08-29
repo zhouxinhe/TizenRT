@@ -57,7 +57,7 @@ public:
 	// initialize TSDemuxer, malloc buffer and initialize table parser modules
 	virtual bool initialize(void) override;
 	// space size available for push
-	virtual size_t sizeOfSpace(void) override;
+	virtual size_t getAvailSpace(void) override;
 	// push TS data into demux buffer
 	virtual ssize_t pushData(uint8_t *buf, size_t size) override;
 	// pull audio elementary stream data of the given program number

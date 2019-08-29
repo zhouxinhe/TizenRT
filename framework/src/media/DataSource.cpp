@@ -25,7 +25,7 @@ DataSource::DataSource()
 	, mSampleRate(16000)
 	, mPcmFormat(AUDIO_FORMAT_TYPE_S16_LE)
 	, mAudioType(AUDIO_TYPE_INVALID)
-	, mContainerType(AUDIO_CONTAINER_NONE)
+	, mContainerType(CONTAINER_TYPE_NONE)
 {
 	medvdbg("DataSource::DataSource()\n");
 }
@@ -35,7 +35,7 @@ DataSource::DataSource(unsigned int channels, unsigned int sampleRate, audio_for
 	, mSampleRate(sampleRate)
 	, mPcmFormat(pcmFormat)
 	, mAudioType(AUDIO_TYPE_INVALID)
-	, mContainerType(AUDIO_CONTAINER_NONE)
+	, mContainerType(CONTAINER_TYPE_NONE)
 {
 	medvdbg("DataSource::DataSource(unsigned int channels, unsigned int sampleRate, audio_format_type_t pcmFormat)\n");
 }
@@ -99,12 +99,12 @@ audio_type_t DataSource::getAudioType()
 	return mAudioType;
 }
 
-void DataSource::setContainerType(audio_container_t containerType)
+void DataSource::setContainerType(container_type_t containerType)
 {
 	mContainerType = containerType;
 }
 
-audio_container_t DataSource::getContainerType()
+container_type_t DataSource::getContainerType()
 {
 	return mContainerType;
 }

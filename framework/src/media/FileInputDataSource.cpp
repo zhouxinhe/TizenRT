@@ -21,11 +21,8 @@
 #include <debug.h>
 
 #include <media/FileInputDataSource.h>
-#include "utils/MediaUtils.h"
+#include <media/MediaUtils.h>
 
-#ifndef CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE
-#define CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE 4096
-#endif
 
 namespace media {
 namespace stream {
@@ -62,8 +59,8 @@ bool FileInputDataSource::open()
 	if (!mFp) {
 		unsigned int channel;
 		unsigned int sampleRate;
-		audio_format_type_t pcmFormat = getPcmFormat();
-		audio_container_t audioContainer;
+		audio_format_type_t pcmFormat;
+		container_type_t containerType;
 		audio_type_t audioType;
 
 		mFp = fopen(mDataPath.c_str(), "rb");
@@ -72,8 +69,8 @@ bool FileInputDataSource::open()
 			return false;
 		}
 
-		audioContainer = utils::getAudioContainerFromPath(mDataPath);
-		if (audioContainer != AUDIO_CONTAINER_NONE) {
+		containerType = utils::getContainerTypeFromPath(mDataPath);
+		if (containerType != CONTAINER_TYPE_NONE) {
 			// has container, demux and parse stream data to get audio type
 			size_t bufferSize = CONFIG_DATASOURCE_PREPARSE_BUFFER_SIZE;
 			unsigned char *buffer = new unsigned char[bufferSize];
@@ -90,14 +87,15 @@ bool FileInputDataSource::open()
 				return false;
 			}
 
-			bool ret = utils::stream_parsing(buffer, readSize, audioContainer, &audioType, &channel, &sampleRate, &pcmFormat);
+			pcmFormat = getPcmFormat();
+			bool ret = utils::stream_parsing(buffer, readSize, containerType, &audioType, &channel, &sampleRate, &pcmFormat);
 			delete[] buffer;
 			if (!ret) {
 				meddbg("stream_parsing failed, can not get audio codec type!\n");
 				return false;
 			}
-			medvdbg("audioContainer %d, audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioContainer, audioType, channel, sampleRate, pcmFormat);
-			setContainerType(audioContainer);
+			medvdbg("containerType %d, audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", containerType, audioType, channel, sampleRate, pcmFormat);
+			setContainerType(containerType);
 			setAudioType(audioType);
 			setSampleRate(sampleRate);
 			setChannels(channel);
@@ -111,12 +109,18 @@ bool FileInputDataSource::open()
 		switch (audioType) {
 		case AUDIO_TYPE_MP3:
 		case AUDIO_TYPE_AAC:
-		case AUDIO_TYPE_WAVE:
-			if (!utils::header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
+			if (!utils::file_header_parsing(mFp, audioType, &channel, &sampleRate, NULL)) {
 				meddbg("header parsing failed\n");
 				return false;
 			}
-			medvdbg("audioType %d, channel %u, sampleRate %u, pcmFormat %d\n", audioType, channel, sampleRate, pcmFormat);
+			setSampleRate(sampleRate);
+			setChannels(channel);
+			break;
+		case AUDIO_TYPE_WAVE:
+			if (!utils::file_header_parsing(mFp, audioType, &channel, &sampleRate, &pcmFormat)) {
+				meddbg("header parsing failed\n");
+				return false;
+			}
 			setSampleRate(sampleRate);
 			setChannels(channel);
 			setPcmFormat(pcmFormat);

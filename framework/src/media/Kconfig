@@ -92,6 +92,12 @@ config CONTAINER_WAV
 	---help---
 		Not Supported Now
 
+config DEMUX_BUFFER_SIZE
+	int "Demuxing buffer size"
+	default 4096
+	---help---
+		Buffer to cache stream data for demuxing
+
 endif #CONTAINER_FORMAT
 
 endif #MEDIA_PLAYER

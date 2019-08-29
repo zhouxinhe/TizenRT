@@ -48,7 +48,7 @@ public:
 	 *         nullptr means create failed.
 	 * Note: This create() method should be the only way to create a new demuxer!
 	 */
-	static std::shared_ptr<Demuxer> create(audio_container_t containerType);
+	static std::shared_ptr<Demuxer> create(container_type_t containerType);
 	/**
 	 * @brief Delete default constructor
 	 */
@@ -56,13 +56,13 @@ public:
 	/**
 	 * @brief Constructor & Destructor
 	 */
-	Demuxer(audio_container_t containerType);
+	Demuxer(container_type_t containerType);
 	virtual ~Demuxer();
 	/**
 	 * @brief Get container type of current demuxer
 	 * @return container type same as the given type when creating demuxer
 	 */
-	audio_container_t getContainerType(void) { return mContainerType; }
+	container_type_t getContainerType(void) { return mContainerType; }
 	/**
 	 * @brief Set user param
 	 * Not in use now!
@@ -106,7 +106,7 @@ public:
 	 *        Derived class should implement it
 	 * @return number of bytes of space
 	 */
-	virtual size_t sizeOfSpace(void) = 0;
+	virtual size_t getAvailSpace(void) = 0;
 	/**
 	 * @brief Preparse demuxer with inputted stream data. (e.g. pre parsing)
 	 *        Derived class should implement it
@@ -133,7 +133,7 @@ public:
 
 private:
 	// container type
-	audio_container_t mContainerType;
+	container_type_t mContainerType;
 	// user parameter
 	void *mParam;
 };

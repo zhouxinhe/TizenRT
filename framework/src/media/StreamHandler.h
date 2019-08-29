@@ -60,7 +60,7 @@ protected:
 	void wakenWorker();
 	virtual void sleepWorker();
 
-	virtual bool registerContainer(audio_container_t audioContainer) = 0;
+	virtual bool registerContainer(container_type_t containerType) = 0;
 	virtual void unregisterContainer() = 0;
 	virtual bool registerCodec(audio_type_t audioType, unsigned int channels, unsigned int sampleRate) = 0;
 	virtual void unregisterCodec() = 0;

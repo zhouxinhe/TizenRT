@@ -60,7 +60,7 @@ bool StreamHandler::open()
 	}
 
 	if (mDataSource->open()) {
-		if (mDataSource->getContainerType() != AUDIO_CONTAINER_NONE) {
+		if (mDataSource->getContainerType() != CONTAINER_TYPE_NONE) {
 			if (!registerContainer(mDataSource->getContainerType())) {
 				meddbg("register container failed!\n");
 				return false;

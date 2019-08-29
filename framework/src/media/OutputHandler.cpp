@@ -208,7 +208,7 @@ ssize_t OutputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 	return (ssize_t)written;
 }
 
-bool OutputHandler::registerContainer(audio_container_t audioContainer)
+bool OutputHandler::registerContainer(container_type_t containerType)
 {
 	meddbg("Do not support multiplexing with any container format now!\n");
 	return false;

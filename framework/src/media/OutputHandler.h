@@ -47,7 +47,7 @@ public:
 	ssize_t writeToStreamBuffer(unsigned char *buf, size_t size);
 
 private:
-	bool registerContainer(audio_container_t audioContainer) override;
+	bool registerContainer(container_type_t containerType) override;
 	void unregisterContainer() override;
 	bool registerCodec(audio_type_t audioType, unsigned int channels, unsigned int sampleRate) override;
 	void unregisterCodec() override;

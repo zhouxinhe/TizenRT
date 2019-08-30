@@ -92,9 +92,14 @@ void InputHandler::resetWorker()
 
 bool InputHandler::processWorker()
 {
-	auto size = getAvailSpace();
+	size_t size = getAvailSpace();
 	if (size > 0) {
 		auto buf = new unsigned char[size];
+		if (!buf) {
+			meddbg("run out of memory! size: 0x%x\n", size);
+			return false;
+		}
+
 		ssize_t readLen = mInputDataSource->read(buf, size);
 		if (readLen <= 0) {
 			// Error occurred, or inputting finished
@@ -103,8 +108,13 @@ bool InputHandler::processWorker()
 			return false;
 		}
 
-		writeToStreamBuffer(buf, (size_t)readLen);
+		ssize_t writeLen = writeToStreamBuffer(buf, (size_t)readLen);
 		delete[] buf;
+		if (writeLen <= 0) {
+			meddbg("write to stream buffer failed!\n");
+			mBufferWriter->setEndOfStream();
+			return false;
+		}
 	}
 
 	return true;
@@ -199,21 +209,31 @@ ssize_t InputHandler::writeToStreamBuffer(unsigned char *buf, size_t size)
 
 	if (mDemuxer) {
 		mDemuxer->pushData(buf, size);
-
 		if (!mDemuxer->isReady()) {
-			if (mDemuxer->prepare() < 0) {
-				medwdbg("Prepare demuxer failed!\n");
-				return size;
+			int ret = mDemuxer->prepare();
+			if (ret < 0) {
+				if (ret == DEMUXER_ERROR_WANT_DATA) {
+					medvdbg("demuxer want more data!\n");
+					return size;
+				}
+				meddbg("demuxer prepare failed! error: %d\n", ret);
+				return EOF;
 			}
 		}
 
-		auto lenES  = mDemuxer->pullData(buf, size);
-		if (lenES < 0) {
-			medwdbg("Can not pull any ES data currently! ret: %d\n", lenES);
-			return size;
+		ssize_t sizeES  = mDemuxer->pullData(buf, size);
+		if (sizeES < 0) {
+			if (sizeES == DEMUXER_ERROR_WANT_DATA) {
+				medvdbg("demuxer want more data!\n");
+				return size;
+			}
+			medwdbg("pull ES data failed! error: %d\n", sizeES);
+			return EOF;
 		}
-		// update `size` to real ES data length
-		size = (size_t)lenES;
+
+		// the output ES data size may be less than input stream data size,
+		// so update `size` to size of ES data
+		size = (size_t)sizeES;
 	}
 
 	size_t written = 0;

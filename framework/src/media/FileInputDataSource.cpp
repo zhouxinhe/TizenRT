@@ -23,7 +23,6 @@
 #include <media/FileInputDataSource.h>
 #include <media/MediaUtils.h>
 
-
 namespace media {
 namespace stream {
 

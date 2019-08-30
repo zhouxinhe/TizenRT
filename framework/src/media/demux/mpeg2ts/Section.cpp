@@ -117,7 +117,7 @@ bool Section::verifyCrc32(void)
 
 bool Section::isCompleted(void)
 {
-	return (mSectionDataLen == mPresentDataLen);
+	return ((mSectionDataLen != 0) && (mSectionDataLen == mPresentDataLen));
 }
 
 uint16_t Section::parseLengthField(uint8_t *pData, uint16_t size)

@@ -55,7 +55,8 @@ void PATParser::deleteInfo(void)
 
 bool PATParser::parseInfo(uint8_t *pData, uint32_t size)
 {
-	switch (checkSection(mVersionNumber, mSectionNumber, mLastSectionNumber, mCrc32)) {
+	auto sectionState = checkSection(mVersionNumber, mSectionNumber, mLastSectionNumber, mCrc32);
+	switch (sectionState) {
 	case SECTION_INITIAL: // fall through
 	case SECTION_CHANGE:  // fall through
 	case SECTION_APPEND: {
@@ -66,16 +67,12 @@ bool PATParser::parseInfo(uint8_t *pData, uint32_t size)
 		}
 		return isCompleted();
 	}
-	case SECTION_IGNORE:
-		medvdbg("PAT Section Ignored...\n");
-		break;
+	case SECTION_IGNORE:  // fall through
 	case SECTION_PRESENT: // fall through
 	default:
-		// do nothing
-		break;
+		medvdbg("PAT section state : %d\n", sectionState);
+		return false;
 	}
-
-	return false;
 }
 
 size_t PATParser::sizeOfProgram(void)

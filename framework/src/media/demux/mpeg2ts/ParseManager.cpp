@@ -154,7 +154,7 @@ bool ParserManager::getPrograms(std::vector<prog_num_t> &programs)
 bool ParserManager::syncProgramInfoFromPAT(void)
 {
 	size_t i, num;
-	ts_pid_t pid;
+	ts_pid_t pmtPid;
 	prog_num_t progNum;
 	std::map<int, ts_pid_t> pmt_elements;
 
@@ -176,13 +176,16 @@ bool ParserManager::syncProgramInfoFromPAT(void)
 	num = pPATParser->sizeOfProgram();
 	for (i = 0; i < num; ++i) {
 		progNum = pPATParser->getProgramNumber(i);
-		pid = pPATParser->getProgramMapPID(progNum);
-		if ((pid != (ts_pid_t)INVALID_PID) && (progNum != (prog_num_t)PATParser::NETWORK_PID_PN)) {
-			int key = PMTParser::makeKey(pid, progNum);
-			pmt_elements[key] = pid;
-			mPMTPids.push_back(pid);
-			medvdbg("index %d, pmt pid 0x%02x\n", i, pid);
+		if (progNum == (prog_num_t)PATParser::NETWORK_PID_PN) {
+			continue;
 		}
+		pmtPid = pPATParser->getProgramMapPID(progNum);
+		if (pmtPid == (ts_pid_t)INVALID_PID) {
+			continue;
+		}
+		pmt_elements[PMTParser::makeKey(pmtPid, progNum)] = pmtPid;
+		mPMTPids.push_back(pmtPid);
+		medvdbg("index %d, progNum %u ,pmtPid 0x%02x\n", i, progNum, pmtPid);
 	}
 
 	auto pPMTParser = std::static_pointer_cast<PMTParser>(getParser(PMTParser::TABLE_ID));

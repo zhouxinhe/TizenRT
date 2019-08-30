@@ -95,7 +95,8 @@ bool PMTInstance::parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 	pData += PID_FIELD_BYTES;
 	size -= PID_FIELD_BYTES;
 
-	switch (checkSection(versionNumber, sectionNumber, lastSectionNumber, crc32)) {
+	auto sectionState = checkSection(versionNumber, sectionNumber, lastSectionNumber, crc32);
+	switch (sectionState) {
 	case SECTION_INITIAL: // fall through
 	case SECTION_CHANGE:  // fall through
 	case SECTION_APPEND:
@@ -103,17 +104,13 @@ bool PMTInstance::parse(uint8_t *pData, uint32_t size, prog_num_t programNum,
 			return isCompleted();
 		}
 		meddbg("parse program info failed!\n");
-		break;
-	case SECTION_IGNORE:
-		medvdbg("PMT Section Ignored...\n");
-		break;
+		return false;
+	case SECTION_IGNORE:  // fall through
 	case SECTION_PRESENT: // fall through
 	default:
-		// do nothing
-		break;
+		medvdbg("PMT section state : %d\n", sectionState);
+		return false;
 	}
-
-	return false;
 }
 
 size_t PMTInstance::numOfElementary(void)

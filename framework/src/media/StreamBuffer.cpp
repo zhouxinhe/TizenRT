@@ -79,7 +79,7 @@ bool StreamBuffer::reset()
 
 size_t StreamBuffer::copy(unsigned char *buf, size_t size, size_t offset)
 {
-	return rb_read_ext(&mRingBuf, (void *)buf, size, offset);
+	return rb_copy(&mRingBuf, (void *)buf, size, offset);
 }
 
 size_t StreamBuffer::read(unsigned char *buf, size_t size)

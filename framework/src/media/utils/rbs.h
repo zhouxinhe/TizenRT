@@ -26,41 +26,41 @@
 extern "C" {
 #endif
 
-/* This rbs.h provides APIs to operate ring buffer stream like a file stream.
-   rbs_open  -> user provides ring-buffer object and register input-function
-   rbs_close -> fclose
-   rbs_read  -> fread, only item size 1 is supported
-   rbs_write -> fwrite, only item size 1 is supported
-   rbs_seek  -> fseek
-   rbs_tell  -> ftell
-   rbs_seek_ext -> if user seek_ext at pos1, then it's IMPOSSIBLE to seek(_ext) at
-                   a forward pos2 (pos2 < pos1).
-   rbs_tell_ext -> tell available minimum position to seek, not current read position).
-
-   There's some limitations:
-   rbs_seek(_ext) can only seek at position started from rd_size, and if seek at position
-   after wr_size, more data will be requseted (user must push data during callback).
-   Large ring-buffer size is better, problem maybe happen if the size is too small.
-   It's thread safe for multi-threaded writing and one thread reading at same time,
-   user can try to push data at any time as long as there is free space in ring-buffer.
-
-                 [   RING             ~            BUFFER  ]
-                 0         rd_idx          wr_idx
-                 |           |                |
-                  ------------------------------------------
- 	             |...........#################.............|
-                  ------------------------------------------
-
-     ~~~~~~~~~~~~~~~~~~~~~~~~#################,,,,,,,,,,,,,,,,,,,,,,,
-     |                       |       |        |                     |
-POS: 0                     rd_size cur_pos wr_size              end of stream
-
-'#' -- Valid Data in ring-buffer
-'.' -- Free space in ring-buffer
-'~' -- Data read/popped out from ring-buffer
-',' -- will be pushed into ring-buffer when needed
-
-*/
+/**
+ * This rbs.h provides APIs to operate ring buffer stream like a file stream.
+ * rbs_open  -> user provides ring-buffer object and register input-function
+ * rbs_close -> fclose
+ * rbs_read  -> fread, only item size 1 is supported
+ * rbs_write -> fwrite, only item size 1 is supported
+ * rbs_seek  -> fseek
+ * rbs_tell  -> ftell
+ * rbs_seek_ext -> if user seek_ext at pos1, then it's IMPOSSIBLE to seek(_ext) at
+ *                 a forward pos2 (pos2 < pos1).
+ * rbs_tell_ext -> tell available minimum position to seek, not current read position).
+ *
+ * There's some limitations:
+ * rbs_seek(_ext) can only seek at position started from rd_size, and if seek at position
+ * after wr_size, more data will be requseted (user must push data during callback).
+ * Large ring-buffer size is better, problem maybe happen if the size is too small.
+ * It's thread safe for multi-threaded writing and one thread reading at same time,
+ * user can try to push data at any time as long as there is free space in ring-buffer.
+ *
+ *                 [   RING             ~            BUFFER  ]
+ *                 0         rd_idx          wr_idx
+ *                 |           |                |
+ *                  ------------------------------------------
+ *                 |...........#################..............|
+ *                  ------------------------------------------
+ *
+ *     ~~~~~~~~~~~~~~~~~~~~~~~~#################,,,,,,,,,,,,,,,,,,,,,,,
+ *     |                       |       |        |                     |
+ * POS 0                     rd_size cur_pos wr_size              end of stream
+ *
+ *    '#' -- Valid Data in ring-buffer
+ *    '.' -- Free space in ring-buffer
+ *    '~' -- Data read/popped out from ring-buffer
+ *    ',' -- will be pushed into ring-buffer when needed
+ */
 
 enum {
 	OPTION_ALLOW_TO_DEQUEUE = 0x0001,    /* Allow to dequeue data form ring-buffer */
@@ -143,7 +143,9 @@ int rbs_seek(rbstream_p stream, ssize_t offset, int whence);
  * @return 0 is returned on success, and positive value means number of data wanted.
  *         Otherwise, -1 is returned on failure.
  */
-int rbs_seek_ext(rbstream_p stream, ssize_t offset, int whence);
+//int rbs_seek_ext(rbstream_p stream, ssize_t offset, int whence);
+
+int rbs_flush(rbstream_p stream);
 
 /**
  * @brief  Set options

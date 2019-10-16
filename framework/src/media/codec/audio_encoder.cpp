@@ -155,7 +155,8 @@ int audio_encoder_getframe(audio_encoder_p encoder, void *data, size_t len)
 		opus_ext->inputBufferCurrentLength = rlen;
 
 		priv->mCurrentPos += rlen;
-		rbs_seek_ext(encoder->rbsp, priv->mCurrentPos, SEEK_SET);
+		rbs_seek(encoder->rbsp, priv->mCurrentPos, SEEK_SET);
+		rbs_flush(mFp);
 
 		ret = opus_frameEncode(opus_ext, encoder->enc_mem);
 		RETURN_VAL_IF_FAIL((ret == OK), AUDIO_ENCODER_ERROR);

@@ -72,7 +72,7 @@ size_t rbs_read(void *ptr, size_t size, size_t nmemb, rbstream_p rbsp)
 	size_t len = size * nmemb;
 	size_t offset = rbsp->cur_pos - rbsp->rd_size;
 	// try to read data desired
-	size_t read = rb_read_ext(rbsp->rbp, ptr, len, offset);
+	size_t read = rb_copy(rbsp->rbp, ptr, len, offset);
 	// increase cur_pos
 	rbsp->cur_pos += read;
 
@@ -86,7 +86,7 @@ size_t rbs_read(void *ptr, size_t size, size_t nmemb, rbstream_p rbsp)
 				// dequeue minimal data from ring-buffer
 				offset = rbsp->cur_pos - rbsp->rd_size;
 				size_t _len = MINIMUM(offset, (least - avail));
-				rbsp->rd_size += rb_read(rbsp->rbp, NULL, _len);
+				rbsp->rd_size += rb_skip(rbsp->rbp, _len);
 			}
 		}
 	}
@@ -131,7 +131,7 @@ int rbs_seek(rbstream_p rbsp, ssize_t offset, int whence)
 				RETURN_VAL_IF_FAIL((RBS_OPTION_CHK(rbsp, OPTION_ALLOW_TO_DEQUEUE)), ERROR);
 				// dequeue all data from ring-buffer
 				size_t len = rbsp->wr_size - rbsp->rd_size;
-				rbsp->rd_size += rb_read(rbsp->rbp, NULL, len);
+				rbsp->rd_size += rb_skip(rbsp->rbp, len);
 			}
 
 			rbsp->cur_pos = (size_t)rbsp->wr_size;
@@ -144,7 +144,7 @@ int rbs_seek(rbstream_p rbsp, ssize_t offset, int whence)
 
 	return OK;
 }
-
+#if 0
 // seek and dequeue data from ring-buffer
 int rbs_seek_ext(rbstream_p rbsp, ssize_t offset, int whence)
 {
@@ -156,10 +156,20 @@ int rbs_seek_ext(rbstream_p rbsp, ssize_t offset, int whence)
 
 	// dequeue data from ring-buffer
 	size_t len = rbsp->cur_pos - rbsp->rd_size;
-	size_t rlen = rb_read(rbsp->rbp, NULL, len);
+	size_t rlen = rb_skip(rbsp->rbp, len);
 
 	rbsp->rd_size += rlen;
 	return ret;
+}
+#endif
+// dequeue data from ring-buffer
+int rbs_flush(rbstream_p rbsp)
+{
+	size_t len = rbsp->cur_pos - rbsp->rd_size;
+	size_t slen = rb_skip(rbsp->rbp, len);
+	rbsp->rd_size += slen;
+	medvdbg("[%s] %u bytes flushed\n", __FUNCTION__, slen);
+	return slen;
 }
 
 int rbs_ctrl(rbstream_p rbsp, int option, int value)

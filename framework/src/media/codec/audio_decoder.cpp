@@ -431,8 +431,8 @@ bool mp3_get_frame(rbstream_p mFp, ssize_t *offset, uint32_t *fixed_header, void
 
 		*offset = pos;
 		// Policy: Pop out data when mCurrentPos updated!
-		rbs_seek_ext(mFp, *offset, SEEK_SET);
-
+		rbs_seek(mFp, *offset, SEEK_SET);
+		rbs_flush(mFp);
 		// Try again with the new position.
 	}
 
@@ -444,7 +444,8 @@ bool mp3_get_frame(rbstream_p mFp, ssize_t *offset, uint32_t *fixed_header, void
 	*size = frame_size;
 	*offset += frame_size;
 	// Policy: Pop out data when mCurrentPos updated!
-	rbs_seek_ext(mFp, *offset, SEEK_SET);
+	rbs_seek(mFp, *offset, SEEK_SET);
+	rbs_flush(mFp);
 
 	return true;
 }
@@ -591,7 +592,8 @@ bool aac_get_frame(rbstream_p mFp, ssize_t *offset, void *buffer, uint32_t *size
 		RETURN_VAL_IF_FAIL(aac_resync(mFp, &pos), false);
 
 		*offset = pos;
-		rbs_seek_ext(mFp, *offset, SEEK_SET);
+		rbs_seek(mFp, *offset, SEEK_SET);
+		rbs_flush(mFp);
 		// Try again with the new position.
 	}
 
@@ -600,7 +602,8 @@ bool aac_get_frame(rbstream_p mFp, ssize_t *offset, void *buffer, uint32_t *size
 
 	*size = frame_size;
 	*offset += frame_size;
-	rbs_seek_ext(mFp, *offset, SEEK_SET);
+	rbs_seek(mFp, *offset, SEEK_SET);
+	rbs_flush(mFp);
 
 	return true;
 }
@@ -747,7 +750,8 @@ bool opus_get_frame(rbstream_p mFp, ssize_t *offset, void *buffer, uint32_t *siz
 		RETURN_VAL_IF_FAIL(opus_resync(mFp, &pos), false);
 
 		*offset = pos;
-		rbs_seek_ext(mFp, *offset, SEEK_SET);
+		rbs_seek(mFp, *offset, SEEK_SET);
+		rbs_flush(mFp);
 		// Try again with the new position.
 	}
 
@@ -756,7 +760,8 @@ bool opus_get_frame(rbstream_p mFp, ssize_t *offset, void *buffer, uint32_t *siz
 
 	*size = frame_size;
 	*offset += frame_size;
-	rbs_seek_ext(mFp, *offset, SEEK_SET);
+	rbs_seek(mFp, *offset, SEEK_SET);
+	rbs_flush(mFp);
 
 	return true;
 }

@@ -231,8 +231,9 @@ bool wav_get_frame(rbstream_p mFp, ssize_t *offset, void *dec_mem, void *buffer,
 			_offset += subChunkSize;
 		}
 
-		int ret = rbs_seek_ext(mFp, _offset, SEEK_SET);
+		int ret = rbs_seek(mFp, _offset, SEEK_SET);
 		RETURN_VAL_IF_FAIL((ret == OK), false);
+		rbs_flush(mFp);
 		*offset = _offset;
 	}
 
@@ -244,7 +245,8 @@ bool wav_get_frame(rbstream_p mFp, ssize_t *offset, void *dec_mem, void *buffer,
 	RETURN_VAL_IF_FAIL((*size > 0), false);
 
 	_offset += *size;
-	rbs_seek_ext(mFp, _offset, SEEK_SET);
+	rbs_seek(mFp, _offset, SEEK_SET);
+	rbs_flush(mFp);
 	*offset = _offset;
 	return true;
 }

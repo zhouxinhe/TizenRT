@@ -1,0 +1,250 @@
+/*
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+#define _GNU_SOURCE
+#include <stdio.h>
+
+#include "aul_api.h"
+#include "aul_cmd.h"
+
+API const char *aul_cmd_convert_to_string(int cmd)
+{
+	switch (cmd) {
+	case APP_START:
+		return "APP_START";
+	case APP_OPEN:
+		return "APP_OPEN";
+	case APP_RESUME:
+		return "APP_RESUME";
+	case APP_RESUME_BY_PID:
+		return "APP_RESUME_BY_PID";
+	case APP_TERM_BY_PID:
+		return "APP_TERM_BY_PID";
+	case APP_TERM_BY_PID_WITHOUT_RESTART:
+		return "APP_TERM_BY_PID_WITHOUT_RESTART";
+	case APP_RESULT:
+		return "APP_RESULT";
+	case APP_START_RES:
+		return "APP_START_RES";
+	case APP_CANCEL:
+		return "APP_CANCEL";
+	case APP_KILL_BY_PID:
+		return "APP_KILL_BY_PID";
+	case APP_UPDATE_RUA_STAT:
+		return "APP_UPDATE_RUA_STAT";
+	case APP_ADD_HISTORY:
+		return "APP_ADD_HISTORY";
+	case APP_REMOVE_HISTORY:
+		return "APP_REMOVE_HISTORY";
+	case APP_RUNNING_INFO:
+		return "APP_RUNNING_INFO";
+	case APP_RUNNING_INFO_RESULT:
+		return "APP_RUNNING_INFO_RESULT";
+	case APP_IS_RUNNING:
+		return "APP_IS_RUNNING";
+	case APP_GET_APPID_BYPID:
+		return "APP_GET_APPID_BYPID";
+	case APP_GET_PKGID_BYPID:
+		return "APP_GET_PKGID_BYPID";
+	case APP_GET_INFO_OK:
+		return "APP_GET_INFO_OK";
+	case APP_GET_INFO_ERROR:
+		return "APP_GET_INFO_ERROR";
+	case APP_KEY_EVENT:
+		return "APP_KEY_EVENT";
+	case APP_KEY_RESERVE:
+		return "APP_KEY_RESERVE";
+	case APP_KEY_RELEASE:
+		return "APP_KEY_RELEASE";
+	case APP_STATUS_UPDATE:
+		return "APP_STATUS_UPDATE";
+	case APP_RUNNING_LIST_UPDATE:
+		return "APP_RUNNING_LIST_UPDATE";
+	case APP_TERM_REQ_BY_PID:
+		return "APP_TERM_REQ_BY_PID";
+	case APP_TERM_BY_PID_ASYNC:
+		return "APP_TERM_BY_PID_ASYNC";
+	case APP_TERM_BGAPP_BY_PID:
+		return "APP_TERM_BGAPP_BY_PID";
+	case APP_PAUSE:
+		return "APP_PAUSE";
+	case APP_PAUSE_BY_PID:
+		return "APP_PAUSE_BY_PID";
+	case APP_GROUP_GET_WINDOW:
+		return "APP_GROUP_GET_WINDOW";
+	case APP_GROUP_SET_WINDOW:
+		return "APP_GROUP_SET_WINDOW";
+	case APP_GROUP_GET_FG:
+		return "APP_GROUP_GET_FG";
+	case APP_GROUP_GET_LEADER_PID:
+		return "APP_GROUP_GET_LEADER_PID";
+	case APP_GROUP_GET_LEADER_PIDS:
+		return "APP_GROUP_GET_LEADER_PIDS";
+	case APP_GROUP_GET_GROUP_PIDS:
+		return "APP_GROUP_GET_GROUP_PIDS";
+	case APP_GROUP_GET_IDLE_PIDS:
+		return "APP_GROUP_GET_IDLE_PIDS";
+	case APP_GROUP_LOWER:
+		return "APP_GROUP_LOWER";
+	case APP_GROUP_CLEAR_TOP:
+		return "APP_GROUP_CLEAR_TOP";
+	case APP_GROUP_ACTIVATE_BELOW:
+		return "APP_GROUP_ACTIVATE_BELOW";
+	case APP_GET_STATUS:
+		return "APP_GET_STATUS";
+	case APP_ADD_LOADER:
+		return "APP_ADD_LOADER";
+	case APP_REMOVE_LOADER:
+		return "APP_REMOVE_LOADER";
+	case APP_GET_PID:
+		return "APP_GET_PID";
+	case APP_GET_DC_SOCKET_PAIR:
+		return "APP_GET_DC_SOCKET_PAIR";
+	case APP_GET_MP_SOCKET_PAIR:
+		return "APP_GET_MP_SOCKET_PAIR";
+	case APP_COM_CREATE:
+		return "APP_COM_CREATE";
+	case APP_COM_JOIN:
+		return "APP_COM_JOIN";
+	case APP_COM_SEND:
+		return "APP_COM_SEND";
+	case APP_COM_LEAVE:
+		return "APP_COM_LEAVE";
+	case APP_COM_MESSAGE:
+		return "APP_COM_MESSAGE";
+	case WIDGET_ADD:
+		return "WIDGET_ADD";
+	case WIDGET_DEL:
+		return "WIDGET_DEL";
+	case WIDGET_LIST:
+		return "WIDGET_LIST";
+	case WIDGET_UPDATE:
+		return "WIDGET_UPDATE";
+	case WIDGET_COUNT:
+		return "WIDGET_COUNT";
+	case WIDGET_GET_CONTENT:
+		return "WIDGET_GET_CONTENT";
+	case APP_REGISTER_PID:
+		return "APP_REGISTER_PID";
+	case APP_WAKE:
+		return "APP_WAKE";
+	case APP_SUSPEND:
+		return "APP_SUSPEND";
+	case AMD_RELOAD_APPINFO:
+		return "AMD_RELOAD_APPINFO";
+	case LAUNCHPAD_DEAD_SIGNAL:
+		return "LAUNCHPAD_DEAD_SIGNAL";
+	case APP_ALL_RUNNING_INFO:
+		return "APP_ALL_RUNNING_INFO";
+	case APP_SET_APP_CONTROL_DEFAULT_APP:
+		return "APP_SET_APP_CONTROL_DEFAULT_APP";
+	case APP_UNSET_APP_CONTROL_DEFAULT_APP:
+		return "APP_UNSET_APP_CONTROL_DEFAULT_APP";
+	case APP_START_ASYNC:
+		return "APP_START_ASYNC";
+	case APP_SET_PROCESS_GROUP:
+		return "APP_SET_PROCESS_GROUP";
+	case APP_PREPARE_CANDIDATE_PROCESS:
+		return "APP_PREPARE_CANDIDATE_PROCESS";
+	case APP_TERM_BY_PID_SYNC:
+		return "APP_TERM_BY_PID_SYNC";
+	case APP_GET_STATUS_BY_APPID:
+		return "APP_GET_STATUS_BY_APPID";
+	case APP_GET_LAST_CALLER_PID:
+		return "APP_GET_LAST_CALLER_PID";
+	case APP_TERM_BY_PID_SYNC_WITHOUT_RESTART:
+		return "APP_TERM_BY_PID_SYNC_WITHOUT_RESTART";
+	case APP_RESUME_BY_PID_ASYNC:
+		return "APP_RESUME_BY_PID_ASYNC";
+	case APP_SET_ALIAS_APPID:
+		return "APP_SET_ALIAS_APPID";
+	case APP_UNSET_ALIAS_APPID:
+		return "APP_UNSET_ALIAS_APPID";
+	case APP_ENABLE_ALIAS_INFO:
+		return "APP_ENABLE_ALIAS_INFO";
+	case APP_DISABLE_ALIAS_INFO:
+		return "APP_DISABLE_ALIAS_INFO";
+	case APP_GROUP_ACTIVATE_ABOVE:
+		return "APP_GROUP_ACTIVATE_ABOVE";
+	case ADD_APP_SCREEN:
+		return "ADD_APP_SCREEN";
+	case REMOVE_APP_SCREEN:
+		return "REMOVE_APP_SCREEN";
+	case APP_UPDATE_REQUESTED:
+		return "APP_UPDATE_REQUESTED";
+	case ADD_SCREEN_VIEWER:
+		return "ADD_SCREEN_VIEWER";
+	case REMOVE_SCREEN_VIEWER:
+		return "REMOVE_SCREEN_VIEWER";
+	case LAUNCHPAD_LAUNCH_SIGNAL:
+		return "LAUNCHPAD_LAUNCH_SIGNAL";
+	case APP_RUNNING_INSTANCE_INFO:
+		return "APP_RUNNING_INSTANCE_INFO";
+	case APP_GET_INSTANCE_ID_BYPID:
+		return "APP_GET_INSTANCE_ID_BYPID";
+	case APP_SET_CACHE:
+		return "APP_SET_CACHE";
+	case APP_GET_APPID_FROM_CACHE:
+		return "APP_GET_APPID_FROM_CACHE";
+	case APP_INVALIDATE_CACHE:
+		return "APP_INVALIDATE_CACHE";
+	case APP_STARTUP_SIGNAL:
+		return "APP_STARTUP_SIGNAL";
+	case APP_WINDOW_ATTACH:
+		return "APP_WINDOW_ATTACH";
+	case APP_WINDOW_DETACH:
+		return "APP_WINDOW_DETACH";
+	case APP_START_RES_ASYNC:
+		return "APP_START_RES_ASYNC";
+	case APP_NOTIFY_EXIT:
+		return "APP_NOTIFY_EXIT";
+	case APP_GET_APPID_BY_SURFACE_ID:
+		return "APP_GET_APPID_BY_SURFACE_ID";
+	case APP_GET_INSTANCE_ID_BY_SURFACE_ID:
+		return "APP_GET_INSTANCE_ID_BY_SURFACE_ID";
+	case UPDATE_SCREEN_VIEWER_STATUS:
+		return "UPDATE_SCREEN_VIEWER_STATUS";
+	case WIDGET_RUNNING_INFO:
+		return "WIDGET_RUNNING_INFO";
+	case JOB_STATUS_UPDATE:
+		return "JOB_STATUS_UPDATE";
+	case WIDGET_CHANGE_STATUS:
+		return "WIDGET_CHANGE_STATUS";
+	case RPC_PORT_PREPARE_STUB:
+		return "RPC_PORT_PREPARE_STUB";
+	case RPC_PORT_CREATE_SOCKET_PAIR:
+		return "RPC_PORT_CREATE_SOCKET_PAIR";
+	case RPC_PORT_NOTIFY_RPC_FINISHED:
+		return "RPC_PORT_NOTIFY_RPC_FINISHED";
+	case COMPLICATION_UPDATE_REQUEST:
+		return "COMPLICATION_UPDATE_REQUEST";
+	case APP_NOTIFY_START:
+		return "APP_NOTIFY_START";
+	case WATCHDOG_ENABLE:
+		return "WATCHDOG_ENABLE";
+	case WATCHDOG_DISABLE:
+		return "WATCHDOG_DISABLE";
+	case WATCHDOG_PING:
+		return "WATCHDOG_PING";
+	case WATCHDOG_KICK:
+		return "WATCHDOG_KICK";
+	case APP_SEND_LAUNCH_REQUEST:
+		return "APP_SEND_LAUNCH_REQUEST";
+	default:
+		return "CUSTOM_COMMAND";
+	}
+}

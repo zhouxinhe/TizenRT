@@ -19,216 +19,223 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <dlfcn.h>
+// #include <dlfcn.h>
 #include <glib.h>
-#include <Elementary.h>
+// #include <Elementary.h>
 #include <vconf.h>
 
 #include "appcore_efl_base_private.h"
 #include "appcore_efl_base.h"
 
-#define PATH_LIB_VC_ELM "/usr/lib/libvc-elm.so.0"
+// #define PATH_LIB_VC_ELM "/usr/lib/libvc-elm.so.0"
 
-static bool __vc_elm_initialized;
-static void *__vc_elm_handle;
-static int (*__vc_elm_initialize)(void);
-static int (*__vc_elm_deinitialize)(void);
-static int (*__vc_elm_set_auto_register_mode)(int, int);
-static GThread *__vc_elm_thread;
+// static bool __vc_elm_initialized;
+// static void *__vc_elm_handle;
+// static int (*__vc_elm_initialize)(void);
+// static int (*__vc_elm_deinitialize)(void);
+// static int (*__vc_elm_set_auto_register_mode)(int, int);
+// static GThread *__vc_elm_thread;
 
-static void __unload_vc_elm(void)
-{
-	if (!__vc_elm_handle)
-		return;
+// static void __unload_vc_elm(void)
+// {
+// 	// if (!__vc_elm_handle)
+// 	// 	return;
 
-	__vc_elm_initialize = NULL;
-	__vc_elm_deinitialize = NULL;
-	__vc_elm_set_auto_register_mode = NULL;
+// 	// __vc_elm_initialize = NULL;
+// 	// __vc_elm_deinitialize = NULL;
+// 	// __vc_elm_set_auto_register_mode = NULL;
 
-	dlclose(__vc_elm_handle);
-	__vc_elm_handle = NULL;
-}
+// 	// dlclose(__vc_elm_handle);
+// 	// __vc_elm_handle = NULL;
+// }
 
-static int __load_vc_elm(void)
-{
-	_DBG("Load voice-control-elm");
+// static int __load_vc_elm(void)
+// {
+// 	// _DBG("Load voice-control-elm");
 
-	if (__vc_elm_handle) {
-		_DBG("Already exists");
-		return 0;
-	}
+// 	// if (__vc_elm_handle) {
+// 	// 	_DBG("Already exists");
+// 	// 	return 0;
+// 	// }
 
-	if (access(PATH_LIB_VC_ELM, F_OK) != 0) {
-		_ERR("Failed to access %s", PATH_LIB_VC_ELM);
-		return -1;
-	}
+// 	// if (access(PATH_LIB_VC_ELM, F_OK) != 0) {
+// 	// 	_ERR("Failed to access %s", PATH_LIB_VC_ELM);
+// 	// 	return -1;
+// 	// }
 
-	__vc_elm_handle = dlopen(PATH_LIB_VC_ELM, RTLD_LAZY | RTLD_LOCAL);
-	if (!__vc_elm_handle) {
-		_ERR("Failed to open %s", PATH_LIB_VC_ELM);
-		return -1;
-	}
+// 	// __vc_elm_handle = dlopen(PATH_LIB_VC_ELM, RTLD_LAZY | RTLD_LOCAL);
+// 	// if (!__vc_elm_handle) {
+// 	// 	_ERR("Failed to open %s", PATH_LIB_VC_ELM);
+// 	// 	return -1;
+// 	// }
 
-	__vc_elm_initialize = dlsym(__vc_elm_handle, "vc_elm_initialize");
-	if (!__vc_elm_initialize) {
-		_ERR("Failed to load vc_elm_initialize");
-		__unload_vc_elm();
-		return -1;
-	}
+// 	// __vc_elm_initialize = dlsym(__vc_elm_handle, "vc_elm_initialize");
+// 	// if (!__vc_elm_initialize) {
+// 	// 	_ERR("Failed to load vc_elm_initialize");
+// 	// 	__unload_vc_elm();
+// 	// 	return -1;
+// 	// }
 
-	__vc_elm_deinitialize = dlsym(__vc_elm_handle, "vc_elm_deinitialize");
-	if (!__vc_elm_deinitialize) {
-		_ERR("Failed to load vc_elm_deinitialize");
-		__unload_vc_elm();
-		return -1;
-	}
+// 	// __vc_elm_deinitialize = dlsym(__vc_elm_handle, "vc_elm_deinitialize");
+// 	// if (!__vc_elm_deinitialize) {
+// 	// 	_ERR("Failed to load vc_elm_deinitialize");
+// 	// 	__unload_vc_elm();
+// 	// 	return -1;
+// 	// }
 
-	__vc_elm_set_auto_register_mode = dlsym(__vc_elm_handle,
-			"vc_elm_set_auto_register_mode");
-	if (!__vc_elm_set_auto_register_mode) {
-		_ERR("Failed to load vc_elm_set_auto_register_mode");
-		__unload_vc_elm();
-		return -1;
-	}
+// 	// __vc_elm_set_auto_register_mode = dlsym(__vc_elm_handle,
+// 	// 		"vc_elm_set_auto_register_mode");
+// 	// if (!__vc_elm_set_auto_register_mode) {
+// 	// 	_ERR("Failed to load vc_elm_set_auto_register_mode");
+// 	// 	__unload_vc_elm();
+// 	// 	return -1;
+// 	// }
 
-	return 0;
-}
+// 	return 0;
+// }
 
-static void __vc_vtauto_changed_cb(keynode_t *key, void *data)
-{
-	const char *name;
-	int vt_automode;
+// static void __vc_vtauto_changed_cb(keynode_t *key, void *data)
+// {
+// 	// const char *name;
+// 	// int vt_automode;
 
-	name = vconf_keynode_get_name(key);
-	if (!name || strcmp(name, VCONFKEY_VC_VOICE_TOUCH_AUTOMODE) != 0)
-		return;
+// 	// name = vconf_keynode_get_name(key);
+// 	// if (!name || strcmp(name, VCONFKEY_VC_VOICE_TOUCH_AUTOMODE) != 0)
+// 	// 	return;
 
-	vt_automode = vconf_keynode_get_bool(key);
-	if (vt_automode) {
-		if (!__vc_elm_initialized) {
-			__vc_elm_initialize();
-			__vc_elm_initialized = true;
-		}
-		__vc_elm_set_auto_register_mode(2, 0);
-	} else {
-		__vc_elm_deinitialize();
-		__vc_elm_initialized = false;
-	}
-}
+// 	// vt_automode = vconf_keynode_get_bool(key);
+// 	// if (vt_automode) {
+// 	// 	if (!__vc_elm_initialized) {
+// 	// 		__vc_elm_initialize();
+// 	// 		__vc_elm_initialized = true;
+// 	// 	}
+// 	// 	__vc_elm_set_auto_register_mode(2, 0);
+// 	// } else {
+// 	// 	__vc_elm_deinitialize();
+// 	// 	__vc_elm_initialized = false;
+// 	// }
+// }
 
-static void __vc_elm_init(void)
-{
-	int vt_automode = 0;
+// static void __vc_elm_init(void)
+// {
+// 	// int vt_automode = 0;
 
-	vconf_notify_key_changed(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE,
-			__vc_vtauto_changed_cb, NULL);
-	vconf_get_bool(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE, &vt_automode);
-	if (vt_automode) {
-		if (!__vc_elm_initialized) {
-			__vc_elm_initialize();
-			__vc_elm_initialized = true;
-		}
-		__vc_elm_set_auto_register_mode(2, 0);
-	}
-}
+// 	// vconf_notify_key_changed(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE,
+// 	// 		__vc_vtauto_changed_cb, NULL);
+// 	// vconf_get_bool(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE, &vt_automode);
+// 	// if (vt_automode) {
+// 	// 	if (!__vc_elm_initialized) {
+// 	// 		__vc_elm_initialize();
+// 	// 		__vc_elm_initialized = true;
+// 	// 	}
+// 	// 	__vc_elm_set_auto_register_mode(2, 0);
+// 	// }
+// }
 
-static void __vc_elm_finish(void)
-{
-	vconf_ignore_key_changed(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE,
-			__vc_vtauto_changed_cb);
-	if (__vc_elm_initialized) {
-		__vc_elm_deinitialize();
-		__vc_elm_initialized = false;
-	}
-}
+// static void __vc_elm_finish(void)
+// {
+// 	// vconf_ignore_key_changed(VCONFKEY_VC_VOICE_TOUCH_AUTOMODE,
+// 	// 		__vc_vtauto_changed_cb);
+// 	// if (__vc_elm_initialized) {
+// 	// 	__vc_elm_deinitialize();
+// 	// 	__vc_elm_initialized = false;
+// 	// }
+// }
 
-static gboolean __init_vc_elm(gpointer data)
-{
-	_DBG("Initialize vc-elm");
-	/* Postpone initialization to improve app launching performance */
-	/* VC voice touch setting */
-	__vc_elm_init();
+// static gboolean __init_vc_elm(gpointer data)
+// {
+// 	// _DBG("Initialize vc-elm");
+// 	// /* Postpone initialization to improve app launching performance */
+// 	// /* VC voice touch setting */
+// 	// __vc_elm_init();
 
-	return G_SOURCE_REMOVE;
-}
+// 	// return G_SOURCE_REMOVE;
+// }
 
-static gpointer __vc_elm_loader(gpointer data)
-{
-	int r = 0;
-	int retry_count = 3;
+// static gpointer __vc_elm_loader(gpointer data)
+// {
+// 	// int r = 0;
+// 	// int retry_count = 3;
 
-	do {
-		r = __load_vc_elm();
-		if (r == 0) {
-			g_idle_add(__init_vc_elm, NULL);
-			break;
-		}
-	} while (retry_count--);
-	LOGW("[vc-elm-loader] Result: %d", r);
+// 	// do {
+// 	// 	r = __load_vc_elm();
+// 	// 	if (r == 0) {
+// 	// 		g_idle_add(__init_vc_elm, NULL);
+// 	// 		break;
+// 	// 	}
+// 	// } while (retry_count--);
+// 	// LOGW("[vc-elm-loader] Result: %d", r);
 
-	return GINT_TO_POINTER(r);
-}
+// 	// return GINT_TO_POINTER(r);
+// }
 
 static void __efl_app_init(int argc, char **argv, void *data)
 {
-	int hint;
-	const char *hwacc;
+	// int hint;
+	// const char *hwacc;
 
-	elm_init(argc, argv);
+	// elm_init(argc, argv);
 
-	hint = appcore_efl_base_get_hint();
-	if (hint & APPCORE_EFL_BASE_HINT_HW_ACC_CONTROL) {
-		hwacc = getenv("HWACC");
-		if (hwacc == NULL) {
-			_DBG("elm_config_accel_preference_set is not called");
-		} else if (strcmp(hwacc, "USE") == 0) {
-			elm_config_accel_preference_set("hw");
-			_DBG("elm_config_accel_preference_set : hw");
-		} else if (strcmp(hwacc, "NOT_USE") == 0) {
-			elm_config_accel_preference_set("none");
-			_DBG("elm_config_accel_preference_set : none");
-		} else {
-			_DBG("elm_config_accel_preference_set is not called");
-		}
-	}
+	// hint = appcore_efl_base_get_hint();
+	// if (hint & APPCORE_EFL_BASE_HINT_HW_ACC_CONTROL) {
+	// 	hwacc = getenv("HWACC");
+	// 	if (hwacc == NULL) {
+	// 		_DBG("elm_config_accel_preference_set is not called");
+	// 	} else if (strcmp(hwacc, "USE") == 0) {
+	// 		elm_config_accel_preference_set("hw");
+	// 		_DBG("elm_config_accel_preference_set : hw");
+	// 	} else if (strcmp(hwacc, "NOT_USE") == 0) {
+	// 		elm_config_accel_preference_set("none");
+	// 		_DBG("elm_config_accel_preference_set : none");
+	// 	} else {
+	// 		_DBG("elm_config_accel_preference_set is not called");
+	// 	}
+	// }
 
-	__vc_elm_thread = g_thread_new("vc-elm-loader", __vc_elm_loader, NULL);
+	// __vc_elm_thread = g_thread_new("vc-elm-loader", __vc_elm_loader, NULL);
 }
 
 static void __efl_app_finish(void)
 {
-	gpointer r;
+	// gpointer r;
 
-	__vc_elm_finish();
-	if (__vc_elm_thread) {
-		r = g_thread_join(__vc_elm_thread);
-		__vc_elm_thread = NULL;
-		_DBG("vc-elm-loader. result(%d)", GPOINTER_TO_INT(r));
-	}
+	// __vc_elm_finish();
+	// if (__vc_elm_thread) {
+	// 	r = g_thread_join(__vc_elm_thread);
+	// 	__vc_elm_thread = NULL;
+	// 	_DBG("vc-elm-loader. result(%d)", GPOINTER_TO_INT(r));
+	// }
 
-	elm_shutdown();
+	// elm_shutdown();
 
-	/* Check loader case */
-	if (getenv("AUL_LOADER_INIT")) {
-		unsetenv("AUL_LOADER_INIT");
-		elm_shutdown();
-	}
+	// /* Check loader case */
+	// if (getenv("AUL_LOADER_INIT")) {
+	// 	unsetenv("AUL_LOADER_INIT");
+	// 	elm_shutdown();
+	// }
 }
 
 static void __efl_app_run(void *data)
 {
-	elm_run();
+	// TODO: Fixme
+	//elm_run();
+	ui_start();
+	while (ui_is_running()) { usleep(10*1000); }
+	// TODO: eventloop_loop_run();
 }
 
 static void __efl_app_exit(void *data)
 {
-	elm_exit();
+	// TODO: Fixme
+	// elm_exit();
+	ui_stop();
+	// TODO: eventloop_loop_stop();
 }
 
 static void __efl_app_trim_memory(void *data)
 {
-	_DBG("Trim memory");
-	elm_cache_all_flush();
+	// _DBG("Trim memory");
+	// elm_cache_all_flush();
 	appcore_base_on_trim_memory();
 }
 

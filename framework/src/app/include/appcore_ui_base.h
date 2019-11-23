@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libintl.h>
+// #include <libintl.h>
 #include <bundle.h>
 #include <aul.h>
 #include <appcore_base.h>
@@ -61,8 +61,7 @@ void appcore_ui_base_window_on_hide(int type, void *event);
 void appcore_ui_base_window_on_lower(int type, void *event);
 void appcore_ui_base_window_on_visibility(int type, void *event);
 void appcore_ui_base_window_on_pre_visibility(int type, void *event);
-int appcore_ui_base_init(appcore_ui_base_ops ops, int argc, char **argv,
-		void *data, unsigned int hint);
+int appcore_ui_base_init(appcore_ui_base_ops ops, int argc, char **argv, void *data, unsigned int hint);
 void appcore_ui_base_fini(void);
 appcore_ui_base_ops appcore_ui_base_get_default_ops(void);
 void appcore_ui_base_pause(void);

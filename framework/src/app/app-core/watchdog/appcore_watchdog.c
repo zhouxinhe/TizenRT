@@ -21,27 +21,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <glib.h>
-#include <aul.h>
-#include <aul_watchdog.h>
+// #include <glib.h>
+// #include <aul.h>
+// #include <aul_watchdog.h>
 
 #include "appcore_watchdog.h"
 #include "appcore_watchdog_private.h"
 
 EXPORT_API int appcore_watchdog_enable(void)
 {
-	_W("[__APPCORE_WATCHDOG__] enable");
-	return aul_watchdog_enable();
+	// _W("[__APPCORE_WATCHDOG__] enable");
+	// return aul_watchdog_enable();
 }
 
 EXPORT_API int appcore_watchdog_disable(void)
 {
-	_W("[__APPCORE_WATCHDOG__] kick");
-	return aul_watchdog_disable();
+	// _W("[__APPCORE_WATCHDOG__] kick");
+	// return aul_watchdog_disable();
 }
 
 EXPORT_API int appcore_watchdog_kick(void)
 {
-	_W("[__APPCORE_WATCHDOG__] kick");
-	return aul_watchdog_kick();
+	// _W("[__APPCORE_WATCHDOG__] kick");
+	// return aul_watchdog_kick();
 }

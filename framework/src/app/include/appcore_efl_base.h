@@ -49,8 +49,7 @@ void appcore_efl_base_window_on_show(int type, void *event);
 void appcore_efl_base_window_on_hide(int type, void *event);
 void appcore_efl_base_window_on_lower(int type, void *event);
 void appcore_efl_base_window_on_visibility(int type, void *event);
-int appcore_efl_base_init(appcore_efl_base_ops ops, int argc, char **argv,
-		void *data, unsigned int hint);
+int appcore_efl_base_init(appcore_efl_base_ops ops, int argc, char **argv, void *data, unsigned int hint);
 void appcore_efl_base_fini(void);
 appcore_efl_base_ops appcore_efl_base_get_default_ops(void);
 void appcore_efl_base_pause(void);

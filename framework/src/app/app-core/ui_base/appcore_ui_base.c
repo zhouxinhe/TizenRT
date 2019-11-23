@@ -99,9 +99,9 @@ struct win_node {
 
 static GSList *g_winnode_list;
 static appcore_ui_base_context __context;
-static struct wl_display *dsp;
-static struct wl_registry *reg;
-static struct tizen_policy *tz_policy;
+// static struct wl_display *dsp;
+// static struct wl_registry *reg;
+// static struct tizen_policy *tz_policy;
 
 static void _wl_cb_conformant(void *data,
 		struct tizen_policy *tizen_policy,
@@ -206,25 +206,6 @@ static const struct tizen_policy_listener _tizen_policy_listener = {
 	_wl_cb_conformant_region,
 };
 
-static void __wl_listener_cb(void *data, struct wl_registry *reg,
-		uint32_t id, const char *interface, uint32_t ver)
-{
-	if (interface && !strcmp(interface, "tizen_policy")) {
-		if (!tz_policy)
-			tz_policy = wl_registry_bind(reg, id,
-					&tizen_policy_interface, 7);
-		if (tz_policy) {
-			tizen_policy_add_listener(tz_policy, &_tizen_policy_listener, dsp);
-		}
-	}
-}
-
-static void __wl_listener_remove_cb(void *data, struct wl_registry *reg,
-		unsigned int id)
-{
-	/* do nothing */
-}
-
 static const struct wl_registry_listener reg_listener = {
 	__wl_listener_cb,
 	__wl_listener_remove_cb
@@ -296,10 +277,10 @@ static void __do_pause(void)
 
 	if (__context.state == AS_RUNNING) {
 		if (__context.ops.pause) {
-			traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:PAUSE");
+			// traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:PAUSE");
 			_DBG("Call pause callback");
 			r = __context.ops.pause(__context.data);
-			traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+			// traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
 		}
 
 		if (r >= 0 && __context.resource_reclaiming)
@@ -317,10 +298,10 @@ static void __do_resume(void)
 		__exit_from_suspend();
 		if (__context.ops.resume) {
 			LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]", __context.appid);
-			traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:RESUME");
+			// traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:RESUME");
 			_DBG("Call resume callback");
 			__context.ops.resume(__context.data);
-			traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+			// traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
 			LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:done]", __context.appid);
 		}
 		__context.state = AS_RUNNING;
@@ -331,214 +312,176 @@ static void __do_resume(void)
 
 static GSList *__find_win(unsigned int win)
 {
-	GSList *iter;
-	struct win_node *t;
+	// GSList *iter;
+	// struct win_node *t;
 
-	for (iter = g_winnode_list; iter; iter = g_slist_next(iter)) {
-		t = iter->data;
-		if (t && t->win == win)
-			return iter;
-	}
+	// for (iter = g_winnode_list; iter; iter = g_slist_next(iter)) {
+	// 	t = iter->data;
+	// 	if (t && t->win == win)
+	// 		return iter;
+	// }
 
 	return NULL;
 }
 
 static int __get_main_window(void)
 {
-	struct win_node *entry = NULL;
+	// struct win_node *entry = NULL;
 
-	if (g_winnode_list != NULL) {
-		entry = g_winnode_list->data;
-		return (unsigned int) entry->win;
-	}
+	// if (g_winnode_list != NULL) {
+	// 	entry = g_winnode_list->data;
+	// 	return (unsigned int) entry->win;
+	// }
 
 	return 0;
 }
 
 static int __get_main_surface(void)
 {
-	struct win_node *entry = NULL;
+	// struct win_node *entry = NULL;
 
-	if (g_winnode_list != NULL) {
-		entry = g_winnode_list->data;
-		return (unsigned int) entry->surf;
-	}
+	// if (g_winnode_list != NULL) {
+	// 	entry = g_winnode_list->data;
+	// 	return (unsigned int) entry->surf;
+	// }
 
 	return 0;
 }
 
 static bool __add_win(unsigned int win, unsigned int surf)
 {
-	struct win_node *t;
-	GSList *f;
+	// struct win_node *t;
+	// GSList *f;
 
-	_DBG("[EVENT_TEST][EVENT] __add_win WIN:%x\n", win);
+	// _DBG("[EVENT_TEST][EVENT] __add_win WIN:%x\n", win);
 
-	f = __find_win(win);
-	if (f) {
-		errno = ENOENT;
-		_DBG("[EVENT_TEST][EVENT] ERROR There is already window : %x \n", win);
-		return FALSE;
-	}
+	// f = __find_win(win);
+	// if (f) {
+	// 	errno = ENOENT;
+	// 	_DBG("[EVENT_TEST][EVENT] ERROR There is already window : %x \n", win);
+	// 	return FALSE;
+	// }
 
-	t = calloc(1, sizeof(struct win_node));
-	if (t == NULL)
-		return FALSE;
+	// t = calloc(1, sizeof(struct win_node));
+	// if (t == NULL)
+	// 	return FALSE;
 
-	t->win = win;
-	t->surf = surf;
-	t->vis = VT_NONE;
+	// t->win = win;
+	// t->surf = surf;
+	// t->vis = VT_NONE;
 
-	g_winnode_list = g_slist_append(g_winnode_list, t);
+	// g_winnode_list = g_slist_append(g_winnode_list, t);
 
 	return TRUE;
 }
 
 static bool __delete_win(unsigned int win)
 {
-	GSList *f;
+	// GSList *f;
 
-	f = __find_win(win);
-	if (!f) {
-		errno = ENOENT;
-		_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n",
-				win);
-		return FALSE;
-	}
+	// f = __find_win(win);
+	// if (!f) {
+	// 	errno = ENOENT;
+	// 	_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n",
+	// 			win);
+	// 	return FALSE;
+	// }
 
-	free(f->data);
-	g_winnode_list = g_slist_delete_link(g_winnode_list, f);
+	// free(f->data);
+	// g_winnode_list = g_slist_delete_link(g_winnode_list, f);
 
 	return TRUE;
 }
 
 static bool __update_win(unsigned int win, unsigned int surf, int vis)
 {
-	GSList *f;
-	struct win_node *t;
+	// GSList *f;
+	// struct win_node *t;
 
-	_DBG("[EVENT_TEST][EVENT] __update_win WIN:%x visibility %d\n",
-			win, vis);
+	// _DBG("[EVENT_TEST][EVENT] __update_win WIN:%x visibility %d\n",
+	// 		win, vis);
 
-	f = __find_win(win);
-	if (!f) {
-		errno = ENOENT;
-		_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n", win);
-		return FALSE;
-	}
+	// f = __find_win(win);
+	// if (!f) {
+	// 	errno = ENOENT;
+	// 	_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n", win);
+	// 	return FALSE;
+	// }
 
-	t = (struct win_node *)f->data;
-	t->win = win;
-	if (surf != 0)
-		t->surf = surf;
-	if (vis != VT_NONE)
-		t->vis = vis;
+	// t = (struct win_node *)f->data;
+	// t->win = win;
+	// if (surf != 0)
+	// 	t->surf = surf;
+	// if (vis != VT_NONE)
+	// 	t->vis = vis;
 
 	return TRUE;
 }
 
 static void __raise_win(void)
 {
-	Ecore_Wl2_Window *win;
-	unsigned int win_id;
+	// Ecore_Wl2_Window *win;
+	// unsigned int win_id;
 
-	if (!(__context.hint & APPCORE_UI_BASE_HINT_WINDOW_STACK_CONTROL))
-		return;
+	// if (!(__context.hint & APPCORE_UI_BASE_HINT_WINDOW_STACK_CONTROL))
+	// 	return;
 
-	win_id = __get_main_window();
+	// win_id = __get_main_window();
 
-	_DBG("Raise window: %d", win_id);
-	win = ecore_wl2_display_window_find(ecore_wl2_connected_display_get(NULL), win_id);
-	ecore_wl2_window_activate(win);
+	// _DBG("Raise window: %d", win_id);
+	// win = ecore_wl2_display_window_find(ecore_wl2_connected_display_get(NULL), win_id);
+	// ecore_wl2_window_activate(win);
 }
 
 static void __pause_win(void)
 {
-	Ecore_Wl2_Window *win;
-	GSList *wlist = g_winnode_list;
-	struct win_node *entry = NULL;
+	// Ecore_Wl2_Window *win;
+	// GSList *wlist = g_winnode_list;
+	// struct win_node *entry = NULL;
 
-	if (!(__context.hint & APPCORE_UI_BASE_HINT_WINDOW_STACK_CONTROL))
-		return;
+	// if (!(__context.hint & APPCORE_UI_BASE_HINT_WINDOW_STACK_CONTROL))
+	// 	return;
 
-	_DBG("Pause window");
+	// _DBG("Pause window");
 
-	while (wlist) {
-		entry = wlist->data;
+	// while (wlist) {
+	// 	entry = wlist->data;
 
-		_DBG("Pause window: %d", entry->win);
-		win = ecore_wl2_display_window_find(ecore_wl2_connected_display_get(NULL), entry->win);
-		ecore_wl2_window_iconified_set(win, EINA_TRUE);
+	// 	_DBG("Pause window: %d", entry->win);
+	// 	win = ecore_wl2_display_window_find(ecore_wl2_connected_display_get(NULL), entry->win);
+	// 	ecore_wl2_window_iconified_set(win, EINA_TRUE);
 
-		wlist = wlist->next;
-	}
+	// 	wlist = wlist->next;
+	// }
 }
 
 static int __init_wl(void)
 {
-	_DBG("initialize wayland");
-	dsp = wl_display_connect(NULL);
-	if (dsp == NULL) {
-		_ERR("Failed to connect wl display");
-		return -1;
-	}
-
-	reg = wl_display_get_registry(dsp);
-	if (reg == NULL) {
-		_ERR("Failed to get registry");
-		wl_display_disconnect(dsp);
-		return -1;
-	}
-
-	wl_registry_add_listener(reg, &reg_listener, NULL);
-	wl_display_roundtrip(dsp);
-
-	if (!tz_policy) {
-		_ERR("Failed to get tizen policy interface");
-		wl_registry_destroy(reg);
-		wl_display_disconnect(dsp);
-		return -1;
-	}
-
 	return 0;
 }
 
 static void __finish_wl(void)
 {
-	if (tz_policy) {
-		tizen_policy_destroy(tz_policy);
-		tz_policy = NULL;
-	}
-
-	if (reg) {
-		wl_registry_destroy(reg);
-		reg = NULL;
-	}
-
-	if (dsp) {
-		wl_display_disconnect(dsp);
-		dsp = NULL;
-	}
 }
 
 static void __set_bg_state(void)
 {
-	if (!tz_policy && __init_wl() < 0)
-		return;
+	// if (!tz_policy && __init_wl() < 0)
+	// 	return;
 
-	tizen_policy_set_background_state(tz_policy, getpid());
-	wl_display_roundtrip(dsp);
+	// tizen_policy_set_background_state(tz_policy, getpid());
+	// wl_display_roundtrip(dsp);
 	__context.bg_state = true;
 	_DBG("bg state: %d", __context.bg_state);
 }
 
 static void __unset_bg_state(void)
 {
-	if (!tz_policy)
-		return;
+	// if (!tz_policy)
+	// 	return;
 
-	tizen_policy_unset_background_state(tz_policy, getpid());
-	wl_display_roundtrip(dsp);
+	// tizen_policy_unset_background_state(tz_policy, getpid());
+	// wl_display_roundtrip(dsp);
 	__context.bg_state = false;
 	_DBG("bg state: %d", __context.bg_state);
 }
@@ -659,34 +602,32 @@ EXPORT_API int appcore_ui_base_on_receive(aul_type type, bundle *b)
 
 static void __add_ecore_events(void)
 {
-	__context.hshow = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_SHOW,
-			__stub_show_cb, NULL);
+#if 0
+	__context.hshow = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_SHOW, __stub_show_cb, NULL);
 	if (!__context.hshow)
 		_ERR("Failed to add ECORE_WL_EVENT_WINDOW_SHOW event");
 
-	__context.hhide = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_HIDE,
-			__stub_hide_cb, NULL);
+	__context.hhide = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_HIDE, __stub_hide_cb, NULL);
 	if (!__context.hhide)
 		_ERR("Failed to add ECORE_WL_EVENT_WINDOW_HIDE event");
 
-	__context.hvchange = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_VISIBILITY_CHANGE,
-			__stub_visibility_cb, NULL);
+	__context.hvchange = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_VISIBILITY_CHANGE, __stub_visibility_cb, NULL);
 	if (!__context.hvchange)
 		_ERR("Failed to add ECORE_WL_EVENT_WINDOW_VISIBILITY_CHANGE event");
 
-	__context.hlower = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_LOWER,
-			__stub_lower_cb, NULL);
+	__context.hlower = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_LOWER, __stub_lower_cb, NULL);
 	if (!__context.hlower)
 		_ERR("Failed to add ECORE_WL_EVENT_WINDOW_LOWER event");
 
-	__context.hpvchange = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_PRE_VISIBILITY_CHANGE,
-			__stub_pre_visibility_cb, NULL);
+	__context.hpvchange = ecore_event_handler_add(ECORE_WL2_EVENT_WINDOW_PRE_VISIBILITY_CHANGE, __stub_pre_visibility_cb, NULL);
 	if (!__context.hpvchange)
 		_ERR("Failed to add ECORE_WL_EVENT_WINDOW_PRE_VISIBILITY_CHANGE event");
+#endif
 }
 
 static void __del_ecore_events(void)
 {
+#if 0
 	if (__context.hshow) {
 		ecore_event_handler_del(__context.hshow);
 		__context.hshow = NULL;
@@ -711,6 +652,7 @@ static void __del_ecore_events(void)
 		ecore_event_handler_del(__context.hpvchange);
 		__context.hpvchange = NULL;
 	}
+#endif
 }
 
 EXPORT_API int appcore_ui_base_on_create(void)
@@ -936,27 +878,30 @@ EXPORT_API int appcore_ui_base_init(appcore_ui_base_ops ops, int argc, char **ar
 {
 	const char *bg_launch;
 	bundle *b;
-	char appid[PATH_MAX] = {0, };
+	// char appid[PATH_MAX] = {0, };
 	int ret;
 
-	if (!ecore_wl2_init()) {
-		_ERR("could not wl2 init");
-		return -1;
-	}
+	// if (!ecore_wl2_init()) {
+	// 	_ERR("could not wl2 init");
+	// 	return -1;
+	// }
 
-	ecore_wl2_display_connect(NULL);
-	appcore_ui_plugin_init(&ops, argc, argv, &hint);
-	ret = aul_app_get_appid_bypid(getpid(), appid, sizeof(appid));
-	if (ret != 0) {
-		_ERR("Fail to get appid (%d)", getpid());
-	}
+	// ecore_wl2_display_connect(NULL);
+	// appcore_ui_plugin_init(&ops, argc, argv, &hint);
+
+	// ui_start(); ??
+
+	// ret = aul_app_get_appid_bypid(getpid(), appid, sizeof(appid));
+	// if (ret != 0) {
+	// 	_ERR("Fail to get appid (%d)", getpid());
+	// }
 	__context.ops = ops;
 	__context.data = data;
 	__context.argc = argc;
 	__context.argv = argv;
 	__context.hint = hint;
 	__context.state = AS_NONE;
-	__context.appid = strdup(appid);
+	__context.appid = "";//strdup(appid);
 	__context.resource_reclaiming = true;
 
 	LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:main:done]", appid);
@@ -977,16 +922,16 @@ EXPORT_API int appcore_ui_base_init(appcore_ui_base_ops ops, int argc, char **ar
 EXPORT_API void appcore_ui_base_fini(void)
 {
 	__del_ecore_events();
-	__finish_wl();
+	// __finish_wl();
 
-	free(__context.appid);
-	__context.appid = NULL;
+	// free(__context.appid);
+	// __context.appid = NULL;
 
 	appcore_base_fini();
-	appcore_ui_plugin_fini();
-	_ERR("disconnect wl2_display");
-	ecore_wl2_display_disconnect(ecore_wl2_connected_display_get(NULL));
-	ecore_wl2_shutdown();
+	// appcore_ui_plugin_fini();
+	// _ERR("disconnect wl2_display");
+	// ecore_wl2_display_disconnect(ecore_wl2_connected_display_get(NULL));
+	// ecore_wl2_shutdown();
 }
 
 EXPORT_API void appcore_ui_base_pause(void)
@@ -1006,8 +951,7 @@ EXPORT_API bool appcore_ui_base_is_resumed(void)
 
 EXPORT_API void appcore_ui_base_exit(void)
 {
-	if (__context.ops.base.exit)
-		__context.ops.base.exit(__context.data);
+	appcore_base_exit();
 }
 
 EXPORT_API unsigned int appcore_ui_base_get_main_window(void)

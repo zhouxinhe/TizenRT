@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <app/app.h>
 
-typedef struct {
+typedef struct appdata {
 	int data;
 } appdata_s;
 

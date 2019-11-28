@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libintl.h>
+// #include <libintl.h>
 #include <dlog.h>
 #include <app_common_internal.h>
 

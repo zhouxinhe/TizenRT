@@ -20,7 +20,7 @@
 #pragma once
 
 #include <errno.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
@@ -337,7 +337,7 @@ typedef int (*aul_handler_fn)(aul_type type, bundle *b, void *data);
  *	aul_luanch_init register aul handler.
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * static int aul_handler(aul_type type, bundle *kb,void *data)
  * {
@@ -398,7 +398,7 @@ int aul_launch_init(aul_handler_fn handler, void *data);
  *	aul_launch_init
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int send_local_reset_event()
  * {
@@ -445,7 +445,7 @@ int aul_launch_argv_handler(int argc, char **argv);
  *	aul_launch_init, bundle_import_from_argv
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int send_local_reset_event()
  * {
@@ -494,7 +494,7 @@ int aul_launch_local(bundle *b);
  *	aul_open_app
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int launch_inhouse_contact_app()
  * {
@@ -565,7 +565,7 @@ int aul_launch_app_for_uid(const char *appid, bundle *kb, uid_t uid);
  *	aul_launch_app, aul_app_is_running, aul_resume_pid
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int open_inhouse_contact_app()
  * {
@@ -640,7 +640,7 @@ int aul_open_app_for_uid(const char *appid, uid_t uid);
  *
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int resume_inhouse_contact_app()
  * {
@@ -715,7 +715,7 @@ int aul_resume_app_for_uid(const char *appid, uid_t uid);
  *	aul_launch_app
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int iterfunc(const aul_app_info *info, void *data)
  * {
@@ -784,7 +784,7 @@ int aul_resume_pid_for_uid(int pid, uid_t uid);
  *
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int iterfunc(const aul_app_info *info, void *data)
  * {
@@ -1162,7 +1162,7 @@ int aul_app_get_all_running_app_info_for_uid(aul_app_info_iter_fn iter_fn, void 
  * @retval	AUL_R_ERROR	- no such a package name
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * static int app_reset(bundle *b, void *data)
  * {
@@ -1196,7 +1196,7 @@ int aul_app_get_pkgname_bypid(int pid, char *pkgname, int len);
  *
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * static int app_reset(bundle *b, void *data)
  * {
@@ -1250,7 +1250,7 @@ int aul_app_get_pkgid_bypid_for_uid(int pid, char *pkgid, int len, uid_t uid);
  * @retval	AUL_R_ERROR	- no such a appid
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * static int app_reset(bundle *b, void *data)
  * {
@@ -1679,7 +1679,7 @@ int aul_get_mime_description(const char *mimetype, char *desc, int len);
  *	aul_send_service_result
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int app_reset(bundle *b, void *data)
  * {
@@ -1726,7 +1726,7 @@ int aul_create_result_bundle(bundle *inb, bundle **outb);
  *	aul_create_result_bundle
  * @code
  * #include <aul.h>
- * #include <bundle.h>
+ * #include <app/bundle.h>
  *
  * int app_reset(bundle *b, void *data)
  * {

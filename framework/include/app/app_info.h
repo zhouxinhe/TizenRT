@@ -18,7 +18,7 @@
 #ifndef __TIZEN_APPFW_APP_INFO_H
 #define __TIZEN_APPFW_APP_INFO_H
 
-#include <tizen.h>
+#include <app/tizen.h>
 
 #ifdef __cplusplus
 extern "C" {

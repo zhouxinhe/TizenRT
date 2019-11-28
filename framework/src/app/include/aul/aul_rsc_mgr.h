@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <tizen.h>
-#include <bundle.h>
+#include <app/tizen.h>
+#include <app/bundle.h>
 #include <glib.h>
 
 #ifdef __cplusplus

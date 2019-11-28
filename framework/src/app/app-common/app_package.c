@@ -23,7 +23,7 @@
 #include <pkgmgr-info.h>
 #include <dlog.h>
 
-#include <app_common.h>
+#include <app/app_common.h>
 #include <app_common_internal.h>
 
 #ifdef LOG_TAG

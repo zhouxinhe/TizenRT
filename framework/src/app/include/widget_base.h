@@ -18,9 +18,9 @@
 
 #include <stdbool.h>
 #include <libintl.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include <aul.h>
-#include <app_common.h>
+#include <app/app_common.h>
 #include <appcore_multiwindow_base.h>
 
 #define FEATURE_SHELL_APPWIDGET "http://tizen.org/feature/shell.appwidget"

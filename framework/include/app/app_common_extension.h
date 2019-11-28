@@ -18,7 +18,7 @@
 #ifndef __TIZEN_APPFW_APP_COMMON_EXTENSION_H__
 #define __TIZEN_APPFW_APP_COMMON_EXTENSION_H__
 
-#include <app_types.h>
+#include <app/app_types.h>
 
 #ifdef __cplusplus
 extern "C" {

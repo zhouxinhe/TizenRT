@@ -18,7 +18,7 @@
 
 #include <unistd.h>
 #include <dlog.h>
-#include <tzplatform_config.h>
+// #include <tzplatform_config.h>
 
 #define GLOBAL_USER tzplatform_getuid(TZ_SYS_GLOBALAPP_USER)
 

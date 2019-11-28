@@ -38,7 +38,7 @@
  *
  * @section    Header to use them:
  * @code
- * #include <bundle.h>
+ * #include <app/bundle.h>
  * @endcode
  *
  * @addtogroup bundle
@@ -109,7 +109,7 @@ typedef void (*bundle_iterator_t)(
  */
 typedef void (*bundle_iterate_cb_t)(const char *key, const char *val, void *data);
 
-/** 
+/**
  * @brief	Create a bundle object.
  * @pre		None
  * @post	None
@@ -120,7 +120,7 @@ typedef void (*bundle_iterate_cb_t)(const char *key, const char *val, void *data
  *			ENOMEM : No memory to create an object
  *
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_free(b); // free bundle
  @endcode
@@ -138,21 +138,21 @@ API bundle *bundle_create(void);
  * @retval		-1 failure
  * @remark		None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_free(b); // free bundle
  @endcode
  */
 API int bundle_free(bundle *b);
 /**
- * @brief		Add a string array type key-value pair into bundle. 
+ * @brief		Add a string array type key-value pair into bundle.
  * @pre			b must be a valid bundle object.
  * @post		None
  * @see			bundle_get_str_array()
  * @see			bundle_set_str_array_element()
  * @param[in]	b	bundle object
  * @param[in]	key	key
- * @param[in]	str_array string type value. If NULL, empty array is created. You can change an item with 
+ * @param[in]	str_array string type value. If NULL, empty array is created. You can change an item with
  * @param[in]	len Length of array.
  * @return		Operation result
  * @retval		0	success
@@ -163,7 +163,7 @@ API int bundle_free(bundle *b);
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  char *sa = { "aaa", "bbb", "ccc" };	// A string array of length 3
  bundle *b = bundle_create();
  bundle_add_str_array(b, "foo", sa, 3); // add a key-val pair
@@ -172,7 +172,7 @@ API int bundle_free(bundle *b);
  */
 API int bundle_add_str_array(bundle *b, const char *key, const char **str_array, const int len);
 /**
- * @brief		Add a string type key-value pair into bundle. 
+ * @brief		Add a string type key-value pair into bundle.
  * @pre			b must be a valid bundle object.
  * @post		None
  * @see			bundle_add_str()
@@ -188,7 +188,7 @@ API int bundle_add_str_array(bundle *b, const char *key, const char **str_array,
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
 
@@ -213,7 +213,7 @@ API int bundle_add(bundle *b, const char *key, const char *val);
 				ENOKEY : No key exist \n
 				EKEYREJECTED : key is invalid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
  bundle_del(b, "foo_key"); // del "foo_key" from b
@@ -239,7 +239,7 @@ API int bundle_del(bundle *b, const char *key);
 				ENOKEY : No key exists \n
 				EKEYREJECTED : invalid key (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create();
  bundle_add_str_array(b, "foo", NULL, 3); // add a key-val pair
  bundle_set_str_array_element(b, "foo", 0, "aaa");
@@ -272,7 +272,7 @@ API const char **bundle_get_str_array(bundle *b, const char *key, int *len);
 				ENOKEY : No key exists \n
 				EKEYREJECTED : invalid key (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
  char *val = bundle_get_val(b, "foo_key");	// val = "bar_val"
@@ -292,7 +292,7 @@ API const char *bundle_get_val(bundle *b, const char *key);
  * @return		Number of bundle items
  * @remark		None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "key1", "val1"); // add a key-val pair
  int count = bundle_get_count(b);	// count=1
@@ -328,10 +328,10 @@ API int bundle_get_type(bundle *b, const char *key);
  * @retval		NULL	Failure
  * @remark		None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
- bundle *b_dup = bundle_dup(b);	// duplicate b 
+ bundle *b_dup = bundle_dup(b);	// duplicate b
 
  bundle_free(b);
  bundle_free(b_dup);
@@ -350,7 +350,7 @@ API bundle *bundle_dup(bundle *b_from);
  * @remark		This function is obsolete, and does not give values whose types are not BUNDLE_TYPE_STR.
  @code
  @include <stdio.h>
- #include <bundle.h>
+ #include <app/bundle.h>
  void sample_cb(const char *k, const char *v, void *data) {
    printf("%s -> %s\n", k, v);
  }
@@ -362,7 +362,7 @@ API bundle *bundle_dup(bundle *b_from);
 	 bundle_add(b, "k3", "v3"); // add a key-val pair
 	 bundle_iterate(b, sample_cb, NULL);	// iterate sample_cb for each key/val
 	 return 0;
- } 
+ }
  @endcode
  */
 API void bundle_iterate(bundle *b, bundle_iterate_cb_t callback, void *cb_data);
@@ -378,7 +378,7 @@ API void bundle_iterate(bundle *b, bundle_iterate_cb_t callback, void *cb_data);
  * @remark		This function supports all types.
  @code
  @include <stdio.h>
- #include <bundle.h>
+ #include <app/bundle.h>
  void sample_cb(const char *key, const int type, const bundle_keyval_t *kv, void *user_data) {
    void *basic_val = NULL;
    size_t basic_size = 0;
@@ -396,7 +396,7 @@ API void bundle_iterate(bundle *b, bundle_iterate_cb_t callback, void *cb_data);
 	 // Do something...
    }
  }
- 
+
  int main(void) {
 	 bundle *b = bundle_create(); // Create new bundle object
 	 bundle_add_str(b, "k1", "v1"); // add a key-val pair
@@ -405,7 +405,7 @@ API void bundle_iterate(bundle *b, bundle_iterate_cb_t callback, void *cb_data);
 	 bundle_add_str_array(b, "k3", s_arr, 3); // add a key-val pair
 	 bundle_iterate(b, sample_cb, NULL);	// iterate sample_cb for each key/val
 	 return 0;
- } 
+ }
  @endcode
  */
 API void bundle_foreach(bundle *b, bundle_iterator_t iter, void *user_data);
@@ -479,7 +479,7 @@ API int bundle_keyval_get_array_val(bundle_keyval_t *kv, void ***array_val, unsi
  * @retval		-1		Failure
  * @remark		None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
  bundle_raw *r;
@@ -516,7 +516,7 @@ API int bundle_free_encoded_rawdata(bundle_raw **r);
  * @retval	NULL	Failure
  * @remark		None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
 
@@ -537,7 +537,7 @@ API bundle *bundle_decode(const bundle_raw *r, const int len);
 /**
  * @brief	Export bundle to argv
  * @pre		b is a valid bundle object.
- * @post	argv is a pointer of newly allocated memory. It must be freed. 
+ * @post	argv is a pointer of newly allocated memory. It must be freed.
  *          Each item of argv points the string in the bundle object b. If b is freed, argv will have garbage pointers. DO NOT FREE b BEFORE ACCESSING argv!!
  * @see		bundle_import_from_argv
  * @param[in]	b	bundle object
@@ -548,7 +548,7 @@ API bundle *bundle_decode(const bundle_raw *r, const int len);
  * @retval	-1		Function failure. Check errno to get the reason.
  * @remark	None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add(b, "foo_key", "bar_val"); // add a key-val pair
 
@@ -556,10 +556,10 @@ API bundle *bundle_decode(const bundle_raw *r, const int len);
  char **argv = NULL;
  argc = bundle_export_to_argv(b, &argv);	// export to argv
  if(0 > argc) error("export failure");
- 
+
  int i;
  for(i=0; i < argc; i++) {
-   printf("%s\n", argv[i]);		// print argv 
+   printf("%s\n", argv[i]);		// print argv
  }
  bundle_free_exported_argv(argc, argv);	// argv must be freed after being used.
 
@@ -582,7 +582,7 @@ API int bundle_export_to_argv(bundle *b, char ***argv);
  @code
  bundle *b = bundle_create();
  bundle_add_str(b, "foo", "bar");
- 
+
  int argc = 0;
  char **argv = NULL;
  argc = bundle_export_to_argv(b, &argv);
@@ -609,7 +609,7 @@ API int bundle_free_exported_argv(int argc, char ***argv);
  * @retval	NULL	Function failure
  * @remark	None
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
 
  int main(int argc, char **argv) {
    bundle *b = bundle_import_from_argv(argc, argv); // import from argc+argv
@@ -624,7 +624,7 @@ API bundle *bundle_import_from_argv(int argc, char **argv);
 
 #if 0
 /**
- * @brief		Add a string type key-value pair into bundle. 
+ * @brief		Add a string type key-value pair into bundle.
  * @pre			b must be a valid bundle object.
  * @post		None
  * @see			bundle_get_str()
@@ -640,7 +640,7 @@ API bundle *bundle_import_from_argv(int argc, char **argv);
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add_str(b, "foo", "bar"); // add a key-val pair
 
@@ -658,7 +658,7 @@ API int bundle_add_str(bundle *b, const char *key, const char *str);
  * @param[in]	b	bundle object
  * @param[in]	key	key
  * @param[in]	idx index of array element to be changed
- * @param[in]	val string type value. If NULL, empty array is created. You can change an item with 
+ * @param[in]	val string type value. If NULL, empty array is created. You can change an item with
  * @return		Operation result
  * @retval		0	success
  * @retval		-1	failure
@@ -668,7 +668,7 @@ API int bundle_add_str(bundle *b, const char *key, const char *str);
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create();
  bundle_add_str_array(b, "foo", NULL, 3); // add a key-val pair
  bundle_set_str_array_element(b, "foo", 0, "aaa");
@@ -687,7 +687,7 @@ API int bundle_add_str(bundle *b, const char *key, const char *str);
 API int bundle_set_str_array_element(bundle *b, const char *key, const unsigned int idx, const char *val);
 
 /**
- * @brief		Add a byte type key-value pair into bundle. 
+ * @brief		Add a byte type key-value pair into bundle.
  * @pre			b must be a valid bundle object.
  * @post		None
  * @see			bundle_get_byte()
@@ -704,7 +704,7 @@ API int bundle_set_str_array_element(bundle *b, const char *key, const unsigned 
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add_byte(b, "foo", "bar\0", 4); // add a key-val pair
 
@@ -715,7 +715,7 @@ API int bundle_set_str_array_element(bundle *b, const char *key, const unsigned 
 API int bundle_add_byte(bundle *b, const char *key, const void *byte, const size_t size);
 
 /**
- * @brief		Add a byte array type key-value pair into bundle. 
+ * @brief		Add a byte array type key-value pair into bundle.
  * @pre			b must be a valid bundle object.
  * @post		None
  * @see			bundle_get_str_array()
@@ -733,7 +733,7 @@ API int bundle_add_byte(bundle *b, const char *key, const void *byte, const size
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create();
  bundle_add_byte_array(b, "foo", NULL, 3); // add a byte-array with length 3
 
@@ -755,7 +755,7 @@ API int bundle_add_byte_array(bundle *b, const char *key, void **byte_array, con
  * @param[in]	b	bundle object
  * @param[in]	key	key
  * @param[in]	idx index of array element to be changed
- * @param[in]	val string type value. If NULL, empty array is created. You can change an item with 
+ * @param[in]	val string type value. If NULL, empty array is created. You can change an item with
  * @param[in]	size Size of value in byte
  * @return		Operation result
  * @retval		0	success
@@ -766,7 +766,7 @@ API int bundle_add_byte_array(bundle *b, const char *key, void **byte_array, con
 				EPERM : key is already exist, not permitted to overwrite value \n
 				EINVAL : b or val is not valid (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create();
  bundle_add_byte_array(b, "foo", NULL, 3); // add a key-val pair
  bundle_set_byte_array_element(b, "foo", 0, "aaa\0", 4);
@@ -801,7 +801,7 @@ API int bundle_set_byte_array_element(bundle *b, const char *key, const unsigned
 				ENOKEY : No key exists \n
 				EKEYREJECTED : invalid key (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add_str(b, "foo_key", "bar_val"); // add a key-val pair
 
@@ -832,7 +832,7 @@ API int bundle_get_str(bundle *b, const char *key, char **str);
 				ENOKEY : No key exists \n
 				EKEYREJECTED : invalid key (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create(); // Create new bundle object
  bundle_add_byte(b, "foo", "bar\0", 4); // add a key-val pair
 
@@ -864,7 +864,7 @@ API int bundle_get_byte(bundle *b, const char *key, void **byte, size_t *size);
 				ENOKEY : No key exists \n
 				EKEYREJECTED : invalid key (NULL or sth) \n
  @code
- #include <bundle.h>
+ #include <app/bundle.h>
  bundle *b = bundle_create();
  bundle_add_byte_array(b, "foo", NULL, 3);
  bundle_set_byte_array_element(b, "foo", 0, "aaa\0", 4);

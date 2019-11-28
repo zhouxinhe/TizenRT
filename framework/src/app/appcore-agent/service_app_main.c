@@ -16,20 +16,23 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <bundle.h>
+#include <stdlib.h>
+#include <string.h>
+#include <eventloop/eventloop.h>
+#include <app/bundle.h>
 #include <aul.h>
 #include <dlog.h>
-#include <vconf-internal-keys.h>
-#include <app_common.h>
-#include <Ecore.h>
+// #include <vconf-internal-keys.h>
+#include <app/app_common.h>
+// #include <Ecore.h>
 #include <appcore_base.h>
-#include <service_app.h>
+#include <app/service_app.h>
+#include <app/service_app_extension.h>
 #include <aul_job_scheduler.h>
-#include <bundle_internal.h>
+// #include <bundle_internal.h>
 #include <glib.h>
-
-#include "service_app_extension.h"
 #include "service_app_internal.h"
+
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -75,8 +78,8 @@ struct job_s {
 	int job_status;
 	char *job_id;
 	bundle *job_data;
-	guint timer;
-	guint idler;
+	el_timer_t *timer;
+	// guint idler; // TODO: is there idler in eventloop or libuv?
 };
 
 static struct service_app_context __context;
@@ -92,11 +95,10 @@ static int __app_event_converter[APPCORE_BASE_EVENT_MAX] = {
 };
 
 static int __on_error(app_error_e error, const char *function, const char *description);
-static void __destroy_job_handler(gpointer data);
+static void __destroy_job_handler(void *data);
 static bool __exist_job_handler(const char *job_id);
 
-static struct job_s *__create_job(int job_status, const char *job_id,
-		bundle *job_data)
+static struct job_s *__create_job(int job_status, const char *job_id, bundle *job_data)
 {
 	struct job_s *job;
 
@@ -132,17 +134,18 @@ static struct job_s *__create_job(int job_status, const char *job_id,
 	return job;
 }
 
-static void __destroy_job(gpointer data)
+static void __destroy_job(void *data)
 {
 	struct job_s *job = (struct job_s *)data;
 
 	if (job == NULL)
 		return;
 
-	if (job->idler)
-		g_source_remove(job->idler); /* LCOV_EXCL_LINE */
+	// TODO:
+	// if (job->idler)
+	// 	g_source_remove(job->idler); /* LCOV_EXCL_LINE */
 	if (job->timer)
-		g_source_remove(job->timer); /* LCOV_EXCL_LINE */
+		eventloop_delete_timer(job->timer); /* LCOV_EXCL_LINE */
 	if (job->job_data)
 		bundle_free(job->job_data);
 	if (job->job_id)
@@ -151,16 +154,17 @@ static void __destroy_job(gpointer data)
 }
 
 /* LCOV_EXCL_START */
-static gboolean __pending_job_timeout_handler(gpointer data)
+static bool __pending_job_timeout_handler(void *data)
 {
 	struct job_s *job = (struct job_s *)data;
 
 	LOGE("[__TIMEOUT__] Job(%s) Status(%d)", job->job_id, job->job_status);
 	__context.pending_jobs = g_list_remove(__context.pending_jobs, job);
-	job->timer = 0;
+	// eventloop_delete_timer(job->timer); // TODO: necessary?
+	job->timer = NULL;
 	__destroy_job(job);
 
-	return G_SOURCE_REMOVE;
+	return EVENTLOOP_CALLBACK_STOP;//G_SOURCE_REMOVE;
 }
 /* LCOV_EXCL_STOP */
 
@@ -246,27 +250,27 @@ static int __service_app_receive(aul_type type, bundle *b, void *data)
 
 static void __loop_init(int argc, char **argv, void *data)
 {
-	ecore_init();
+	// event loop init
 }
 
 static void __loop_fini(void)
 {
-	ecore_shutdown();
+	// event loop shutdown
 }
 
 static void __loop_run(void *data)
 {
-	ecore_main_loop_begin();
+	eventloop_loop_run();
 }
 
 static void __exit_main_loop(void *data)
 {
-	ecore_main_loop_quit();
+	eventloop_loop_stop();
 }
 
 static void __loop_exit(void *data)
 {
-	ecore_main_loop_thread_safe_call_sync((Ecore_Data_Cb)__exit_main_loop, NULL);
+	eventloop_thread_safe_function_call(__exit_main_loop, data);
 }
 
 static const char *__error_to_string(app_error_e error)
@@ -423,7 +427,7 @@ EXPORT_API int service_app_remove_event_handler(app_event_handler_h event_handle
 
 EXPORT_API void service_app_exit_without_restart(void)
 {
-	aul_status_update(STATUS_NORESTART);
+	// aul_status_update(STATUS_NORESTART);
 	appcore_base_exit();
 }
 
@@ -444,32 +448,26 @@ static void __invoke_job_callback(int status, const char *job_id,
 	}
 }
 
-static gboolean __handle_job(gpointer data)
+static void __handle_job(void *data)
 {
 	struct job_s *job = (struct job_s *)data;
 
 	__context.running_jobs = g_list_remove(__context.running_jobs, job);
 
-	LOGD("[__JOB___] Job(%s) Status(%d) START",
-			job->job_id, job->job_status);
+	LOGD("[__JOB___] Job(%s) Status(%d) START", job->job_id, job->job_status);
 	if (job->job_status == SERVICE_APP_JOB_STATUS_START) {
-		aul_job_scheduler_update_job_status(job->job_id,
-				JOB_STATUS_START);
-		__invoke_job_callback(job->job_status, job->job_id,
-				job->job_data);
+		// aul_job_scheduler_update_job_status(job->job_id, JOB_STATUS_START);
+		__invoke_job_callback(job->job_status, job->job_id, job->job_data);
 	} else {
-		__invoke_job_callback(job->job_status, job->job_id,
-				job->job_data);
-		aul_job_scheduler_update_job_status(job->job_id,
-				JOB_STATUS_STOPPED);
+		__invoke_job_callback(job->job_status, job->job_id, job->job_data);
+		// aul_job_scheduler_update_job_status(job->job_id, JOB_STATUS_STOPPED);
 	}
-	LOGD("[__JOB__] Job(%s) Status(%d) END",
-			job->job_id, job->job_status);
+	LOGD("[__JOB__] Job(%s) Status(%d) END", job->job_id, job->job_status);
 
-	job->idler = 0;
+	// job->idler = 0;
 	__destroy_job(job);
 
-	return G_SOURCE_REMOVE;
+	// return EVENTLOOP_CALLBACK_STOP; // G_SOURCE_REMOVE;
 }
 
 static void __flush_pending_job(const char *job_id)
@@ -483,17 +481,16 @@ static void __flush_pending_job(const char *job_id)
 		job = (struct job_s *)iter->data;
 		iter = iter->next;
 		if (strcmp(job->job_id, job_id) == 0) {
-			__context.pending_jobs = g_list_remove(
-					__context.pending_jobs, job);
+			__context.pending_jobs = g_list_remove(__context.pending_jobs, job);
 
 			if (job->timer) {
-				g_source_remove(job->timer);
-				job->timer = 0;
+				eventloop_delete_timer(job->timer);
+				job->timer = NULL;
 			}
 
-			job->idler = g_idle_add(__handle_job, job);
-			__context.running_jobs = g_list_append(
-					__context.running_jobs, job);
+			// job->idler = g_idle_add(__handle_job, job);
+			eventloop_thread_safe_function_call(__handle_job, job); // TODO:
+			__context.running_jobs = g_list_append(__context.running_jobs, job);
 		}
 		/* LCOV_EXCL_STOP */
 	}
@@ -544,7 +541,7 @@ static struct service_app_job_s *__create_job_handler(const char *job_id,
 	return handle;
 }
 
-static void __destroy_job_handler(gpointer data)
+static void __destroy_job_handler(void *data)
 {
 	struct service_app_job_s *handle = (struct service_app_job_s *)data;
 
@@ -616,15 +613,13 @@ EXPORT_API int service_app_job_raise(int job_status, const char *job_id,
 
 	if (!__exist_job_handler(job_id)) {
 		/* LCOV_EXCL_START */
-		job->timer = g_timeout_add(5000, __pending_job_timeout_handler,
-				job);
-		__context.pending_jobs = g_list_append(__context.pending_jobs,
-				job);
+		job->timer = eventloop_add_timer(5000, false, __pending_job_timeout_handler, job);
+		__context.pending_jobs = g_list_append(__context.pending_jobs, job);
 		/* LCOV_EXCL_STOP */
 	} else {
-		job->idler = g_idle_add(__handle_job, job);
-		__context.running_jobs = g_list_append(__context.running_jobs,
-				job);
+		// job->idler = g_idle_add(__handle_job, job);
+		eventloop_thread_safe_function_call(__handle_job, job); // TODO:
+		__context.running_jobs = g_list_append(__context.running_jobs, job);
 	}
 
 	return APP_ERROR_NONE;
@@ -662,13 +657,13 @@ EXPORT_API int service_app_job_finished(const char *job_id)
 
 	__remove_running_job(job_id);
 
-	r = aul_job_scheduler_update_job_status(job_id, JOB_STATUS_FINISHED);
-	if (r != AUL_R_OK) {
-		/* LCOV_EXCL_START */
-		return __on_error(APP_ERROR_INVALID_CONTEXT, __FUNCTION__,
-				NULL);
-		/* LCOV_EXCL_STOP */
-	}
+	// r = aul_job_scheduler_update_job_status(job_id, JOB_STATUS_FINISHED);
+	// if (r != AUL_R_OK) {
+	// 	/* LCOV_EXCL_START */
+	// 	return __on_error(APP_ERROR_INVALID_CONTEXT, __FUNCTION__,
+	// 			NULL);
+	// 	/* LCOV_EXCL_STOP */
+	// }
 
 	return APP_ERROR_NONE;
 }

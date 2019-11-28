@@ -18,7 +18,8 @@
 #ifndef __TIZEN_APPFW_EVENT_H__
 #define __TIZEN_APPFW_EVENT_H__
 
-#include <bundle.h>
+#include <app/tizen_error.h>
+#include <app/bundle.h>
 
 #ifdef __cplusplus
 extern "C" {

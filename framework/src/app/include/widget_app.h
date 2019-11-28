@@ -18,9 +18,9 @@
 #ifndef __TIZEN_APPFW_WIDGET_APP_H__
 #define __TIZEN_APPFW_WIDGET_APP_H__
 
-#include <tizen.h>
-#include <app_common.h>
-#include <bundle.h>
+#include <app/tizen.h>
+#include <app/app_common.h>
+#include <app/bundle.h>
 #include <widget_errno.h>
 
 #ifdef __cplusplus

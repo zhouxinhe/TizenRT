@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <glib.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include <bundle_internal.h>
 
 #include "aul.h"

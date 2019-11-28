@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include <aul.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include <bundle_internal.h>
 
 #include "aul_util.h"

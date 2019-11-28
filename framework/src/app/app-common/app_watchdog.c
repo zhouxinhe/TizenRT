@@ -18,9 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlog.h>
-#include <appcore_watchdog.h>
+#include <app/app_common_extension.h>
 
-#include "app_common_extension.h"
+#include "appcore_watchdog.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG

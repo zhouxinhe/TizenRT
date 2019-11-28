@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <glib.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include <bundle_internal.h>
 
 #include "aul_util.h"

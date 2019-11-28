@@ -18,10 +18,10 @@
 #ifndef __TIZEN_APPFW_APP_H__
 #define __TIZEN_APPFW_APP_H__
 
-#include <app_control.h>
-#include <app_common.h>
-#include <app_i18n.h>
-#include <app_types.h>
+#include <app/app_control.h>
+#include <app/app_common.h>
+#include <app/app_i18n.h>
+#include <app/app_types.h>
 
 #ifdef __cplusplus
 extern "C" {

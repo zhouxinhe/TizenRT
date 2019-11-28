@@ -392,10 +392,10 @@ typedef enum {
 	TIZEN_ERROR_NO_MEDIUM = -ENOMEDIUM, /**< No medium found */
 	TIZEN_ERROR_WRONG_MEDIUM_TYPE = -EMEDIUMTYPE, /**< Wrong medium type */
 	TIZEN_ERROR_CANCELED = -ECANCELED, /**< Operation Canceled */
-//	TIZEN_ERROR_KEY_NOT_AVAILABLE = -ENOKEY, /**< Required key not available */
-//	TIZEN_ERROR_KEY_EXPIRED = -EKEYEXPIRED, /**< Key has expired */
-//	TIZEN_ERROR_KEY_REVOKED = -EKEYREVOKED, /**< Key has been revoked */
-//	TIZEN_ERROR_KEY_REJECTED = -EKEYREJECTED, /**< Key was rejected by service */
+	TIZEN_ERROR_KEY_NOT_AVAILABLE = -ENOKEY, /**< Required key not available */
+	TIZEN_ERROR_KEY_EXPIRED = -EKEYEXPIRED, /**< Key has expired */
+	TIZEN_ERROR_KEY_REVOKED = -EKEYREVOKED, /**< Key has been revoked */
+	TIZEN_ERROR_KEY_REJECTED = -EKEYREJECTED, /**< Key was rejected by service */
 	TIZEN_ERROR_OWNER_DEAD = -EOWNERDEAD, /**< Owner died (for robust mutexes) */
 	TIZEN_ERROR_UNKNOWN = TIZEN_ERROR_MIN_PLATFORM_ERROR, /**< Unknown error */
 	/* This is a place to add new errors here.

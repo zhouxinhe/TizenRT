@@ -16,7 +16,7 @@
 
 #include <string.h>
 #include <aul.h>
-#include <tizen_error.h>
+#include <app/tizen_error.h>
 #include <dlog.h>
 
 #include "app_types.h"

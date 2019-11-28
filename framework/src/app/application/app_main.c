@@ -21,17 +21,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#include <app/bundle.h>
-#include <appcore_efl_base.h>
 #include <dlog.h>
 
-#include <app_internal.h>
-#include <app_control_internal.h>
-#include <app_common_internal.h>
-#include <tizen_error.h>
+#include <eventloop/eventloop.h>
+#include <app/app.h>
+#include <app/bundle.h>
+#include <app/tizen_error.h>
 
 #include "app_extension.h"
+#include "app_control_internal.h"
+#include "app_common_internal.h"
+#include "appcore_ui_base.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -78,7 +78,7 @@ static int __app_event_converter[APPCORE_BASE_EVENT_MAX] = {
 
 static int __ui_app_create(void *data)
 {
-	appcore_efl_base_on_create();
+	appcore_ui_base_on_create();
 	if (__context.callback.create == NULL ||
 			__context.callback.create(__context.data) == false)
 		return app_error(APP_ERROR_INVALID_CONTEXT, __FUNCTION__, "app_create_cb() returns false");
@@ -88,7 +88,7 @@ static int __ui_app_create(void *data)
 
 static int __ui_app_terminate(void *data)
 {
-	appcore_efl_base_on_terminate();
+	appcore_ui_base_on_terminate();
 
 	if (__context.callback.terminate)
 		__context.callback.terminate(__context.data);
@@ -100,7 +100,7 @@ static int __ui_app_control(bundle *b, void *data)
 {
 	app_control_h app_control = NULL;
 
-	appcore_efl_base_on_control(b);
+	appcore_ui_base_on_control(b);
 
 	if (b) {
 		if (app_control_create_event(b, &app_control) != APP_ERROR_NONE)
@@ -120,7 +120,7 @@ static int __ui_app_control(bundle *b, void *data)
 
 static int __ui_app_pause(void *data)
 {
-	appcore_efl_base_on_pause();
+	appcore_ui_base_on_pause();
 	if (__context.callback.pause)
 		__context.callback.pause(__context.data);
 	return APP_ERROR_NONE;
@@ -128,13 +128,13 @@ static int __ui_app_pause(void *data)
 
 static int __ui_app_resume(void *data)
 {
-	appcore_efl_base_on_resume();
+	appcore_ui_base_on_resume();
 	if (__context.callback.resume)
 		__context.callback.resume(__context.data);
 	return APP_ERROR_NONE;
 }
 
-static int __app_init(int argc, char **argv, ui_app_lifecycle_callback_s *callback, void *user_data, appcore_efl_base_ops ops)
+static int __app_init(int argc, char **argv, ui_app_lifecycle_callback_s *callback, void *user_data, appcore_ui_base_ops ops)
 {
 	int ret;
 
@@ -151,13 +151,8 @@ static int __app_init(int argc, char **argv, ui_app_lifecycle_callback_s *callba
 	__context.data = user_data;
 	__app_state = APP_STATE_CREATING;
 
-	ret = appcore_efl_base_init(ops, argc, argv, NULL,
-			APPCORE_EFL_BASE_HINT_WINDOW_GROUP_CONTROL |
-			APPCORE_EFL_BASE_HINT_WINDOW_STACK_CONTROL |
-			APPCORE_EFL_BASE_HINT_BG_LAUNCH_CONTROL |
-			APPCORE_EFL_BASE_HINT_HW_ACC_CONTROL |
-			APPCORE_EFL_BASE_HINT_WINDOW_AUTO_CONTROL |
-			APPCORE_EFL_BASE_HINT_LEGACY_CONTROL);
+	// UI Init
+	ret = appcore_ui_base_init(ops, argc, argv, NULL, 0);
 
 	if (ret < 0) {
 		__app_state = APP_STATE_NOT_RUNNING;
@@ -169,56 +164,37 @@ static int __app_init(int argc, char **argv, ui_app_lifecycle_callback_s *callba
 
 static void __app_fini(void)
 {
-	appcore_efl_base_fini();
+	// UI Finish
+	// appcore_ui_base_fini();
 	__app_state = APP_STATE_NOT_RUNNING;
 
-}
-
-int ui_app_init(int argc, char **argv, ui_app_lifecycle_callback_s *callback, void *user_data, appcore_context_h *handle)
-{
-	appcore_efl_base_ops ops = appcore_efl_base_get_default_ops();
-
-	/* override methods */
-	ops.ui_base.base.create = __ui_app_create;
-	ops.ui_base.base.control = __ui_app_control;
-	ops.ui_base.base.terminate = __ui_app_terminate;
-	ops.ui_base.pause = __ui_app_pause;
-	ops.ui_base.resume = __ui_app_resume;
-	ops.ui_base.base.run = NULL;
-	ops.ui_base.base.exit = NULL;
-
-	return __app_init(argc, argv, callback, user_data, ops);
-}
-
-void ui_app_fini(appcore_context_h handle)
-{
-	__app_fini();
 }
 
 int ui_app_main(int argc, char **argv, ui_app_lifecycle_callback_s *callback, void *user_data)
 {
 	int ret;
-	appcore_efl_base_ops ops = appcore_efl_base_get_default_ops();
+	appcore_ui_base_ops ops = appcore_ui_base_get_default_ops();
 
 	/* override methods */
-	ops.ui_base.base.create = __ui_app_create;
-	ops.ui_base.base.control = __ui_app_control;
-	ops.ui_base.base.terminate = __ui_app_terminate;
-	ops.ui_base.pause = __ui_app_pause;
-	ops.ui_base.resume = __ui_app_resume;
+	ops.base.create = __ui_app_create;
+	ops.base.control = __ui_app_control;
+	ops.base.terminate = __ui_app_terminate;
+	ops.pause = __ui_app_pause;
+	ops.resume = __ui_app_resume;
 
 	ret = __app_init(argc, argv, callback, user_data, ops);
 	if (ret != APP_ERROR_NONE)
 		return ret;
 
-	 __app_fini();
+	__app_fini();
 
-	 return APP_ERROR_NONE;
+	return APP_ERROR_NONE;
 }
 
 void ui_app_exit(void)
 {
-	appcore_efl_base_exit();
+	// appcore_ui_base_exit();
+	eventloop_loop_stop();
 }
 
 int __event_cb(void *event, void *data)
@@ -271,7 +247,6 @@ int ui_app_remove_event_handler(app_event_handler_h event_handler)
 	type = event_handler->type;
 	if (type < APP_EVENT_LOW_MEMORY || type > APP_EVENT_UPDATE_REQUESTED)
 		return app_error(APP_ERROR_INVALID_PARAMETER, __FUNCTION__, "invalid handler");
-
 
 	ret = appcore_base_remove_event(event_handler->raw);
 	if (ret < 0)

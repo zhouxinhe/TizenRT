@@ -20,26 +20,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <bundle.h>
-#include <bundle_internal.h>
+#include <app/bundle.h>
+// #include <bundle_internal.h>
 #include <glib.h>
 #include <string.h>
-#include <pthread.h>
-#include <dlfcn.h>
-#include <iniparser.h>
-#include <pkgmgr-info.h>
+// #include <pthread.h>
+// #include <dlfcn.h>
+// #include <iniparser.h>
+// #include <pkgmgr-info.h>
 
 #include "aul.h"
 #include "aul_api.h"
 #include "aul_svc.h"
-#include "aul_sock.h"
-#include "aul_svc_db.h"
-#include "aul_util.h"
+// #include "aul_sock.h"
+// #include "aul_svc_db.h"
+// #include "aul_util.h"
 #include "aul_svc_priv_key.h"
-#include "launch.h"
+// #include "launch.h"
 
-#define MAX_CHECKSUM_BUF	2048
+// #define MAX_CHECKSUM_BUF	2048
 
+#if 0
 /* callback handling */
 typedef struct _aul_svc_cb_info_t {
 	int request_code;
@@ -150,7 +151,7 @@ static void __remove_rescb(aul_svc_cb_info_t *info)
 	if (info)
 		free(info);
 }
-
+#endif
 static int __set_bundle(bundle *b, const char *key, const char *value)
 {
 	const char *val = NULL;
@@ -167,7 +168,7 @@ static int __set_bundle(bundle *b, const char *key, const char *value)
 	if (bundle_add(b, key, value) != 0)
 		return AUL_SVC_RET_ERROR;
 
-	_D("__set_bundle");
+	// _D("__set_bundle");
 
 	return AUL_SVC_RET_OK;
 }
@@ -190,11 +191,11 @@ static int __set_bundle_array(bundle *b, const char *key,
 	if (bundle_add_str_array(b, key, value, len) != 0)
 		return AUL_SVC_RET_ERROR;
 
-	_D("__set_bundle_array");
+	// _D("__set_bundle_array");
 
 	return AUL_SVC_RET_OK;
 }
-
+#if 0
 static void __aul_cb(bundle *b, int is_cancel, void *data)
 {
 	const char *val = NULL;
@@ -805,11 +806,12 @@ static void __invalidate_cache(uid_t uid)
 
 	bundle_free(b);
 }
+#endif
 
 API int aul_svc_set_operation(bundle *b, const char *operation)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
@@ -819,7 +821,7 @@ API int aul_svc_set_operation(bundle *b, const char *operation)
 API int aul_svc_set_uri(bundle *b, const char *uri)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
@@ -829,7 +831,7 @@ API int aul_svc_set_uri(bundle *b, const char *uri)
 API int aul_svc_set_mime(bundle *b, const char *mime)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
@@ -862,7 +864,7 @@ API int aul_svc_add_data_array(bundle *b, const char *key,
 API int aul_svc_set_pkgname(bundle *b, const char *pkg_name)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
@@ -875,11 +877,11 @@ API int aul_svc_set_appid(bundle *b, const char *appid)
 	int ret;
 
 	if (b == NULL || appid == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
-	alias_id = __get_alias_appid((char *)appid);
+	// alias_id = __get_alias_appid((char *)appid);
 	if (alias_id == NULL) {
 		ret = __set_bundle(b, AUL_SVC_K_PKG_NAME, appid);
 	} else {
@@ -894,7 +896,7 @@ API int aul_svc_set_appid(bundle *b, const char *appid)
 API int aul_svc_set_category(bundle *b, const char *category)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
@@ -904,13 +906,13 @@ API int aul_svc_set_category(bundle *b, const char *category)
 API int aul_svc_set_launch_mode(bundle *b, const char *mode)
 {
 	if (b == NULL) {
-		_E("bundle is NULL");
+		// _E("bundle is NULL");
 		return AUL_SVC_RET_EINVAL;
 	}
 
 	return __set_bundle(b, AUL_SVC_K_LAUNCH_MODE, mode);
 }
-
+#if 0
 static int __run_service(bundle *b, int request_code,
 		aul_svc_res_fn cbfunc, aul_svc_err_cb err_cb,
 		void *data, uid_t uid, bool sync)
@@ -1349,6 +1351,7 @@ API int aul_svc_get_all_defapps_for_uid(aul_svc_info_iter_fn iter_fn,
 
 	return AUL_SVC_RET_OK;
 }
+#endif
 
 API const char *aul_svc_get_operation(bundle *b)
 {
@@ -1394,7 +1397,7 @@ API const char *aul_svc_get_launch_mode(bundle *b)
 {
 	return bundle_get_val(b, AUL_SVC_K_LAUNCH_MODE);
 }
-
+#if 0
 API int aul_svc_create_result_bundle(bundle *inb, bundle **outb)
 {
 	int ret = -1;
@@ -1957,3 +1960,4 @@ API int aul_svc_send_launch_request_for_uid(bundle *b, int request_code,
 	return __run_service(b, request_code, cbfunc, err_cb, user_data,
 			uid, false);
 }
+#endif

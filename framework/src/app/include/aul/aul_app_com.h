@@ -20,7 +20,7 @@
 #ifndef __APP_COM_H__
 #define __APP_COM_H__
 
-#include <bundle.h>
+#include <app/bundle.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -17,7 +17,7 @@
 #ifndef __TIZEN_APPFW_RESOURCE_MANAGER_H__
 #define __TIZEN_APPFW_RESOURCE_MANAGER_H__
 
-#include <tizen.h>
+#include <app/tizen.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,7 +18,7 @@
 #ifndef __TIZEN_APPFW_APP_TYPES_H__
 #define __TIZEN_APPFW_APP_TYPES_H__
 
-#include <tizen.h>
+#include <app/tizen.h>
 
 /**
  * @file app_types.h

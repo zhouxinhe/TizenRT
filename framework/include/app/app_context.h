@@ -19,7 +19,7 @@
 #define __TIZEN_APPFW_APP_CONTEXT_H
 
 #include <sys/types.h>
-#include <tizen.h>
+#include <app/tizen.h>
 
 #ifdef __cplusplus
 extern "C" {

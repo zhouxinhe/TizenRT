@@ -16,10 +16,11 @@
 
 #include <stdlib.h>
 #include <glib.h>
-#include <tizen.h>
+#include <app/tizen.h>
 #include <dlog.h>
 #include <app_event.h>
-#include <eventsystem.h>
+#include <pthread.h>
+// #include <eventsystem.h>
 
 #ifdef LOG_TAG
 #undef LOG_TAG

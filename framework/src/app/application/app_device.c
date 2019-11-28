@@ -14,28 +14,8 @@
  * limitations under the License.
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <bundle.h>
+#include <app/app.h>
 #include <appcore_base.h>
-#include <aul.h>
-#include <dlog.h>
-#include <vconf.h>
-
-#include <app_internal.h>
-
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
-
-#define LOG_TAG "CAPI_APPFW_APPLICATION"
 
 static app_device_orientation_e __convert_appcore_rm(int rm)
 {
@@ -72,4 +52,3 @@ app_device_orientation_e app_get_device_orientation(void)
 
 	return dev_orientation;
 }
-

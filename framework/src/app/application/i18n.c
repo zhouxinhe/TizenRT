@@ -18,12 +18,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libintl.h>
+// #include <libintl.h>
 
-#include <app_i18n.h>
+#include <app/app_i18n.h>
 
 char *i18n_get_text(const char *message)
 {
-	return gettext(message);
+	// return gettext(message);
+	return (char *)message;
 }
 

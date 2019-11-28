@@ -24,8 +24,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <glib.h>
-#include <gio/gio.h>
-#include <bundle_internal.h>
+// #include <gio/gio.h>
+// #include <bundle_internal.h>
 
 #include "aul.h"
 #include "aul_api.h"
@@ -36,7 +36,7 @@
 #include "launch.h"
 
 typedef struct _app_resultcb_info_t {
-	GIOChannel *io;
+	// GIOChannel *io;
 	int launched_pid;
 	char *seq_num;
 	void (*reply_cb)(bundle *b, int is_cancel, void *data);
@@ -62,7 +62,7 @@ static char *__gen_seq_num(void)
 	static int num;
 	char buf[MAX_LOCAL_BUFSZ];
 
-	g_atomic_int_inc(&num);
+	num++;
 	snprintf(buf, sizeof(buf), "%d@%d", __rand(num), num);
 
 	return strdup(buf);
@@ -116,8 +116,8 @@ static void __destroy_resultcb(app_resultcb_info_t *info)
 	if (info->b)
 		bundle_free(info->b);
 
-	if (info->io)
-		g_io_channel_unref(info->io);
+	// if (info->io)
+	// 	g_io_channel_unref(info->io);
 
 	if (info->seq_num)
 		free(info->seq_num);
@@ -586,7 +586,7 @@ API int aul_remove_caller_cb(int pid, void *data)
 	return AUL_R_ERROR;
 }
 
-static gboolean __invoke_caller_cb(gpointer data)
+static void __invoke_caller_cb(gpointer data)
 {
 	app_resultcb_info_t *info = (app_resultcb_info_t *)data;
 
@@ -595,7 +595,7 @@ static gboolean __invoke_caller_cb(gpointer data)
 
 	__destroy_resultcb(info);
 
-	return G_SOURCE_REMOVE;
+	// return G_SOURCE_REMOVE;
 }
 
 API int aul_invoke_caller_cb(void *data)
@@ -620,9 +620,8 @@ API int aul_invoke_caller_cb(void *data)
 
 			new_info->caller_cb = info->caller_cb;
 			new_info->caller_data = info->caller_data;
-			g_idle_add_full(G_PRIORITY_DEFAULT,
-					__invoke_caller_cb,
-					new_info, NULL);
+			eventloop_thread_safe_function_call(__invoke_caller_cb, new_info);
+
 			break;
 		}
 		iter = g_list_next(iter);
@@ -647,66 +646,66 @@ API int aul_launch_app_with_result_async_for_uid(const char *appid, bundle *b,
 			data, uid);
 }
 
-static gboolean __aul_error_handler(GIOChannel *io,
-		GIOCondition cond, gpointer user_data)
-{
-	int fd = g_io_channel_unix_get_fd(io);
-	app_resultcb_info_t *info = (app_resultcb_info_t *)user_data;
-	int res;
+// static gboolean __aul_error_handler(GIOChannel *io,
+// 		GIOCondition cond, gpointer user_data)
+// {
+// 	int fd = g_io_channel_unix_get_fd(io);
+// 	app_resultcb_info_t *info = (app_resultcb_info_t *)user_data;
+// 	int res;
 
-	if (!info) {
-		_E("Critical error!");
-		close(fd);
-		return G_SOURCE_REMOVE;
-	}
+// 	if (!info) {
+// 		_E("Critical error!");
+// 		close(fd);
+// 		return G_SOURCE_REMOVE;
+// 	}
 
-	res = aul_sock_recv_result_with_fd(fd);
-	if (res < 1) {
-		res = aul_error_convert(res);
-		if (res == AUL_R_LOCAL) {
-			res = app_request_local(info->cmd, info->b);
-			if (info->b) {
-				bundle_free(info->b);
-				info->b = NULL;
-			}
-		}
-	}
+// 	res = aul_sock_recv_result_with_fd(fd);
+// 	if (res < 1) {
+// 		res = aul_error_convert(res);
+// 		if (res == AUL_R_LOCAL) {
+// 			res = app_request_local(info->cmd, info->b);
+// 			if (info->b) {
+// 				bundle_free(info->b);
+// 				info->b = NULL;
+// 			}
+// 		}
+// 	}
 
-	_W("Sequence(%s), result(%d)", info->seq_num, res);
+// 	_W("Sequence(%s), result(%d)", info->seq_num, res);
 
-	if (info->error_cb) {
-		info->error_cb(res, info->user_data);
-		info->error_cb = NULL;
-	}
+// 	if (info->error_cb) {
+// 		info->error_cb(res, info->user_data);
+// 		info->error_cb = NULL;
+// 	}
 
-	if (res > 0 && info->reply_cb) {
-		info->launched_pid = res;
-	} else {
-		__remove_resultcb(info);
-		__destroy_resultcb(info);
-	}
-	close(fd);
+// 	if (res > 0 && info->reply_cb) {
+// 		info->launched_pid = res;
+// 	} else {
+// 		__remove_resultcb(info);
+// 		__destroy_resultcb(info);
+// 	}
+// 	close(fd);
 
-	return G_SOURCE_REMOVE;
-}
+// 	return G_SOURCE_REMOVE;
+// }
 
 static int __resultcb_add_watch(int fd, app_resultcb_info_t *info)
 {
-	GIOCondition cond = G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_HUP;
-	guint source;
+	// GIOCondition cond = G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_HUP;
+	// guint source;
 
-	info->io = g_io_channel_unix_new(fd);
-	if (!info->io) {
-		_E("Failed to create gio channel");
-		return -1;
-	}
+	// info->io = g_io_channel_unix_new(fd);
+	// if (!info->io) {
+	// 	_E("Failed to create gio channel");
+	// 	return -1;
+	// }
 
-	source = g_io_add_watch(info->io, cond, __aul_error_handler, info);
-	if (!source) {
-		_E("Failed to add gio watch");
-		return -1;
-	}
-	g_io_channel_set_close_on_unref(info->io, TRUE);
+	// source = g_io_add_watch(info->io, cond, __aul_error_handler, info);
+	// if (!source) {
+	// 	_E("Failed to add gio watch");
+	// 	return -1;
+	// }
+	// g_io_channel_set_close_on_unref(info->io, TRUE);
 
 	return 0;
 }
@@ -752,7 +751,7 @@ API int aul_send_launch_request_for_uid(const char *appid, bundle *b, uid_t uid,
 
 	fd = app_request_to_launchpad_for_uid(APP_SEND_LAUNCH_REQUEST,
 			appid, b, uid);
-	if (fd < 0 || fd > sysconf(_SC_OPEN_MAX)) {
+	if (fd < 0/* || fd > sysconf(_SC_OPEN_MAX)*/) {
 		_E("Failed to send launch request. appid(%s), result(%d)",
 				appid, fd);
 		__remove_resultcb(info);

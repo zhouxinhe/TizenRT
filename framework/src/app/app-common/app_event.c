@@ -15,9 +15,7 @@
  */
 
 #include <string.h>
-
-#include <vconf-internal-keys.h>
-#include <app_common.h>
+#include <app/app_common.h>
 #include <app_common_internal.h>
 
 struct app_event_info {
@@ -63,12 +61,13 @@ app_device_orientation_e app_convert_appcore_rm(enum appcore_rm rm)
 static int __app_convert_low_memory(void *val)
 {
 	switch (*(int *)val) {
-	case VCONFKEY_SYSMAN_LOW_MEMORY_NORMAL:
-		return APP_EVENT_LOW_MEMORY_NORMAL;
-	case VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING:
-		return APP_EVENT_LOW_MEMORY_SOFT_WARNING;
-	case VCONFKEY_SYSMAN_LOW_MEMORY_HARD_WARNING:
-		return APP_EVENT_LOW_MEMORY_HARD_WARNING;
+	// TODO:
+	// case VCONFKEY_SYSMAN_LOW_MEMORY_NORMAL:
+	// 	return APP_EVENT_LOW_MEMORY_NORMAL;
+	// case VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING:
+	// 	return APP_EVENT_LOW_MEMORY_SOFT_WARNING;
+	// case VCONFKEY_SYSMAN_LOW_MEMORY_HARD_WARNING:
+	// 	return APP_EVENT_LOW_MEMORY_HARD_WARNING;
 	default:
 		return -1;
 	}
@@ -77,10 +76,11 @@ static int __app_convert_low_memory(void *val)
 static int __app_convert_low_battery(void *val)
 {
 	switch (*(int *)val) {
-	case VCONFKEY_SYSMAN_BAT_POWER_OFF:
-		return APP_EVENT_LOW_BATTERY_POWER_OFF;
-	case VCONFKEY_SYSMAN_BAT_CRITICAL_LOW:
-		return APP_EVENT_LOW_BATTERY_CRITICAL_LOW;
+	// TODO:
+	// case VCONFKEY_SYSMAN_BAT_POWER_OFF:
+	// 	return APP_EVENT_LOW_BATTERY_POWER_OFF;
+	// case VCONFKEY_SYSMAN_BAT_CRITICAL_LOW:
+	// 	return APP_EVENT_LOW_BATTERY_CRITICAL_LOW;
 	default:
 		return -1;
 	}

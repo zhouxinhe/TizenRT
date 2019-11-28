@@ -17,7 +17,7 @@
 
 #define _GNU_SOURCE
 #include <stdlib.h>
-#include <system_info.h>
+// #include <system_info.h>
 #include "aul_util.h"
 
 tizen_profile_t _get_tizen_profile(void)

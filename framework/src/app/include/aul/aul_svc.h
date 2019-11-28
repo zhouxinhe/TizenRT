@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <bundle.h>
+#include <app/bundle.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus

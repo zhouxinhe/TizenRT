@@ -21,11 +21,11 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/xattr.h>
+// #include <sys/xattr.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <tzplatform_config.h>
+// #include <tzplatform_config.h>
 #include <glib.h>
 #include <vconf.h>
 

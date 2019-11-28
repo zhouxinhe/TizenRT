@@ -17,7 +17,7 @@
 #ifndef __AUL_DEBUG_INFO_H__
 #define __AUL_DEBUG_INFO_H__
 
-#include <bundle.h>
+#include <app/bundle.h>
 
 #ifdef __cplusplus
 extern "C" {

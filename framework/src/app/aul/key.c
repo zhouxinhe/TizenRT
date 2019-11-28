@@ -15,7 +15,7 @@
  */
 
 #define _GNU_SOURCE
-#include <bundle.h>
+#include <app/bundle.h>
 
 #include "aul.h"
 #include "aul_api.h"

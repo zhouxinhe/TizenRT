@@ -46,7 +46,7 @@
  */
 
 #include <libintl.h>
-#include <bundle.h>
+#include <app/bundle.h>
 
 #ifdef __cplusplus
 extern "C" {

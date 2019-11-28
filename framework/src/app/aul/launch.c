@@ -25,10 +25,10 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <glib.h>
-#include <gio/gio.h>
-#include <ttrace.h>
+// #include <gio/gio.h>
+// #include <ttrace.h>
 
-#include <bundle_internal.h>
+// #include <bundle_internal.h>
 
 #include "app_signal.h"
 #include "aul.h"

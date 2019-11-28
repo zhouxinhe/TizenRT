@@ -20,13 +20,13 @@
 #include <string.h>
 #include <errno.h>
 
-#include <bundle.h>
-#include <bundle_internal.h>
-#include <aul.h>
-#include <aul_svc.h>
+#include <app/bundle.h>
+// #include <bundle_internal.h>
+#include <aul/aul.h>
+#include <aul/aul_svc.h>
 #include <dlog.h>
 
-#include <app_control.h>
+#include <app/app_control.h>
 #include <app_control_internal.h>
 
 #ifdef LOG_TAG
@@ -318,8 +318,10 @@ int app_control_destroy(app_control_h app_control)
 		return app_control_error(APP_CONTROL_ERROR_INVALID_PARAMETER, __FUNCTION__, NULL);
 
 	if (app_control->type == APP_CONTROL_TYPE_REQUEST && app_control->launch_pid > 0
-			&& bundle_get_val(app_control->data, AUL_SVC_K_LAUNCH_RESULT_APP_STARTED) == NULL)
-		aul_remove_caller_cb(app_control->launch_pid, app_control);
+			&& bundle_get_val(app_control->data, AUL_SVC_K_LAUNCH_RESULT_APP_STARTED) == NULL) {
+		// TODO:
+		// aul_remove_caller_cb(app_control->launch_pid, app_control);
+	}
 
 	bundle_free(app_control->data);
 	app_control->data = NULL;
@@ -700,19 +702,20 @@ static void __handle_launch_result(int launched_pid, void *data)
 		return;
 	}
 
-	ret = aul_app_get_appid_bypid(launched_pid, callee, sizeof(callee));
-	if (ret < 0)
-		LOGE("aul_app_get_appid_bypid failed: %d", launched_pid);
+	// TODO:
+	// ret = aul_app_get_appid_bypid(launched_pid, callee, sizeof(callee));
+	// if (ret < 0)
+	// 	LOGE("aul_app_get_appid_bypid failed: %d", launched_pid);
 
 	app_control_set_app_id(reply, callee);
 	LOGI("app control async result callback callee pid:%d", launched_pid);
 
-	ret = aul_app_get_instance_id_bypid(launched_pid, instance_id,
-			sizeof(instance_id));
-	if (ret == AUL_R_OK) {
-		app_control_set_instance_id(reply, instance_id);
-		LOGI("instance id(%s)", instance_id);
-	}
+	// TODO:
+	// ret = aul_app_get_instance_id_bypid(launched_pid, instance_id, sizeof(instance_id));
+	// if (ret == AUL_R_OK) {
+	// 	app_control_set_instance_id(reply, instance_id);
+	// 	LOGI("instance id(%s)", instance_id);
+	// }
 
 	result = APP_CONTROL_RESULT_APP_STARTED;
 	request = request_context->app_control;
@@ -746,31 +749,32 @@ static app_control_error_e __launch_request_convert_error(int res)
 static void __handle_app_started_result(app_control_h app_control,
 		app_control_request_context_h request_context)
 {
-	char callee[256] = { 0, };
-	const char *str;
-	int ret;
+	// char callee[256] = { 0, };
+	// const char *str;
+	// int ret;
 
-	str = bundle_get_val(app_control->data,
-			AUL_SVC_K_LAUNCH_RESULT_APP_STARTED);
-	if (!str) {
-		aul_add_caller_cb(app_control->launch_pid,
-				__update_launch_pid, app_control);
-		return;
-	}
+	// str = bundle_get_val(app_control->data,
+	// 		AUL_SVC_K_LAUNCH_RESULT_APP_STARTED);
+	// if (!str) {
+	// 	aul_add_caller_cb(app_control->launch_pid,
+	// 			__update_launch_pid, app_control);
+	// 	return;
+	// }
 
-	ret = aul_app_get_appid_bypid(app_control->launch_pid,
-			callee, sizeof(callee));
-	if (ret != AUL_R_OK) {
-		LOGE("Failed to get appliation ID. pid(%d)",
-				app_control->launch_pid);
-	}
+	// TODO:
+	// ret = aul_app_get_appid_bypid(app_control->launch_pid,
+	// 		callee, sizeof(callee));
+	// if (ret != AUL_R_OK) {
+	// 	LOGE("Failed to get appliation ID. pid(%d)",
+	// 			app_control->launch_pid);
+	// }
 
-	aul_add_caller_cb(app_control->launch_pid,
-			__handle_launch_result, request_context);
+	// aul_add_caller_cb(app_control->launch_pid,
+	// 		__handle_launch_result, request_context);
 
-	if (strcmp(callee, APP_SELECTOR) &&
-			strcmp(callee, SHARE_PANEL))
-		aul_invoke_caller_cb(request_context);
+	// if (strcmp(callee, APP_SELECTOR) &&
+	// 		strcmp(callee, SHARE_PANEL))
+	// 	aul_invoke_caller_cb(request_context);
 }
 
 static void app_control_request_result_broker(int request_code, int result,
@@ -880,16 +884,17 @@ static int __launch_request_send(struct launch_request_s *req)
 				APP_CONTROL_OPERATION_DEFAULT);
 	}
 
-	if (req->result_cb) {
-		ret = aul_svc_send_launch_request_for_uid(app_control->data,
-				app_control->id, reply_cb, result_cb,
-				req->request_context, getuid());
+	// TODO:
+	// if (req->result_cb) {
+	// 	ret = aul_svc_send_launch_request_for_uid(app_control->data,
+	// 			app_control->id, reply_cb, result_cb,
+	// 			req->request_context, getuid());
 
-	} else {
-		ret = aul_svc_run_service_for_uid(app_control->data,
-				app_control->id, reply_cb,
-				req->request_context, getuid());
-	}
+	// } else {
+	// 	ret = aul_svc_run_service_for_uid(app_control->data,
+	// 			app_control->id, reply_cb,
+	// 			req->request_context, getuid());
+	// }
 
 	if (req->implicit_default_operation)
 		bundle_del(req->app_control->data, BUNDLE_KEY_OPERATION);

@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <bundle.h>
+#include <app/bundle.h>
 #include "aul_cmd.h"
 
 #define AUL_SOCK_MAXBUFF 131071

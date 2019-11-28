@@ -1,39 +1,15 @@
-/* GLIB - Library of useful routines for C programming
- * Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
- */
 
-/*
- * Modified by the GLib Team and others 1997-2000.  See the AUTHORS
- * file for a list of people on the GLib Team.  See the ChangeLog
- * files for a list of changes.  These files are distributed with
- * GLib at ftp://ftp.gtk.org/pub/gtk/.
- */
-
-/*
- * MT safe
- */
-
-#include "config.h"
-
+#define __GLIB_H_INSIDE__
 #include "glist.h"
-#include "gslice.h"
-#include "gmessages.h"
+#include <stdlib.h>
+#include <stdio.h>
+// #include "gslice.h"
+// #include "gmessages.h"
 
-#include "gtestutils.h"
+// #include "gtestutils.h"
 
+#define g_return_val_if_fail(cond, val)   do { if (!(cond)) return val; } while (0)
+#define g_warning printf
 /**
  * SECTION:linked_lists_double
  * @title: Doubly-Linked Lists
@@ -48,9 +24,9 @@
  * directions (unlike the singly-linked [GSList][glib-Singly-Linked-Lists],
  * which only allows movement through the list in the forward direction).
  *
- * The double linked list does not keep track of the number of items 
+ * The double linked list does not keep track of the number of items
  * and does not keep track of both the start and end of the list. If
- * you want fast access to both the start and the end of the list, 
+ * you want fast access to both the start and the end of the list,
  * and/or the number of items in the list, use a
  * [GQueue][glib-Double-ended-Queues] instead.
  *
@@ -116,7 +92,7 @@
 /**
  * GList:
  * @data: holds the element's data, which can be a pointer to any kind
- *        of data, or any integer value using the 
+ *        of data, or any integer value using the
  *        [Type Conversion Macros][glib-Type-Conversion-Macros]
  * @next: contains the link to the next element in the list
  * @prev: contains the link to the previous element in the list
@@ -147,9 +123,9 @@
  * Returns: the next element, or %NULL if there are no more elements
  **/
 
-#define _g_list_alloc()         g_slice_new (GList)
-#define _g_list_alloc0()        g_slice_new0 (GList)
-#define _g_list_free1(list)     g_slice_free (GList, list)
+#define _g_list_alloc()         (GList *)calloc(1, sizeof(GList))
+#define _g_list_alloc0()        (GList *)zalloc((sizeof(GList)))
+#define _g_list_free1(list)     free((void *)list)
 
 /**
  * g_list_alloc:
@@ -167,7 +143,7 @@ g_list_alloc (void)
 }
 
 /**
- * g_list_free: 
+ * g_list_free:
  * @list: a #GList
  *
  * Frees all of the memory used by a #GList.
@@ -179,7 +155,13 @@ g_list_alloc (void)
 void
 g_list_free (GList *list)
 {
-  g_slice_free_chain (GList, list, next);
+  // g_slice_free_chain (GList, list, next);
+  while (list)
+  {
+      GList *next = list->next;
+      _g_list_free1(list);
+      list = next;
+  }
 }
 
 /**
@@ -243,7 +225,7 @@ g_list_free_full (GList          *list,
  * // This is a list of strings.
  * string_list = g_list_append (string_list, "first");
  * string_list = g_list_append (string_list, "second");
- * 
+ *
  * // This is a list of integers.
  * number_list = g_list_append (number_list, GINT_TO_POINTER (27));
  * number_list = g_list_append (number_list, GINT_TO_POINTER (14));
@@ -257,11 +239,11 @@ g_list_append (GList    *list,
 {
   GList *new_list;
   GList *last;
-  
+
   new_list = _g_list_alloc ();
   new_list->data = data;
   new_list->next = NULL;
-  
+
   if (list)
     {
       last = g_list_last (list);
@@ -286,7 +268,7 @@ g_list_append (GList    *list,
  * Prepends a new element on to the start of the list.
  *
  * Note that the return value is the new start of the list,
- * which will have changed, so make sure you store the new value. 
+ * which will have changed, so make sure you store the new value.
  *
  * |[<!-- language="C" -->
  * // Notice that it is initialized to the empty list.
@@ -299,7 +281,7 @@ g_list_append (GList    *list,
  * Do not use this function to prepend a new element to a different
  * element than the start of the list. Use g_list_insert_before() instead.
  *
- * Returns: a pointer to the newly prepended element, which is the new 
+ * Returns: a pointer to the newly prepended element, which is the new
  *     start of the #GList
  */
 GList *
@@ -307,11 +289,11 @@ g_list_prepend (GList    *list,
                 gpointer  data)
 {
   GList *new_list;
-  
+
   new_list = _g_list_alloc ();
   new_list->data = data;
   new_list->next = list;
-  
+
   if (list)
     {
       new_list->prev = list->prev;
@@ -321,7 +303,7 @@ g_list_prepend (GList    *list,
     }
   else
     new_list->prev = NULL;
-  
+
   return new_list;
 }
 
@@ -329,10 +311,10 @@ g_list_prepend (GList    *list,
  * g_list_insert:
  * @list: a pointer to a #GList, this must point to the top of the list
  * @data: the data for the new element
- * @position: the position to insert the element. If this is 
- *     negative, or is larger than the number of elements in the 
+ * @position: the position to insert the element. If this is
+ *     negative, or is larger than the number of elements in the
  *     list, the new element is added on to the end of the list.
- * 
+ *
  * Inserts a new element into the list at the given position.
  *
  * Returns: the (possibly changed) start of the #GList
@@ -367,7 +349,7 @@ g_list_insert (GList    *list,
 /**
  * g_list_insert_before:
  * @list: a pointer to a #GList, this must point to the top of the list
- * @sibling: the list element before which the new element 
+ * @sibling: the list element before which the new element
  *     is inserted or %NULL to insert at the end of the list
  * @data: the data for the new element
  *
@@ -441,14 +423,14 @@ g_list_insert_before (GList    *list,
  * list = g_list_concat (llink, list);
  * ]|
  *
- * Returns: the start of the new #GList, which equals @list1 if not %NULL 
+ * Returns: the start of the new #GList, which equals @list1 if not %NULL
  */
 GList *
 g_list_concat (GList *list1,
                GList *list2)
 {
   GList *tmp_list;
-  
+
   if (list2)
     {
       tmp_list = g_list_last (list1);
@@ -458,7 +440,7 @@ g_list_concat (GList *list1,
         list1 = list2;
       list2->prev = tmp_list;
     }
-  
+
   return list1;
 }
 
@@ -572,13 +554,13 @@ g_list_remove_all (GList         *list,
  * @llink: an element in the #GList
  *
  * Removes an element from a #GList, without freeing the element.
- * The removed element's prev and next links are set to %NULL, so 
+ * The removed element's prev and next links are set to %NULL, so
  * that it becomes a self-contained list with one element.
  *
  * This function is for example used to move an element in the list
  * (see the example for g_list_concat()) or to remove an element in
  * the list before freeing its data:
- * |[<!-- language="C" --> 
+ * |[<!-- language="C" -->
  * list = g_list_remove_link (list, llink);
  * free_some_data_that_may_access_the_list_again (llink->data);
  * g_list_free (llink);
@@ -598,8 +580,8 @@ g_list_remove_link (GList *list,
  * @list: a #GList, this must point to the top of the list
  * @link_: node to delete from @list
  *
- * Removes the node link_ from the list and frees it. 
- * Compare this to g_list_remove_link() which removes the node 
+ * Removes the node link_ from the list and frees it.
+ * Compare this to g_list_remove_link() which removes the node
  * without freeing it.
  *
  * Returns: the (possibly changed) start of the #GList
@@ -620,8 +602,8 @@ g_list_delete_link (GList *list,
  *
  * Copies a #GList.
  *
- * Note that this is a "shallow" copy. If the list elements 
- * consist of pointers to data, the pointers are copied but 
+ * Note that this is a "shallow" copy. If the list elements
+ * consist of pointers to data, the pointers are copied but
  * the actual data is not. See g_list_copy_deep() if you need
  * to copy the data as well.
  *
@@ -650,16 +632,16 @@ g_list_copy (GList *list)
  * if the copy function takes only one argument.
  *
  * For instance, if @list holds a list of GObjects, you can do:
- * |[<!-- language="C" -->   
+ * |[<!-- language="C" -->
  * another_list = g_list_copy_deep (list, (GCopyFunc) g_object_ref, NULL);
  * ]|
  *
  * And, to entirely free the new list, you could do:
- * |[<!-- language="C" --> 
+ * |[<!-- language="C" -->
  * g_list_free_full (another_list, g_object_unref);
  * ]|
  *
- * Returns: the start of the new list that holds a full copy of @list, 
+ * Returns: the start of the new list that holds a full copy of @list,
  *     use g_list_free_full() to free it
  *
  * Since: 2.34
@@ -713,7 +695,7 @@ GList *
 g_list_reverse (GList *list)
 {
   GList *last;
-  
+
   last = NULL;
   while (list)
     {
@@ -722,7 +704,7 @@ g_list_reverse (GList *list)
       last->next = last->prev;
       last->prev = list;
     }
-  
+
   return last;
 }
 
@@ -737,7 +719,7 @@ g_list_reverse (GList *list)
  * intend to iterate over every element, it is better to use a for-loop as
  * described in the #GList introduction.
  *
- * Returns: the element, or %NULL if the position is off 
+ * Returns: the element, or %NULL if the position is off
  *     the end of the #GList
  */
 GList *
@@ -746,7 +728,7 @@ g_list_nth (GList *list,
 {
   while ((n-- > 0) && list)
     list = list->next;
-  
+
   return list;
 }
 
@@ -757,7 +739,7 @@ g_list_nth (GList *list,
  *
  * Gets the element @n places before @list.
  *
- * Returns: the element, or %NULL if the position is 
+ * Returns: the element, or %NULL if the position is
  *     off the end of the #GList
  */
 GList *
@@ -766,7 +748,7 @@ g_list_nth_prev (GList *list,
 {
   while ((n-- > 0) && list)
     list = list->prev;
-  
+
   return list;
 }
 
@@ -781,7 +763,7 @@ g_list_nth_prev (GList *list,
  * intend to iterate over every element, it is better to use a for-loop as
  * described in the #GList introduction.
  *
- * Returns: the element's data, or %NULL if the position 
+ * Returns: the element's data, or %NULL if the position
  *     is off the end of the #GList
  */
 gpointer
@@ -790,7 +772,7 @@ g_list_nth_data (GList *list,
 {
   while ((n-- > 0) && list)
     list = list->next;
-  
+
   return list ? list->data : NULL;
 }
 
@@ -813,7 +795,7 @@ g_list_find (GList         *list,
         break;
       list = list->next;
     }
-  
+
   return list;
 }
 
@@ -821,14 +803,14 @@ g_list_find (GList         *list,
  * g_list_find_custom:
  * @list: a #GList, this must point to the top of the list
  * @data: user data passed to the function
- * @func: the function to call for each element. 
+ * @func: the function to call for each element.
  *     It should return 0 when the desired element is found
  *
- * Finds an element in a #GList, using a supplied function to 
- * find the desired element. It iterates over the list, calling 
- * the given function which should return 0 when the desired 
- * element is found. The function takes two #gconstpointer arguments, 
- * the #GList element's data as the first argument and the 
+ * Finds an element in a #GList, using a supplied function to
+ * find the desired element. It iterates over the list, calling
+ * the given function which should return 0 when the desired
+ * element is found. The function takes two #gconstpointer arguments,
+ * the #GList element's data as the first argument and the
  * given user data.
  *
  * Returns: the found #GList element, or %NULL if it is not found
@@ -855,10 +837,10 @@ g_list_find_custom (GList         *list,
  * @list: a #GList, this must point to the top of the list
  * @llink: an element in the #GList
  *
- * Gets the position of the given element 
+ * Gets the position of the given element
  * in the #GList (starting from 0).
  *
- * Returns: the position of the element in the #GList, 
+ * Returns: the position of the element in the #GList,
  *     or -1 if the element is not found
  */
 gint
@@ -884,10 +866,10 @@ g_list_position (GList *list,
  * @list: a #GList, this must point to the top of the list
  * @data: the data to find
  *
- * Gets the position of the element containing 
+ * Gets the position of the element containing
  * the given data (starting from 0).
  *
- * Returns: the index of the element containing the data, 
+ * Returns: the index of the element containing the data,
  *     or -1 if the data is not found
  */
 gint
@@ -925,7 +907,7 @@ g_list_last (GList *list)
       while (list->next)
         list = list->next;
     }
-  
+
   return list;
 }
 
@@ -935,7 +917,7 @@ g_list_last (GList *list)
  *
  * Gets the first element in a #GList.
  *
- * Returns: the first element in the #GList, 
+ * Returns: the first element in the #GList,
  *     or %NULL if the #GList has no elements
  */
 GList *
@@ -946,7 +928,7 @@ g_list_first (GList *list)
       while (list->prev)
         list = list->prev;
     }
-  
+
   return list;
 }
 
@@ -967,14 +949,14 @@ guint
 g_list_length (GList *list)
 {
   guint length;
-  
+
   length = 0;
   while (list)
     {
       length++;
       list = list->next;
     }
-  
+
   return length;
 }
 
@@ -1018,14 +1000,14 @@ g_list_insert_sorted_real (GList    *list,
   gint cmp;
 
   g_return_val_if_fail (func != NULL, list);
-  
-  if (!list) 
+
+  if (!list)
     {
       new_list = _g_list_alloc0 ();
       new_list->data = data;
       return new_list;
     }
-  
+
   cmp = ((GCompareDataFunc) func) (data, tmp_list->data, user_data);
 
   while ((tmp_list->next) && (cmp > 0))
@@ -1044,7 +1026,7 @@ g_list_insert_sorted_real (GList    *list,
       new_list->prev = tmp_list;
       return list;
     }
-   
+
   if (tmp_list->prev)
     {
       tmp_list->prev->next = new_list;
@@ -1052,7 +1034,7 @@ g_list_insert_sorted_real (GList    *list,
     }
   new_list->next = tmp_list;
   tmp_list->prev = new_list;
- 
+
   if (tmp_list == list)
     return new_list;
   else
@@ -1064,11 +1046,11 @@ g_list_insert_sorted_real (GList    *list,
  * @list: a pointer to a #GList, this must point to the top of the
  *     already sorted list
  * @data: the data for the new element
- * @func: the function to compare elements in the list. It should 
- *     return a number > 0 if the first parameter comes after the 
+ * @func: the function to compare elements in the list. It should
+ *     return a number > 0 if the first parameter comes after the
  *     second parameter in the sort order.
  *
- * Inserts a new element into the list, using the given comparison 
+ * Inserts a new element into the list, using the given comparison
  * function to determine its position.
  *
  * If you are adding many new elements to a list, and the number of
@@ -1096,7 +1078,7 @@ g_list_insert_sorted (GList        *list,
  *     second parameter in the sort order.
  * @user_data: user data to pass to comparison function
  *
- * Inserts a new element into the list, using the given comparison 
+ * Inserts a new element into the list, using the given comparison
  * function to determine its position.
  *
  * If you are adding many new elements to a list, and the number of
@@ -1118,7 +1100,7 @@ g_list_insert_sorted_with_data (GList            *list,
 }
 
 static GList *
-g_list_sort_merge (GList     *l1, 
+g_list_sort_merge (GList     *l1,
                    GList     *l2,
                    GFunc     compare_func,
                    gpointer  user_data)
@@ -1126,7 +1108,7 @@ g_list_sort_merge (GList     *l1,
   GList list, *l, *lprev;
   gint cmp;
 
-  l = &list; 
+  l = &list;
   lprev = NULL;
 
   while (l1 && l2)
@@ -1137,14 +1119,14 @@ g_list_sort_merge (GList     *l1,
         {
           l->next = l1;
           l1 = l1->next;
-        } 
-      else 
+        }
+      else
         {
           l->next = l2;
           l2 = l2->next;
         }
       l = l->next;
-      l->prev = lprev; 
+      l->prev = lprev;
       lprev = l;
     }
   l->next = l1 ? l1 : l2;
@@ -1153,29 +1135,29 @@ g_list_sort_merge (GList     *l1,
   return list.next;
 }
 
-static GList * 
+static GList *
 g_list_sort_real (GList    *list,
                   GFunc     compare_func,
                   gpointer  user_data)
 {
   GList *l1, *l2;
-  
-  if (!list) 
+
+  if (!list)
     return NULL;
-  if (!list->next) 
+  if (!list->next)
     return list;
-  
-  l1 = list; 
+
+  l1 = list;
   l2 = list->next;
 
   while ((l2 = l2->next) != NULL)
     {
-      if ((l2 = l2->next) == NULL) 
+      if ((l2 = l2->next) == NULL)
         break;
       l1 = l1->next;
     }
-  l2 = l1->next; 
-  l1->next = NULL; 
+  l2 = l1->next;
+  l1->next = NULL;
 
   return g_list_sort_merge (g_list_sort_real (list, compare_func, user_data),
                             g_list_sort_real (l2, compare_func, user_data),
@@ -1187,12 +1169,12 @@ g_list_sort_real (GList    *list,
  * g_list_sort:
  * @list: a #GList, this must point to the top of the list
  * @compare_func: the comparison function used to sort the #GList.
- *     This function is passed the data from 2 elements of the #GList 
- *     and should return 0 if they are equal, a negative value if the 
- *     first element comes before the second, or a positive value if 
+ *     This function is passed the data from 2 elements of the #GList
+ *     and should return 0 if they are equal, a negative value if the
+ *     first element comes before the second, or a positive value if
  *     the first element comes after the second.
  *
- * Sorts a #GList using the given comparison function. The algorithm 
+ * Sorts a #GList using the given comparison function. The algorithm
  * used is a stable sort.
  *
  * Returns: the (possibly changed) start of the #GList
@@ -1223,7 +1205,7 @@ g_list_sort (GList        *list,
  * @compare_func: comparison function
  * @user_data: user data to pass to comparison function
  *
- * Like g_list_sort(), but the comparison function accepts 
+ * Like g_list_sort(), but the comparison function accepts
  * a user data argument.
  *
  * Returns: the (possibly changed) start of the #GList

@@ -17,7 +17,7 @@
 #ifndef __TIZEN_APPFW_APP_MANAGER_H
 #define __TIZEN_APPFW_APP_MANAGER_H
 
-#include <tizen.h>
+#include <app/tizen.h>
 
 #include <app_context.h>
 #include <app_info.h>

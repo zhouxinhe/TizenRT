@@ -23,7 +23,7 @@
 #include <libxml/xmlschemas.h>
 
 #include <dlog.h>
-#include <bundle.h>
+#include <app/bundle.h>
 
 #include "aul_rsc_mgr_internal.h"
 #include "aul_rsc_mgr_schema.h"

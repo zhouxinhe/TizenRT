@@ -17,9 +17,9 @@
 #pragma once
 
 // #include <libintl.h>
-#include <bundle.h>
-#include <aul.h>
-#include <appcore_base.h>
+#include <app/bundle.h>
+#include "aul/aul.h"
+#include "appcore_base.h"
 
 typedef struct _appcore_ui_base_window_ops {
 	void (*show)(int type, void *event, void *data);
@@ -68,8 +68,8 @@ void appcore_ui_base_pause(void);
 void appcore_ui_base_resume(void);
 bool appcore_ui_base_is_resumed(void);
 void appcore_ui_base_exit(void);
-void appcore_ui_base_group_add();
-void appcore_ui_base_group_remove();
+void appcore_ui_base_group_add(void);
+void appcore_ui_base_group_remove(void);
 unsigned int appcore_ui_base_get_main_window(void);
 unsigned int appcore_ui_base_get_main_surface(void);
 int appcore_ui_base_get_hint(void);

@@ -17,9 +17,9 @@
 #pragma once
 
 #include <stdbool.h>
-#include <libintl.h>
-#include <bundle.h>
-#include <aul.h>
+// #include <libintl.h>
+#include <app/bundle.h>
+#include <aul/aul.h>
 
 #ifdef __cplusplus
 extern "C" {
